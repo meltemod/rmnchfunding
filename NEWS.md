@@ -15,6 +15,13 @@
 * IDA's family-planning weight is `0` in every vintage, matching the published
   method. The revised Muskoka 1% alternative will be reachable as
   `muskoka(universe = "fp", ida = 1)` rather than as a table entry.
+* Added an internal `solve_donor_weights()`, which recovers a donor's four
+  per-donor RMNCH weights from published totals by bounded least squares,
+  assuming the weights are constant across years. It reports which weights are
+  identified, which codes the donor never disbursed in, and which donors are
+  underdetermined, plus a bound on the error induced by rounding in the
+  published totals. Not yet wired to anything: it needs the CRS disbursements
+  the totals were built from.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 No estimate can be computed yet: the OECD fetchers and `muskoka()` are not

@@ -114,6 +114,8 @@ then a subsection below it if the choice needs more than a line.
 | 5 | Methodology vintages kept side by side | Coefficients are revised annually and move sharply. Reproducing a published figure needs the vintage that produced it. |
 | 6 | Purpose codes stored as character | Keeps codes out of arithmetic and preserves leading digits when joining CRS extracts that store them as text. |
 | 7 | IDA's FP treatment is a `muskoka()` argument, not a table row | 0% (Donors Delivering) and 1% (revised Muskoka) are two live methods, not two vintages. A row would imply 1% was once published. |
+| 8 | Per-donor RMNCH weights assumed constant across years | Turns one equation per published year into repeated observations of the same unknowns, which is what makes recovery possible at all. |
+| 9 | Unidentified donors return `NA`, not a point from the solution family | A donor spending in all four `varies*` codes is underdetermined by one. Picking a representative solution would present an undetermined number as a result. |
 
 ### Decision 3 — unsupplied coefficients are `NA`, never `0`
 
@@ -184,11 +186,16 @@ oversights.
   totals were built from — so this waits on the fetchers. Until then
   `muskoka(universe = "rmnch")` will refuse to compute rather than understate.
   SRHR and FP are complete.
-- **The per-donor derivation may not be identifiable** from published totals
-  alone. Each donor-year gives one equation (the published RMNCH total) against
-  four unknown weights. It resolves only if the four codes share a single
-  per-donor multiplier, or if the weights are fixed across years and three
-  years of totals are used. Worth settling before building toward it.
+- **Donors spending in all four `varies*` codes cannot be identified** from the
+  2026 report alone. Weights are taken as constant across years (Decision 8),
+  so three published years give three equations; a donor with non-zero
+  disbursement in all four codes has four unknowns and is short by one. Donors
+  with three or fewer are determined or overdetermined. The remedy is a fourth
+  year of published totals from an earlier edition of the report — the solver
+  is written to accept any number of years and a test covers that case.
+  Ill-conditioned donors are a separate risk: published totals are rounded to
+  0.005 million, and `solve_donor_weights()` reports the resulting error bound
+  on the weights rather than leaving it implicit.
 - **No agency crosswalk yet.** `agency_weights` identifies agencies by display
   name. Joining to OECD data needs channel codes; matching on name at run time
   would fail silently.
