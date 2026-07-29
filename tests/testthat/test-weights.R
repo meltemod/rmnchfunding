@@ -21,10 +21,52 @@ test_that("every purpose code appears once per universe", {
   expect_type(sector_weights$purpose_code, "character")
 })
 
-test_that("every agency appears in every vintage and universe", {
-  expect_equal(nrow(agency_weights), 11L * 3L * 3L)
-  expect_true(all(table(agency_weights$agency, agency_weights$method_year) == 3L))
-  expect_setequal(agency_weights$method_year, 2022:2024)
+test_that("every agency appears in every year of every edition", {
+  expect_equal(nrow(agency_weights), 11L * 3L * 3L * 2L)
+  expect_setequal(agency_weights$data_year, 2021:2024)
+  expect_setequal(agency_weights$report_edition, c(2025L, 2026L))
+
+  # A missing agency-year would silently drop an agency from a total when a
+  # caller switched edition.
+  counts <- table(agency_weights$agency, agency_weights$data_year,
+                  agency_weights$report_edition)
+  expect_true(all(counts %in% c(0L, 3L)))
+
+  # Each edition covers exactly three consecutive spending years.
+  for (ed in unique(agency_weights$report_edition)) {
+    yrs <- sort(unique(agency_weights$data_year[
+      agency_weights$report_edition == ed
+    ]))
+    expect_length(yrs, 3L)
+    expect_true(all(diff(yrs) == 1L))
+  }
+})
+
+test_that("the two editions together span four consecutive spending years", {
+  # This is what makes the four per-donor RMNCH weights recoverable: four
+  # unknowns need four independent published years, and neither edition alone
+  # provides them.
+  expect_equal(sort(unique(agency_weights$data_year)), 2021:2024)
+})
+
+test_that("editions disagree about years they both publish", {
+  # Not a defect — each edition recomputes earlier years as the underlying
+  # multilateral data is revised. Asserted because it is the reason
+  # report_edition exists: were these identical, the column would be
+  # redundant and callers could mix editions freely. They cannot.
+  both <- merge(
+    agency_weights[agency_weights$report_edition == 2025L, ],
+    agency_weights[agency_weights$report_edition == 2026L, ],
+    by = c("agency", "data_year", "universe")
+  )
+  expect_equal(nrow(both), 66L)
+  expect_gt(sum(both$weight.x != both$weight.y), 0L)
+
+  # The single largest revision, kept as a concrete anchor.
+  adb <- both[both$agency == "Asian Development Bank" &
+                both$data_year == 2023L & both$universe == "rmnch", ]
+  expect_equal(adb$weight.x, 0.0518)
+  expect_equal(adb$weight.y, 0.1342)
 })
 
 test_that("universe is the same factor in both tables", {
@@ -63,7 +105,7 @@ test_that("the SRHR universe is fully specified", {
   )
 })
 
-test_that("IDA's FP weight is a published zero in every vintage", {
+test_that("IDA's FP weight is a published zero in every year and edition", {
   # The Donors Delivering method does not count IDA contributions to FP, so
   # this zero is a methodological choice rather than a missing value. The 1%
   # revised-Muskoka alternative is applied by muskoka(ida = 1) at call time
@@ -71,8 +113,9 @@ test_that("IDA's FP weight is a published zero in every vintage", {
   w <- agency_weights$weight[
     agency_weights$agency == "IDA" & agency_weights$universe == "fp"
   ]
-  expect_length(w, 3L)
-  expect_equal(w, c(0, 0, 0))
+  # Six cells: three spending years in each of two editions.
+  expect_length(w, 6L)
+  expect_true(all(w == 0))
 })
 
 test_that("unresolved weights are confined to the documented cells", {

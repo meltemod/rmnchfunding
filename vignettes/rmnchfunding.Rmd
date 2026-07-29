@@ -59,8 +59,8 @@ Bilateral flows are weighted by CRS purpose code:
 head(sector_weights[sector_weights$universe == "rmnch", ], 8)
 ```
 
-Multilateral spending is weighted by agency, separately for each vintage of
-the methodology:
+Multilateral spending is weighted by agency, and needs two keys rather than
+one:
 
 ```{r}
 agency_weights[
@@ -68,15 +68,32 @@ agency_weights[
 ]
 ```
 
-`method_year` is the year of the *methodology*, not of the spending. The
-coefficients are revised annually and can move a long way between revisions,
-so reproducing a published figure means using the vintage that produced it:
+`data_year` is the year of the *spending*: each weight is the proportion of
+that agency's own disbursements in that year benefiting the universe, so it
+moves as the agency's disbursement mix moves.
+
+`report_edition` is the year of the *report*. Every edition recomputes the
+weights for all the years it covers, including years an earlier edition
+already published, as the underlying data is revised. Those revisions are
+large enough to matter:
 
 ```{r}
-agency_weights[
-  agency_weights$agency == "UNAIDS" & agency_weights$universe == "rmnch",
+adb <- agency_weights[
+  agency_weights$agency == "Asian Development Bank" &
+    agency_weights$universe == "rmnch" &
+    agency_weights$data_year %in% 2022:2023,
 ]
+adb[order(adb$data_year, adb$report_edition), ]
 ```
+
+The 2023 weight is 5.18% as first published and 13.42% a year later. So
+**take the weights and the published totals from the same edition** — mixing
+them reproduces neither report. The editions also differ in price base: 2022
+constant prices in 2025, 2023 constant prices in 2026.
+
+Between them the two editions cover four spending years, 2021 to 2024, which
+is what makes the four per-donor RMNCH weights recoverable — four unknowns
+need four independent published years, and neither edition alone has them.
 
 ## Weights that are missing on purpose
 

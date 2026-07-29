@@ -34,7 +34,7 @@ Nothing computes an estimate yet. What exists is the two coefficient tables:
 library(rmnchfunding)
 
 sector_weights                # CRS purpose code -> share, per universe
-agency_weights                # multilateral agency -> share, per vintage
+agency_weights                # multilateral agency -> share, per year and edition
 ```
 
 The planned entry point is a single function covering all three universes:
@@ -44,10 +44,13 @@ muskoka(universe = "rmnch")           # or "srhr", or "fp"
 muskoka(universe = "fp", ida = 1)     # revised Muskoka 1% for IDA
 ```
 
-Both tables are transcribed from the [Donors Delivering for SRHR Report
-2026](https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf),
-pages 110–111. The three universes overlap by construction, so their totals must
-never be added together.
+Both tables are transcribed from the Donors Delivering for SRHR Report,
+[2026 edition](https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf)
+pages 110–111 and
+[2025 edition](https://donorsdelivering.report/wp-content/uploads/2025/06/DDSRHR2025.pdf)
+pages 104–105. The sector table is identical in both; the multilateral weights
+were revised, so `agency_weights` carries them per edition. The three universes
+overlap by construction, so their totals must never be added together.
 
 Full reference: <https://meltemod.github.io/rmnchfunding/>
 
@@ -111,9 +114,9 @@ then a subsection below it if the choice needs more than a line.
 | 2 | Coefficients stored as proportions, entered as percentages | Every use is a multiplication against a disbursement; a stray factor of 100 there is invisible in a total. `data-raw/` keeps percentages so it stays diffable against the source table. |
 | 3 | Unknown coefficients are `NA`, never `0` | A zero asserts the sector contributes nothing. Conflating the two understates totals silently. |
 | 4 | Weight tables held in long format | `muskoka()` takes one universe and joins on code; a wide table would need runtime column selection by name. |
-| 5 | Methodology vintages kept side by side | Coefficients are revised annually and move sharply. Reproducing a published figure needs the vintage that produced it. |
+| 5 | Agency weights keyed by spending year *and* report edition | Weights are per spending year, and each edition recomputes earlier years. 31 of 66 overlapping cells differ between editions. |
 | 6 | Purpose codes stored as character | Keeps codes out of arithmetic and preserves leading digits when joining CRS extracts that store them as text. |
-| 7 | IDA's FP treatment is a `muskoka()` argument, not a table row | 0% (Donors Delivering) and 1% (revised Muskoka) are two live methods, not two vintages. A row would imply 1% was once published. |
+| 7 | IDA's FP treatment is a `muskoka()` argument, not a table row | 0% (Donors Delivering) and 1% (revised Muskoka) are two live methods. A row would imply 1% was once published. |
 | 8 | Per-donor RMNCH weights assumed constant across years | Turns one equation per published year into repeated observations of the same unknowns, which is what makes recovery possible at all. |
 | 9 | Unidentified donors return `NA`, not a point from the solution family | A donor spending in all four `varies*` codes is underdetermined by one. Picking a representative solution would present an undetermined number as a result. |
 
@@ -138,13 +141,13 @@ it is data. The `varies*` cells are a shape mismatch, so they are absent.
 **Cost.** The package cannot produce an RMNCH total until the per-donor weights
 are derived. SRHR and FP are complete and unaffected.
 
-### Decision 7 — IDA's family-planning treatment is an argument, not a vintage
+### Decision 7 — IDA's family-planning treatment is an argument, not a row
 
 **Chosen:** `agency_weights` records IDA's published FP weight of 0%.
 `muskoka(universe = "fp", ida = )` accepts `0` (default) or `1` to apply the
 revised Muskoka 1% instead.
 
-**Rejected:** A fourth `method_year` row carrying the 1% figure.
+**Rejected:** An extra row in `agency_weights` carrying the 1% figure.
 
 **Why.** The report's footnote says the Donors Delivering method does not count
 IDA contributions to FP, while the revised Muskoka method applies 1%, and that
@@ -156,21 +159,40 @@ report exactly, and puts any departure from it in the caller's own code.
 **Cost.** One more argument, and it only means anything for `universe = "fp"`.
 The default will need revisiting when the next report reconciles the two.
 
-### Decision 5 — methodology vintages kept side by side
+### Decision 5 — agency weights keyed by spending year *and* report edition
 
-**Chosen:** `agency_weights` carries a `method_year` column (2022, 2023, 2024)
-and callers select one.
+**Chosen:** `agency_weights` carries both `data_year` (2021–2024) and
+`report_edition` (2025, 2026). 198 rows.
 
-**Rejected:** Keeping only the current coefficients.
+**Rejected:** A single year column. That was the first implementation, and it
+was wrong — see below.
 
-**Why.** `method_year` is the vintage of the *method*, not of the spending.
-Revisions move a long way — UNAIDS RMNCH goes 0.00% → 43.80% → 45.36%, the
-Asian Development Bank 7.19% → 13.42% → 7.13%. An estimate published under the
-2023 method is not reproducible from 2024 coefficients no matter which data
-years it covered.
+**Why.** The two columns mean different things and neither is redundant.
+`data_year` is the year of the spending: the report computes each weight as the
+proportion of that agency's own disbursements in that year benefiting the
+universe, so it moves with the agency's disbursement mix. `report_edition` is
+the year of the report, and every edition *recomputes* the weights for all
+years it covers, including years already published, as the underlying data is
+revised.
 
-**Cost.** Every caller must choose a vintage, and each annual revision adds a
-table rather than replacing one.
+Those revisions are not cosmetic. Of the 66 agency-year-universe cells
+published in both editions, **31 changed** — the Asian Development Bank's 2023
+RMNCH weight is 5.18% as first published and 13.42% a year later. So weights
+and published totals must come from the *same* edition; mixing them reproduces
+neither report. The editions also differ in price base (2022 vs 2023 constant
+prices).
+
+The first version of this table had one `method_year` column, documented as the
+methodology vintage rather than the spending year. That reading did not survive
+contact with the 2025 edition: the columns are labelled 2021–2023 there and
+2022–2024 in 2026, which only makes sense as spending years, and the report
+says the percentages are computed from each multilateral's disbursements "each
+year". The edition axis was missing entirely.
+
+**Cost.** Callers must specify both keys, and each new edition adds ~99 rows
+rather than replacing them. In exchange, the two editions together span four
+spending years — which is exactly what makes the four per-donor RMNCH weights
+identifiable.
 
 ---
 
@@ -186,16 +208,16 @@ oversights.
   totals were built from — so this waits on the fetchers. Until then
   `muskoka(universe = "rmnch")` will refuse to compute rather than understate.
   SRHR and FP are complete.
-- **Donors spending in all four `varies*` codes cannot be identified** from the
-  2026 report alone. Weights are taken as constant across years (Decision 8),
-  so three published years give three equations; a donor with non-zero
-  disbursement in all four codes has four unknowns and is short by one. Donors
-  with three or fewer are determined or overdetermined. The remedy is a fourth
-  year of published totals from an earlier edition of the report — the solver
-  is written to accept any number of years and a test covers that case.
-  Ill-conditioned donors are a separate risk: published totals are rounded to
-  0.005 million, and `solve_donor_weights()` reports the resulting error bound
-  on the weights rather than leaving it implicit.
+- **The per-donor weights are identifiable but not yet computed.** Weights are
+  taken as constant across years (Decision 8), so each published year is one
+  equation against four unknowns. The 2025 and 2026 editions together cover
+  2021–2024, which supplies the four needed. What remains is the CRS
+  disbursements those totals were built from, i.e. the fetchers. Two hazards to
+  watch when it runs: the editions revise each other's years, so equations must
+  pair totals with same-edition weights and be deflated to a common base; and
+  ill-conditioned donors amplify the 0.005-million rounding in the published
+  totals, which `solve_donor_weights()` reports as an explicit error bound
+  rather than leaving implicit.
 - **No agency crosswalk yet.** `agency_weights` identifies agencies by display
   name. Joining to OECD data needs channel codes; matching on name at run time
   would fail silently.

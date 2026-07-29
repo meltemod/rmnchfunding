@@ -54,13 +54,18 @@ globally:
 }
 
 They are \code{NA} here because a single column cannot hold a per-donor value,
-not because they are unknown in principle. The donor-level weights are to
-be derived from the published per-donor RMNCH totals in Annex 3 of the
-source report, which requires the CRS disbursements those totals were
-built from; until that derivation exists there is nowhere for the numbers
-to live. \code{muskoka()} must therefore refuse to compute an RMNCH total
-rather than treat these as zero — three of the four are large CRS sectors,
-and a silent zero would understate every donor's result.
+not because they are unknown in principle. The donor-level weights are
+recovered from the published per-donor RMNCH totals by
+\code{solve_donor_weights()}, which needs the CRS disbursements those totals
+were built from; until that runs there is nowhere for the numbers to live.
+\code{muskoka()} must therefore refuse to compute an RMNCH total rather than
+treat these as zero — three of the four are large CRS sectors, and a silent
+zero would understate every donor's result.
+
+Four unknown weights need four independent published years. The 2025 and
+2026 editions cover 2021-2023 and 2022-2024 respectively, so together they
+supply them; see \link{agency_weights} for why the two editions cannot be freely
+mixed while doing so.
 
 The SRHR and family-planning universes are complete and unaffected.
 }
