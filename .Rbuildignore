@@ -1,0 +1,32 @@
+# Files present in the repository but excluded from the built package.
+# Entries are PERL-style regular expressions matched against paths relative
+# to the package root, so anchors and escaped dots matter.
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.github$
+^\.git$
+^\.gitignore$
+^\.vscode$
+^\.DS_Store$
+
+# Documentation and metadata that belong to the repository, not the tarball.
+^LICENSE\.md$
+^README\.Rmd$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^codecov\.yml$
+^_pkgdown\.yml$
+^pkgdown$
+^docs$
+
+# Developer-only trees. data-raw/ holds the scripts that BUILD data/, which
+# users neither need nor should re-run; dev/ holds environment bootstrap.
+^data-raw$
+^dev$
+
+# renv, whether or not it is in use today. Left in place unconditionally so
+# that adding renv later cannot silently break `R CMD build`.
+^renv$
+^renv\.lock$
+^\.Rprofile$
+^\.renvignore$

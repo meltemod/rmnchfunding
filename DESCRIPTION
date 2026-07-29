@@ -1,0 +1,21 @@
+Package: rmnchfunding
+Title: Tools For Reproducible RMNCH Funding Analysis
+Version: 0.0.0.9000
+Authors@R:
+    person("Meltem", "Odabaş", , "me@meltemodabas.net", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-6123-0676"))
+Description: Calculates bilateral and multilateral reproductive, maternal, newborn and child health (RMNCH) and family-planning funding from OECD Creditor Reporting System (CRS) data under three methodologies, with user-adjustable percentage tables. Provides muskoka1(), muskoka2() and revised_fp().
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Depends:
+    R (>= 4.1)
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+URL: https://github.com/meltemod/rmnchfunding, https://meltemod.github.io/rmnchfunding/
+BugReports: https://github.com/meltemod/rmnchfunding/issues
+Config/roxygen2/version: 8.0.0

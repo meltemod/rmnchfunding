@@ -1,0 +1,19 @@
+url: https://meltemod.github.io/rmnchfunding/
+
+template:
+  bootstrap: 5
+
+# By default pkgdown puts every exported function in one "All functions"
+# reference page, which stops being readable at about a dozen functions.
+# Uncomment and group them once there are enough to warrant it. Note that
+# pkgdown FAILS the build if a topic is missing from the index, which is the
+# point: a new exported function cannot be quietly left undocumented.
+#
+# reference:
+#   - title: Core
+#     desc: The functions most users need.
+#     contents:
+#       - rescale01
+#   - title: Helpers
+#     contents:
+#       - has_keyword("internal")

@@ -1,0 +1,42 @@
+---
+title: "Getting started with rmnchfunding"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with rmnchfunding}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(rmnchfunding)
+```
+
+## Why this package exists
+
+Replace this section with the problem the package solves — the situation a
+reader is in *before* they install it. A vignette that opens with a feature
+list assumes the reader already knows they need one.
+
+## A worked example
+
+```{r}
+x <- c(2, 4, 6, 8)
+rescale01(x)
+```
+
+Every chunk here is executed when the package is built, so a vignette that
+still knits is a second, coarser test suite: it catches interface changes
+that unit tests written against internals would miss.
+
+## What this vignette is not
+
+Reference documentation. That is generated from the roxygen comments and
+reached with `?rescale01`. A vignette explains *when and why*; the help page
+explains *what and how*.
