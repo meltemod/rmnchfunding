@@ -29,10 +29,23 @@
   underdetermined, plus a bound on the error induced by rounding in the
   published totals. Not yet wired to anything: it needs the CRS disbursements
   the totals were built from.
+* Added `oecd_crs()`, which fetches a donor's bilateral CRS disbursements for
+  the Muskoka purpose codes, by recipient and year.
+* Added `oecd_multi()`, which fetches a provider's core contributions to the
+  eleven weighted multilateral agencies.
+* Added `crs_recipients`, the recipient hierarchy, and `agency_channels`, the
+  agency-to-OECD-channel crosswalk. Both are what stop the fetchers from
+  double counting or matching on names.
+* Both fetchers take `prices = "constant"` with an explicit `base` year, or
+  `prices = "current"`. The base is never implicit: OECD rebases its own
+  constant series with each release (2024 now, 2023 a few months ago), so
+  values are always fetched in current prices and deflated here with OECD's
+  per-donor ODA deflators. Use base 2022 to reproduce the 2025 report edition
+  and 2023 for the 2026 edition.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
-No estimate can be computed yet: the OECD fetchers and `muskoka()` are not
-written.
+`muskoka()` itself is not written yet, and the per-donor RMNCH weights are not
+yet derived.
 
 <!--
 Conventions:

@@ -11,9 +11,10 @@ newborn and child health (RMNCH), sexual and reproductive health and rights
 OECD providers' total use of the multilateral system, using the revised Muskoka
 method.
 
-> **Status: under construction.** The coefficient tables the method depends on
-> are in place and documented. The OECD fetchers and `muskoka()` itself are not
-> yet written, so the package does not currently produce an estimate.
+> **Status: under construction.** The coefficient tables and both OECD fetchers
+> are in place. `muskoka()` itself is not written yet, and the four per-donor
+> RMNCH weights are not yet derived, so the package does not produce a Muskoka
+> estimate — but `oecd_crs()` and `oecd_multi()` are usable on their own.
 
 ---
 
@@ -28,13 +29,25 @@ Requires R >= 4.1. Developed against R 4.6.x.
 
 ## 2. Usage
 
-Nothing computes an estimate yet. What exists is the two coefficient tables:
+Fetch a donor's bilateral disbursements and multilateral core contributions:
 
 ```r
 library(rmnchfunding)
 
+# Bilateral, by recipient country, in the 2026 edition's price base
+crs <- oecd_crs("USA", years = 2022:2024, prices = "constant", base = 2023)
+
+# Core contributions to the eleven weighted agencies
+mul <- oecd_multi("USA", years = 2022:2024, prices = "constant", base = 2023)
+```
+
+The coefficient tables and the two lookups the fetchers depend on:
+
+```r
 sector_weights                # CRS purpose code -> share, per universe
 agency_weights                # multilateral agency -> share, per year and edition
+crs_recipients                # which recipient codes are aggregates
+agency_channels               # agency -> OECD channel code
 ```
 
 The planned entry point is a single function covering all three universes:
@@ -119,6 +132,9 @@ then a subsection below it if the choice needs more than a line.
 | 7 | IDA's FP treatment is a `muskoka()` argument, not a table row | 0% (Donors Delivering) and 1% (revised Muskoka) are two live methods. A row would imply 1% was once published. |
 | 8 | Per-donor RMNCH weights assumed constant across years | Turns one equation per published year into repeated observations of the same unknowns, which is what makes recovery possible at all. |
 | 9 | Unidentified donors return `NA`, not a point from the solution family | A donor spending in all four `varies*` codes is underdetermined by one. Picking a representative solution would present an undetermined number as a result. |
+| 10 | CRS and MULTI fetched from the `dcd-public` host | These two dataflows moved; the ordinary `public` host answers every query with HTTP 500, which reads as a broken request rather than a wrong address. |
+| 11 | Every hierarchical dimension pinned to its total | `RECIPIENT`, `CHANNEL`, `MODALITY` and `SECTOR` each return a `_T` total *and* its components. Left open, one figure comes back six or more times and sums to a multiple of the truth. |
+| 12 | Values fetched in current prices and deflated here | OECD rebases its constant series each release, and serves only the current base. Deflating locally lets any base be requested and keeps one code path. |
 
 ### Decision 3 — unsupplied coefficients are `NA`, never `0`
 
@@ -158,6 +174,31 @@ report exactly, and puts any departure from it in the caller's own code.
 
 **Cost.** One more argument, and it only means anything for `universe = "fp"`.
 The default will need revisiting when the next report reconciles the two.
+
+### Decision 11 — every hierarchical dimension pinned to its total
+
+**Chosen:** `oecd_crs()` pins `CHANNEL`, `MODALITY` and `UNIT_MEASURE`;
+`oecd_multi()` pins `RECIPIENT`, `SECTOR` and `UNIT_MEASURE`. `RECIPIENT` in CRS
+is filtered after the fact against [crs_recipients] instead, because the
+per-recipient breakdown is itself wanted.
+
+**Rejected:** Leaving them open and summing whatever comes back.
+
+**Why.** SDMX dimensions here are hierarchies, and a query returns the `_T`
+total *alongside* every component, at more than one level of nesting. Measured:
+one donor, one purpose code, one recipient, one year came back as 34 CRS rows
+(channel `_T` plus 10000–60000, modality `_T` plus B/C/D plus B03/C01/D01/D02).
+For MULTI, one donor-agency-year came back six times — `RECIPIENT` `DPGC` and
+`DPGC_X` crossed with `SECTOR` `1000`, `998` and `99810`. Summing gave $20.7bn
+for a US core contribution to the Global Fund whose true value is $3.3bn.
+
+Nothing in the response marks which rows are totals, so this fails silently and
+plausibly. Both fetchers now also assert one row per key and stop rather than
+sum if that ever changes.
+
+**Cost.** Channel and modality breakdowns are not reachable through these
+functions. Adding them would mean returning those dimensions as columns rather
+than opening the filter.
 
 ### Decision 5 — agency weights keyed by spending year *and* report edition
 

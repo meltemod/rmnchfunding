@@ -6,7 +6,7 @@
 \alias{rmnchfunding-package}
 \title{rmnchfunding: Tools For Reproducible RMNCH Funding Analysis}
 \description{
-Calculates bilateral and multilateral funding for reproductive, maternal, newborn and child health (RMNCH), sexual and reproductive health and rights (SRHR) and family planning from OECD Creditor Reporting System (CRS) flows and OECD providers' total use of the multilateral system, using the revised Muskoka method. Ships the sector and multilateral-agency coefficient tables the method depends on, versioned by methodology vintage and adjustable by the user.
+Calculates bilateral and multilateral funding for reproductive, maternal, newborn and child health (RMNCH), sexual and reproductive health and rights (SRHR) and family planning from OECD Creditor Reporting System (CRS) flows and OECD providers' total use of the multilateral system, using the revised Muskoka method. Fetches both sources from the OECD SDMX API and ships the sector and multilateral-agency coefficient tables the method depends on, keyed by spending year and report edition and adjustable by the user.
 }
 \seealso{
 Useful links:
