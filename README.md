@@ -5,11 +5,15 @@
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-Calculates bilateral and multilateral reproductive, maternal, newborn and child health (RMNCH) and family-planning funding from OECD Creditor Reporting System (CRS) data under three methodologies, with user-adjustable percentage tables. Provides muskoka1(), muskoka2() and revised_fp().
+Calculates bilateral and multilateral funding for reproductive, maternal,
+newborn and child health (RMNCH), sexual and reproductive health and rights
+(SRHR) and family planning from OECD Creditor Reporting System (CRS) flows and
+OECD providers' total use of the multilateral system, using the revised Muskoka
+method.
 
-> **Status: scaffolding.** Generated from a package template. The only code
-> here is one example function, `rescale01()`, kept so the package builds,
-> checks and tests from the first commit. Delete it when you have real code.
+> **Status: under construction.** The coefficient tables the method depends on
+> are in place and documented. The OECD fetchers and `muskoka()` itself are not
+> yet written, so the package does not currently produce an estimate.
 
 ---
 
@@ -24,12 +28,26 @@ Requires R >= 4.1. Developed against R 4.6.x.
 
 ## 2. Usage
 
+Nothing computes an estimate yet. What exists is the two coefficient tables:
+
 ```r
 library(rmnchfunding)
 
-rescale01(c(2, 4, 6, 8))
-#> [1] 0.0000000 0.3333333 0.6666667 1.0000000
+sector_weights                # CRS purpose code -> share, per universe
+agency_weights                # multilateral agency -> share, per vintage
 ```
+
+The planned entry point is a single function covering all three universes:
+
+```r
+muskoka(universe = "rmnch")           # or "srhr", or "fp"
+muskoka(universe = "fp", ida = 1)     # revised Muskoka 1% for IDA
+```
+
+Both tables are transcribed from the [Donors Delivering for SRHR Report
+2026](https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf),
+pages 110–111. The three universes overlap by construction, so their totals must
+never be added together.
 
 Full reference: <https://meltemod.github.io/rmnchfunding/>
 
@@ -89,20 +107,68 @@ then a subsection below it if the choice needs more than a line.
 
 | # | Decision | Rationale in brief |
 |---|----------|--------------------|
-|   |          |                    |
+| 1 | One `muskoka(universe=)` rather than `muskoka1()`/`muskoka2()`/`revised_fp()` | The three universes share a method and differ only in coefficients. Three functions would triplicate the pipeline to vary a lookup. |
+| 2 | Coefficients stored as proportions, entered as percentages | Every use is a multiplication against a disbursement; a stray factor of 100 there is invisible in a total. `data-raw/` keeps percentages so it stays diffable against the source table. |
+| 3 | Unknown coefficients are `NA`, never `0` | A zero asserts the sector contributes nothing. Conflating the two understates totals silently. |
+| 4 | Weight tables held in long format | `muskoka()` takes one universe and joins on code; a wide table would need runtime column selection by name. |
+| 5 | Methodology vintages kept side by side | Coefficients are revised annually and move sharply. Reproducing a published figure needs the vintage that produced it. |
+| 6 | Purpose codes stored as character | Keeps codes out of arithmetic and preserves leading digits when joining CRS extracts that store them as text. |
+| 7 | IDA's FP treatment is a `muskoka()` argument, not a table row | 0% (Donors Delivering) and 1% (revised Muskoka) are two live methods, not two vintages. A row would imply 1% was once published. |
 
-<!--
-### Decision 1 — <short title>
+### Decision 3 — unsupplied coefficients are `NA`, never `0`
 
-**Chosen:** what was done.
+**Chosen:** Hold the four per-donor RMNCH weights as `NA`, and have `muskoka()`
+refuse to compute a total that depends on one.
 
-**Rejected:** the main alternative.
+**Rejected:** Substituting `0`, which would let every call return a number.
 
-**Why.** The reasoning, including anything non-obvious that would otherwise
-be rediscovered the hard way.
+**Why.** The two are indistinguishable in a result but opposite in meaning. A
+zero says a sector contributes nothing to the universe; an `NA` says this table
+cannot express the value. Three of the four `varies*` RMNCH cells (12262
+malaria, 12263 tuberculosis, 13040 HIV/AIDS) are large CRS sectors, so treating
+them as zero would understate RMNCH totals substantially — and the output would
+carry no sign that anything was missing.
 
-**Cost.** What this trade-off gives up. Every real decision has one.
--->
+Note the contrast with IDA's family-planning weight, which *is* a plain `0`.
+That zero is a published methodological choice with a footnote explaining it, so
+it is data. The `varies*` cells are a shape mismatch, so they are absent.
+
+**Cost.** The package cannot produce an RMNCH total until the per-donor weights
+are derived. SRHR and FP are complete and unaffected.
+
+### Decision 7 — IDA's family-planning treatment is an argument, not a vintage
+
+**Chosen:** `agency_weights` records IDA's published FP weight of 0%.
+`muskoka(universe = "fp", ida = )` accepts `0` (default) or `1` to apply the
+revised Muskoka 1% instead.
+
+**Rejected:** A fourth `method_year` row carrying the 1% figure.
+
+**Why.** The report's footnote says the Donors Delivering method does not count
+IDA contributions to FP, while the revised Muskoka method applies 1%, and that
+the two will be reconciled in a later report. Those are two live methods, not
+two vintages of one. Adding a row would assert that 1% was published in some
+year, which it was not. Making it an argument keeps the default reproducing the
+report exactly, and puts any departure from it in the caller's own code.
+
+**Cost.** One more argument, and it only means anything for `universe = "fp"`.
+The default will need revisiting when the next report reconciles the two.
+
+### Decision 5 — methodology vintages kept side by side
+
+**Chosen:** `agency_weights` carries a `method_year` column (2022, 2023, 2024)
+and callers select one.
+
+**Rejected:** Keeping only the current coefficients.
+
+**Why.** `method_year` is the vintage of the *method*, not of the spending.
+Revisions move a long way — UNAIDS RMNCH goes 0.00% → 43.80% → 45.36%, the
+Asian Development Bank 7.19% → 13.42% → 7.13%. An estimate published under the
+2023 method is not reproducible from 2024 coefficients no matter which data
+years it covered.
+
+**Cost.** Every caller must choose a vintage, and each annual revision adds a
+table rather than replacing one.
 
 ---
 
@@ -111,7 +177,21 @@ be rediscovered the hard way.
 Things carried forward deliberately, so they read as choices rather than
 oversights.
 
-- `rescale01()` is placeholder code, not a feature.
+- **Four RMNCH sector weights are per-donor and not yet derived** (12262,
+  12263, 13040, 51010). The source marks these `varies*` because their RMNCH
+  share is set per donor country. They must be back-derived from the published
+  per-donor totals in Annex 3 of the report, which needs the CRS data those
+  totals were built from — so this waits on the fetchers. Until then
+  `muskoka(universe = "rmnch")` will refuse to compute rather than understate.
+  SRHR and FP are complete.
+- **The per-donor derivation may not be identifiable** from published totals
+  alone. Each donor-year gives one equation (the published RMNCH total) against
+  four unknown weights. It resolves only if the four codes share a single
+  per-donor multiplier, or if the weights are fixed across years and three
+  years of totals are used. Worth settling before building toward it.
+- **No agency crosswalk yet.** `agency_weights` identifies agencies by display
+  name. Joining to OECD data needs channel codes; matching on name at run time
+  would fail silently.
 - `README.md` is plain Markdown, not `README.Rmd`. The usage block above is
   therefore hand-written and not verified by anything. Run
   `usethis::use_readme_rmd()` if you want the examples executed on build.

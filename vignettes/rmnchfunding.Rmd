@@ -20,23 +20,98 @@ library(rmnchfunding)
 
 ## Why this package exists
 
-Replace this section with the problem the package solves — the situation a
-reader is in *before* they install it. A vignette that opens with a feature
-list assumes the reader already knows they need one.
+No OECD dataset reports how much aid goes to reproductive, maternal, newborn
+and child health. The CRS records disbursements against purpose codes that
+are broader than RMNCH — "basic health care", "basic nutrition" — and a
+provider's contribution to the WHO or the Global Fund appears as a single
+core payment with no sectoral breakdown at all.
 
-## A worked example
+The Muskoka method closes both gaps with coefficients: a fixed share of each
+purpose code is attributed to the universe of interest, and a fixed share of
+each multilateral agency's spending is attributed alongside it. This package
+holds those coefficients, fetches the two OECD sources they apply to, and
+does the arithmetic.
+
+## Status
+
+Under construction. The coefficient tables are in place; the OECD fetchers
+and `muskoka()` itself are not yet written, so there is nothing here that
+produces an estimate.
+
+## The three universes
+
+Every coefficient is given for three nested-in-spirit but separately
+estimated universes:
+
+| Universe | Scope |
+|---|---|
+| `rmnch` | Reproductive, maternal, newborn and child health |
+| `srhr` | Sexual and reproductive health and rights |
+| `fp` | Family planning |
+
+`muskoka()` will take one of these as its `universe` argument.
+
+## The coefficient tables
+
+Bilateral flows are weighted by CRS purpose code:
 
 ```{r}
-x <- c(2, 4, 6, 8)
-rescale01(x)
+head(sector_weights[sector_weights$universe == "rmnch", ], 8)
 ```
 
-Every chunk here is executed when the package is built, so a vignette that
-still knits is a second, coarser test suite: it catches interface changes
-that unit tests written against internals would miss.
+Multilateral spending is weighted by agency, separately for each vintage of
+the methodology:
+
+```{r}
+agency_weights[
+  agency_weights$agency == "Global Fund" & agency_weights$universe == "rmnch",
+]
+```
+
+`method_year` is the year of the *methodology*, not of the spending. The
+coefficients are revised annually and can move a long way between revisions,
+so reproducing a published figure means using the vintage that produced it:
+
+```{r}
+agency_weights[
+  agency_weights$agency == "UNAIDS" & agency_weights$universe == "rmnch",
+]
+```
+
+## Weights that are missing on purpose
+
+Some coefficients are `NA`, and that is not the same as zero:
+
+```{r}
+na_cells <- sector_weights[is.na(sector_weights$weight), ]
+table(na_cells$universe)
+```
+
+All four are RMNCH weights — malaria control, tuberculosis control, STD
+control including HIV/AIDS, and general budget support. The source marks
+these `varies*` because their RMNCH share is set **per donor country**, and a
+table with one weight per code cannot hold a per-donor value. They will move
+to their own donor-keyed table once derived. The SRHR and family-planning
+universes are complete. See `?sector_weights`.
+
+## Where the coefficients come from
+
+Both tables are transcribed from the Donors Delivering for SRHR Report 2026,
+pages 110–111. RMNCH follows the Muskoka 2 methodology developed by the London
+School of Hygiene and Tropical Medicine, family planning follows the revised
+Muskoka methodology agreed at the 2012 London Summit, and SRHR follows the
+Donors Delivering methodology.
+
+The three universes overlap by construction. Adding a donor's RMNCH, SRHR and
+FP figures together double-counts, and the report says so explicitly — they
+are meant to be read separately.
+
+Because a missing weight is unknown rather than zero, `muskoka()` will refuse
+to compute a total that depends on one instead of quietly treating it as
+nothing — a zero here would understate the result without leaving a trace.
 
 ## What this vignette is not
 
 Reference documentation. That is generated from the roxygen comments and
-reached with `?rescale01`. A vignette explains *when and why*; the help page
-explains *what and how*.
+reached with `?sector_weights` and `?agency_weights`. A vignette explains
+*when and why*; the help page explains *what and how*.
