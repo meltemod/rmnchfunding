@@ -86,13 +86,13 @@ Donors Delivering methodology. The three overlap by construction, so
 their totals must not be added together.</p>
     </div>
     <div class="section level2">
-    <h2 id="weights-that-vary-by-donor">Weights that vary by donor<a class="anchor" aria-label="anchor" href="#weights-that-vary-by-donor"></a></h2>
+    <h2 id="weights-that-vary-by-recipient-and-year">Weights that vary by recipient and year<a class="anchor" aria-label="anchor" href="#weights-that-vary-by-recipient-and-year"></a></h2>
 
 
 <p>Four of the 99 weights are <code>NA</code>, all in the RMNCH universe. The source
 table gives these as <code>varies*</code> rather than a single figure, because the
-RMNCH share of these sectors is set <strong>per donor country</strong> rather than
-globally:</p>
+RMNCH share of these sectors is set <strong>per recipient country and year</strong>
+rather than globally:</p>
 <dl><dt>12262</dt>
 <dd><p>Malaria control</p></dd>
 
@@ -106,18 +106,15 @@ globally:</p>
 <dd><p>General budget support-related aid</p></dd>
 
 
-</dl><p>They are <code>NA</code> here because a single column cannot hold a per-donor value,
-not because they are unknown in principle. The donor-level weights are
-recovered from the published per-donor RMNCH totals by
-<code>solve_donor_weights()</code>, which needs the CRS disbursements those totals
-were built from; until that runs there is nowhere for the numbers to live.
-<code>muskoka()</code> must therefore refuse to compute an RMNCH total rather than
-treat these as zero — three of the four are large CRS sectors, and a silent
-zero would understate every donor's result.</p>
-<p>Four unknown weights need four independent published years. The 2025 and
-2026 editions cover 2021-2023 and 2022-2024 respectively, so together they
-supply them; see <a href="agency_weights.html">agency_weights</a> for why the two editions cannot be freely
-mixed while doing so.</p>
+</dl><p>They are <code>NA</code> here because a single column cannot hold a value that varies
+by recipient and year, not because they are unknown in principle. Muskoka2
+computes them from open disease-burden and government-health-expenditure
+data; the results live in <a href="rmnch_recipient_weights.html">rmnch_recipient_weights</a> and are joined to a
+disbursement on its recipient and year.</p>
+<p>Only 51010 is built so far. The three disease codes need an IHME Global
+Burden of Disease extract that cannot be fetched automatically, so
+<code>muskoka(universe = "rmnch")</code> still refuses to compute rather than return a
+total missing three large CRS sectors. See <code>data-raw/gbd/README.md</code>.</p>
 <p>The SRHR and family-planning universes are complete and unaffected.</p>
     </div>
     <div class="section level2">

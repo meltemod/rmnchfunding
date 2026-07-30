@@ -50,12 +50,12 @@ Muskoka methodology agreed at the 2012 London Summit; SRHR follows the
 Donors Delivering methodology. The three overlap by construction, so
 their totals must not be added together.
 
-## Weights that vary by donor
+## Weights that vary by recipient and year
 
 Four of the 99 weights are `NA`, all in the RMNCH universe. The source
 table gives these as `varies*` rather than a single figure, because the
-RMNCH share of these sectors is set **per donor country** rather than
-globally:
+RMNCH share of these sectors is set **per recipient country and year**
+rather than globally:
 
 - 12262:
 
@@ -73,20 +73,18 @@ globally:
 
   General budget support-related aid
 
-They are `NA` here because a single column cannot hold a per-donor
-value, not because they are unknown in principle. The donor-level
-weights are recovered from the published per-donor RMNCH totals by
-`solve_donor_weights()`, which needs the CRS disbursements those totals
-were built from; until that runs there is nowhere for the numbers to
-live. `muskoka()` must therefore refuse to compute an RMNCH total rather
-than treat these as zero — three of the four are large CRS sectors, and
-a silent zero would understate every donor's result.
+They are `NA` here because a single column cannot hold a value that
+varies by recipient and year, not because they are unknown in principle.
+Muskoka2 computes them from open disease-burden and
+government-health-expenditure data; the results live in
+[rmnch_recipient_weights](https://meltemod.github.io/rmnchfunding/reference/rmnch_recipient_weights.md)
+and are joined to a disbursement on its recipient and year.
 
-Four unknown weights need four independent published years. The 2025 and
-2026 editions cover 2021-2023 and 2022-2024 respectively, so together
-they supply them; see
-[agency_weights](https://meltemod.github.io/rmnchfunding/reference/agency_weights.md)
-for why the two editions cannot be freely mixed while doing so.
+Only 51010 is built so far. The three disease codes need an IHME Global
+Burden of Disease extract that cannot be fetched automatically, so
+`muskoka(universe = "rmnch")` still refuses to compute rather than
+return a total missing three large CRS sectors. See
+`data-raw/gbd/README.md`.
 
 The SRHR and family-planning universes are complete and unaffected.
 

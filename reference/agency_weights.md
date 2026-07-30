@@ -82,10 +82,9 @@ constant prices in 2026 — which is a second reason not to mix them
 without deflating.
 
 The two editions between them cover four spending years, 2021 to 2024,
-which is what makes the per-donor weights behind
-[sector_weights](https://meltemod.github.io/rmnchfunding/reference/sector_weights.md)'s
-`NA` cells recoverable at all: four years of published totals against
-four unknown weights.
+which is the window `muskoka()` targets and the range over which
+[rmnch_recipient_weights](https://meltemod.github.io/rmnchfunding/reference/rmnch_recipient_weights.md)
+is built.
 
 ## IDA and family planning
 

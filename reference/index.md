@@ -23,13 +23,16 @@ chosen level.
 
 ## Coefficient tables
 
-The weights the method depends on, transcribed from the Donors
-Delivering for SRHR reports and cited there.
+The weights the method depends on. Most are global constants transcribed
+from the Donors Delivering for SRHR reports; four RMNCH weights vary by
+recipient and year and are computed from source data.
 
 - [`sector_weights`](https://meltemod.github.io/rmnchfunding/reference/sector_weights.md)
   : Sector weights for the revised Muskoka method
 - [`agency_weights`](https://meltemod.github.io/rmnchfunding/reference/agency_weights.md)
   : Multilateral agency weights for the revised Muskoka method
+- [`rmnch_recipient_weights`](https://meltemod.github.io/rmnchfunding/reference/rmnch_recipient_weights.md)
+  : RMNCH weights that vary by recipient and year
 
 ## Lookups
 
@@ -41,6 +44,8 @@ OECD channel codes.
   : CRS recipient codes: which are aggregates, which are countries
 - [`crs_recipient_tree`](https://meltemod.github.io/rmnchfunding/reference/crs_recipient_tree.md)
   : CRS recipient hierarchy edges
+- [`recipient_crosswalk`](https://meltemod.github.io/rmnchfunding/reference/recipient_crosswalk.md)
+  : OECD recipients mapped to World Bank codes and geographic groups
 - [`agency_channels`](https://meltemod.github.io/rmnchfunding/reference/agency_channels.md)
   : Multilateral agency to OECD channel code crosswalk
 
