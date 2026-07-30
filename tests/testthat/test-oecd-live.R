@@ -132,3 +132,27 @@ test_that("OECD has not silently rebased its constant series", {
                 "Update the base year quoted in ?oecd_crs and README.md."
               ))
 })
+
+test_that("every level of every scheme sums to the same grand total", {
+  skip_if_no_oecd()
+
+  # The claim the classification schemes exist to support: geography, DAC
+  # income tier and World Bank income group are three cuts of one pot of
+  # money, and each can be cut finer without the total changing. Checked
+  # against live data because it depends on OECD's published aggregates
+  # agreeing with their own hierarchy, which is not guaranteed — it already
+  # failed once, for DPGC_X under INC_X.
+  d <- oecd_or_skip(oecd_crs(
+    "USA", years = 2022, sectors = "13040", prices = "current",
+    recipients = "all", quiet = TRUE
+  ))
+  total <- sum(d$value[d$recipient == "DPGC"])
+
+  for (s in c("geographic", "dac_income", "wb_income")) {
+    for (lv in rmnchfunding:::CRS_SCHEME_LEVELS[[s]]) {
+      r <- crs_classify(d, s, level = lv)
+      expect_equal(sum(r$value), total, tolerance = 1e-6,
+                   label = paste0(s, " at level '", lv, "'"))
+    }
+  }
+})

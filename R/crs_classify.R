@@ -35,6 +35,31 @@ CRS_SCHEME_RESIDUAL <- c(
   geographic = "DPGC_X", dac_income = "INC_X", wb_income = "INC_X"
 )
 
+# Level names per scheme. Level 0 is always the grand total; the last level is
+# always terminal. Geography nests four deep, the income classifications one:
+# their groups hold countries directly.
+CRS_SCHEME_LEVELS <- list(
+  geographic = c("total", "continent", "region", "subregion", "country"),
+  dac_income = c("total", "tier", "country"),
+  wb_income  = c("total", "group", "country")
+)
+
+#' Descend a set of codes one step down the hierarchy
+#'
+#' A branch that has already ended stands in for itself, so the result is a
+#' FRONTIER rather than a depth slice. That is what keeps every level a
+#' partition: Europe holds countries directly while Africa holds regions, so a
+#' plain "all nodes at depth 2" would drop every European country.
+#'
+#' @noRd
+descend_one <- function(codes, tree) {
+  out <- lapply(codes, function(c) {
+    ch <- tree$child_code[tree$parent_code == c]
+    if (length(ch) == 0L) c else ch
+  })
+  unique(unlist(out, use.names = FALSE))
+}
+
 # Deliberately absent from CRS_SCHEMES: HIPC, LLDC, SIDS, FSCAC, ACP, ALLMR
 # and ALLR. These are not classifications but overlapping flags a country
 # carries in addition to its place in every scheme above — Ethiopia is
@@ -77,35 +102,77 @@ CRS_SCHEME_RESIDUAL <- c(
 #'     countries the World Bank does not classify.}
 #' }
 #'
+#' @section Levels:
+#' Every level of every scheme sums to the same grand total, so a level is a
+#' finer cut of the same money rather than a different quantity.
+#'
+#' A level is a **frontier**, not a depth slice: branches that have already
+#' ended stand in for themselves. This matters because the hierarchy is ragged.
+#' Africa divides into regions and then subregions, while Europe holds its
+#' countries directly, so the geographic `"region"` level contains African
+#' regions *and* European countries side by side. Taking "every node at depth
+#' 2" instead would drop every European country and the level would not add up.
+#'
+#' The same applies to unallocated spending, which enters at whatever level it
+#' was reported. `DPGC_X` appears from `"continent"` downwards, while
+#' `F6_X` ("Sub-Saharan Africa unspecified") only appears once the cut reaches
+#' the level at which it sits. A country-level cut therefore still contains
+#' regional residuals; they are marked by `is_unallocated`.
+#'
 #' Groupings such as `HIPC`, `LLDC`, `SIDS` and `FSCAC` are **not** schemes.
 #' They are overlapping flags — Ethiopia is in `F`, `F6`, `F3`, `LDC`, `LLDC`,
 #' `OLICWB`, `HIPC` and `FSCAC` at once — and asking for one is an error.
 #'
 #' @param x A tibble from [oecd_crs()] with `recipients = "all"`.
 #' @param scheme One of `"geographic"`, `"dac_income"`, `"wb_income"`.
+#' @param level How far down the scheme to cut, either a level name or a
+#'   number. `"geographic"` accepts `"total"`, `"continent"`, `"region"`,
+#'   `"subregion"`, `"country"` (0 to 4); the income schemes accept `"total"`,
+#'   `"tier"` or `"group"`, and `"country"` (0 to 2). Defaults to level 1, the
+#'   scheme's own groups. See Levels.
 #' @param by Additional columns to break the totals down by, e.g.
 #'   `"purpose_code"` or `c("donor", "year")`. Defaults to `c("donor", "year")`.
 #' @param tolerance Absolute tolerance, in millions, for the check that the
 #'   scheme sums to OECD's reported grand total.
 #'
 #' @return A tibble of one row per grouping variable and scheme member, with
-#'   `scheme`, `member`, `member_name`, `value`, `is_residual` and `share`.
-#'   Carries a `grand_total` attribute.
+#'   `scheme`, `level`, `member`, `member_name`, `value`, `is_residual`,
+#'   `is_unallocated` and `share`. Carries a `grand_total` attribute.
 #'
 #' @seealso [oecd_crs()], [crs_recipients].
 #'
 #' @examplesIf interactive()
 #' d <- oecd_crs("USA", years = 2022, prices = "constant", base = 2023,
 #'               recipients = "all")
-#' crs_classify(d, "geographic")
-#' crs_classify(d, "dac_income")
+#' crs_classify(d, "geographic")                      # continents
+#' crs_classify(d, "geographic", level = "subregion")
+#' crs_classify(d, "dac_income", level = "country")
 #'
 #' @export
 crs_classify <- function(x,
                          scheme = c("geographic", "dac_income", "wb_income"),
+                         level = 1L,
                          by = c("donor", "year"),
                          tolerance = 0.5) {
   scheme <- match.arg(scheme)
+  names_for_scheme <- CRS_SCHEME_LEVELS[[scheme]]
+  max_level <- length(names_for_scheme) - 1L
+
+  if (is.character(level)) {
+    if (length(level) != 1L || !level %in% names_for_scheme) {
+      stop("`level` must be one of: ",
+           paste0("\"", names_for_scheme, "\"", collapse = ", "),
+           ", or a number from 0 to ", max_level, ".", call. = FALSE)
+    }
+    level <- match(level, names_for_scheme) - 1L
+  }
+  level <- suppressWarnings(as.integer(level))
+  if (length(level) != 1L || is.na(level) || level < 0L || level > max_level) {
+    stop("`level` must be between 0 and ", max_level, " for scheme \"",
+         scheme, "\", or one of: ",
+         paste0("\"", names_for_scheme, "\"", collapse = ", "), ".",
+         call. = FALSE)
+  }
 
   if (!is.data.frame(x) || !all(c("recipient", "value") %in% names(x))) {
     stop("`x` must be a data frame from oecd_crs().", call. = FALSE)
@@ -121,7 +188,13 @@ crs_classify <- function(x,
          call. = FALSE)
   }
 
-  members <- CRS_SCHEMES[[scheme]]
+  # Level 0 is the grand total itself; level 1 is the scheme's own members;
+  # deeper levels descend the frontier from there.
+  members <- if (level == 0L) "DPGC" else CRS_SCHEMES[[scheme]]
+  if (level > 1L) {
+    tree <- rmnchfunding::crs_recipient_tree
+    for (i in seq_len(level - 1L)) members <- descend_one(members, tree)
+  }
   present <- intersect(members, x$recipient)
   if (length(present) == 0L) {
     stop("None of the ", scheme, " members appear in `x`.", call. = FALSE)
@@ -142,15 +215,24 @@ crs_classify <- function(x,
   # Resolved before the tibble() call: inside it, `scheme` would resolve to the
   # column being created rather than to the argument.
   residual_code <- CRS_SCHEME_RESIDUAL[[scheme]]
+  level_name <- names_for_scheme[level + 1L]
   out <- tibble::tibble(
     scheme      = scheme,
+    level       = level_name,
     member      = agg$recipient,
     member_name = nm,
     value       = agg$value,
     is_residual = agg$recipient == residual_code
   )
   for (b in rev(by)) out[[b]] <- agg[[b]]
-  out <- out[c(by, "scheme", "member", "member_name", "value", "is_residual")]
+  # Unallocated rows are flagged here too: a country-level cut still contains
+  # regional residuals, and a caller summing "by country" needs to see which
+  # rows are not countries.
+  ur <- rmnchfunding::crs_recipients
+  out$is_unallocated <- ur$is_unallocated[match(out$member, ur$recipient_code)]
+  out$is_unallocated[is.na(out$is_unallocated)] <- FALSE
+  out <- out[c(by, "scheme", "level", "member", "member_name", "value",
+               "is_residual", "is_unallocated")]
 
   # ---- the check that makes this trustworthy ----
   # Every scheme is a cut of the same money, so it must reproduce OECD's own
@@ -178,7 +260,8 @@ crs_classify <- function(x,
                paste(absent, collapse = ", "), ".")
       },
       "\n  This means the scheme definition and OECD's aggregates have ",
-      "diverged; the parts no longer make the whole.",
+      "diverged at level ", level, " (\"", level_name, "\"); the parts no ",
+      "longer make the whole.",
       call. = FALSE
     )
   }

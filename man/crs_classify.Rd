@@ -7,6 +7,7 @@
 crs_classify(
   x,
   scheme = c("geographic", "dac_income", "wb_income"),
+  level = 1L,
   by = c("donor", "year"),
   tolerance = 0.5
 )
@@ -16,6 +17,12 @@ crs_classify(
 
 \item{scheme}{One of \code{"geographic"}, \code{"dac_income"}, \code{"wb_income"}.}
 
+\item{level}{How far down the scheme to cut, either a level name or a
+number. \code{"geographic"} accepts \code{"total"}, \code{"continent"}, \code{"region"},
+\code{"subregion"}, \code{"country"} (0 to 4); the income schemes accept \code{"total"},
+\code{"tier"} or \code{"group"}, and \code{"country"} (0 to 2). Defaults to level 1, the
+scheme's own groups. See Levels.}
+
 \item{by}{Additional columns to break the totals down by, e.g.
 \code{"purpose_code"} or \code{c("donor", "year")}. Defaults to \code{c("donor", "year")}.}
 
@@ -24,8 +31,8 @@ scheme sums to OECD's reported grand total.}
 }
 \value{
 A tibble of one row per grouping variable and scheme member, with
-\code{scheme}, \code{member}, \code{member_name}, \code{value}, \code{is_residual} and \code{share}.
-Carries a \code{grand_total} attribute.
+\code{scheme}, \code{level}, \code{member}, \code{member_name}, \code{value}, \code{is_residual},
+\code{is_unallocated} and \code{share}. Carries a \code{grand_total} attribute.
 }
 \description{
 OECD classifies recipients several ways at once — geographically, by the DAC
@@ -62,6 +69,25 @@ genuinely different scheme from \code{"dac_income"}: it has no least-
 developed tier, adds a high-income group, and carries \code{INCWB_X} for
 countries the World Bank does not classify.}
 }
+}
+
+\section{Levels}{
+
+Every level of every scheme sums to the same grand total, so a level is a
+finer cut of the same money rather than a different quantity.
+
+A level is a \strong{frontier}, not a depth slice: branches that have already
+ended stand in for themselves. This matters because the hierarchy is ragged.
+Africa divides into regions and then subregions, while Europe holds its
+countries directly, so the geographic \code{"region"} level contains African
+regions \emph{and} European countries side by side. Taking "every node at depth
+2" instead would drop every European country and the level would not add up.
+
+The same applies to unallocated spending, which enters at whatever level it
+was reported. \code{DPGC_X} appears from \code{"continent"} downwards, while
+\code{F6_X} ("Sub-Saharan Africa unspecified") only appears once the cut reaches
+the level at which it sits. A country-level cut therefore still contains
+regional residuals; they are marked by \code{is_unallocated}.
 
 Groupings such as \code{HIPC}, \code{LLDC}, \code{SIDS} and \code{FSCAC} are \strong{not} schemes.
 They are overlapping flags — Ethiopia is in \code{F}, \code{F6}, \code{F3}, \code{LDC}, \code{LLDC},
@@ -72,8 +98,9 @@ They are overlapping flags — Ethiopia is in \code{F}, \code{F6}, \code{F3}, \c
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 d <- oecd_crs("USA", years = 2022, prices = "constant", base = 2023,
               recipients = "all")
-crs_classify(d, "geographic")
-crs_classify(d, "dac_income")
+crs_classify(d, "geographic")                      # continents
+crs_classify(d, "geographic", level = "subregion")
+crs_classify(d, "dac_income", level = "country")
 \dontshow{\}) # examplesIf}
 }
 \seealso{

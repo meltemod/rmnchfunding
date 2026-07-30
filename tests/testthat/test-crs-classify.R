@@ -90,3 +90,62 @@ test_that("by= can break totals down further", {
   expect_equal(sum(r$value[r$year == 2023L]), 60)
   expect_error(crs_classify(x, "geographic", by = "nope"), "not in `x`")
 })
+
+# ---- levels ---------------------------------------------------------------
+
+test_that("descend_one() returns a frontier, not a depth slice", {
+  # The property that keeps every level a partition. `b` has children and `c`
+  # does not, so descending once must expand `b` and carry `c` through
+  # unchanged. A plain depth slice would drop `c` and the level would no
+  # longer add up.
+  tree <- tibble::tibble(
+    parent_code = c("a", "a", "b", "b"),
+    child_code  = c("b", "c", "d", "e")
+  )
+  expect_setequal(descend_one("a", tree), c("b", "c"))
+  expect_setequal(descend_one(c("b", "c"), tree), c("d", "e", "c"))
+  # A terminal set is a fixed point: descending further changes nothing, so
+  # asking for a level deeper than the tree is safe.
+  expect_setequal(descend_one(c("d", "e", "c"), tree), c("d", "e", "c"))
+})
+
+test_that("level accepts names and numbers, and rejects the rest", {
+  x <- fake_crs(100)
+  expect_equal(crs_classify(x, "geographic", level = 0)$member, "DPGC")
+  expect_equal(crs_classify(x, "geographic", level = "total")$member, "DPGC")
+  expect_equal(
+    crs_classify(x, "geographic", level = 1)$level[1], "continent"
+  )
+  expect_equal(crs_classify(x, "dac_income", level = 1)$level[1], "tier")
+  expect_equal(crs_classify(x, "wb_income", level = 1)$level[1], "group")
+
+  # The income schemes are only two deep, so a geographic level name is not
+  # valid for them — silently clamping would return a different cut than asked
+  # for.
+  expect_error(crs_classify(x, "dac_income", level = "subregion"), "must be one of")
+  expect_error(crs_classify(x, "geographic", level = 9), "between 0 and 4")
+  expect_error(crs_classify(x, "dac_income", level = 3), "between 0 and 2")
+  expect_error(crs_classify(x, "geographic", level = -1), "between 0 and 4")
+})
+
+test_that("level 0 is the grand total itself", {
+  x <- fake_crs(100)
+  r <- crs_classify(x, "geographic", level = 0)
+  expect_equal(nrow(r), 1L)
+  expect_equal(r$value, 100)
+  expect_equal(r$share, 1)
+})
+
+test_that("the INC_X -> DPGC_X repair is present in the tree", {
+  # Without this edge, cutting an income scheme at country level descends
+  # INC_X through the codelist and loses DPGC_X entirely — for the US in 2022
+  # that is 32% of the donor's total, and the level silently fails to match
+  # the tier level above it. The edge is a local correction to OECD's
+  # codelist, so it is asserted rather than assumed.
+  tr <- crs_recipient_tree
+  expect_true(any(tr$parent_code == "INC_X" & tr$child_code == "DPGC_X"))
+  # And it must not create a second route to DPGC_X from a geographic node,
+  # which would double count it.
+  expect_setequal(tr$parent_code[tr$child_code == "DPGC_X"],
+                  c("DPGC", "INC_X"))
+})
