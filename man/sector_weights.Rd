@@ -39,12 +39,12 @@ attributed to a funding universe. These coefficients, applied to CRS
 bilateral flows, are one half of a Muskoka estimate; \link{agency_weights} is
 the other.
 }
-\section{Weights that vary by donor}{
+\section{Weights that vary by recipient and year}{
 
 Four of the 99 weights are \code{NA}, all in the RMNCH universe. The source
 table gives these as \verb{varies*} rather than a single figure, because the
-RMNCH share of these sectors is set \strong{per donor country} rather than
-globally:
+RMNCH share of these sectors is set \strong{per recipient country and year}
+rather than globally:
 
 \describe{
 \item{12262}{Malaria control}
@@ -53,19 +53,16 @@ globally:
 \item{51010}{General budget support-related aid}
 }
 
-They are \code{NA} here because a single column cannot hold a per-donor value,
-not because they are unknown in principle. The donor-level weights are
-recovered from the published per-donor RMNCH totals by
-\code{solve_donor_weights()}, which needs the CRS disbursements those totals
-were built from; until that runs there is nowhere for the numbers to live.
-\code{muskoka()} must therefore refuse to compute an RMNCH total rather than
-treat these as zero — three of the four are large CRS sectors, and a silent
-zero would understate every donor's result.
+They are \code{NA} here because a single column cannot hold a value that varies
+by recipient and year, not because they are unknown in principle. Muskoka2
+computes them from open disease-burden and government-health-expenditure
+data; the results live in \link{rmnch_recipient_weights} and are joined to a
+disbursement on its recipient and year.
 
-Four unknown weights need four independent published years. The 2025 and
-2026 editions cover 2021-2023 and 2022-2024 respectively, so together they
-supply them; see \link{agency_weights} for why the two editions cannot be freely
-mixed while doing so.
+Only 51010 is built so far. The three disease codes need an IHME Global
+Burden of Disease extract that cannot be fetched automatically, so
+\code{muskoka(universe = "rmnch")} still refuses to compute rather than return a
+total missing three large CRS sectors. See \code{data-raw/gbd/README.md}.
 
 The SRHR and family-planning universes are complete and unaffected.
 }

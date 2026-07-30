@@ -1,11 +1,21 @@
-#' Recover a donor's per-sector RMNCH weights from published totals
+#' Cross-check implied donor-level RMNCH weights against published totals
 #'
-#' The Muskoka 2 method sets the RMNCH share of four CRS purpose codes — 12262
-#' (malaria control), 12263 (tuberculosis control), 13040 (STD control
-#' including HIV/AIDS) and 51010 (general budget support-related aid) — per
-#' donor country rather than globally, and the source table records them only
-#' as `varies*`. This function recovers them for one donor by solving the
-#' published RMNCH totals for the unknown weights.
+#' @description
+#' **This is a validation tool, not the source of any weight.** Muskoka2 sets
+#' the RMNCH share of CRS codes 12262, 12263, 13040 and 51010 per **recipient
+#' country and year**, computed from disease-burden and health-expenditure
+#' data; those weights are in [rmnch_recipient_weights].
+#'
+#' What this function does is solve a donor's published RMNCH totals for the
+#' weights they imply, treating them as unknowns. Aggregating
+#' [rmnch_recipient_weights] over a donor's recipient mix should give something
+#' broadly consistent with what this recovers. Agreement is evidence the
+#' computed weights are right; disagreement is a reason to look at both.
+#'
+#' An earlier version of this package treated this solver as the primary route
+#' to those four weights, on the understanding that they varied by donor. They
+#' do not. The solver is kept because an independent check on a computed
+#' quantity is worth having, not because the weights need recovering.
 #'
 #' @details
 #' For one donor, each published year gives one equation. Writing \eqn{w} for
@@ -94,7 +104,8 @@
 #' }
 #'
 #' @keywords internal
-#' @seealso [sector_weights] for the weights that are known globally.
+#' @seealso [rmnch_recipient_weights] for the weights themselves, and
+#'   [sector_weights] for the codes whose weight is a global constant.
 #' @noRd
 solve_donor_weights <- function(disbursements,
                                 residual_totals,

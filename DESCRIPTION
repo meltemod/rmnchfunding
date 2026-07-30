@@ -19,6 +19,7 @@ Depends:
     R (>= 4.1)
 Imports:
     httr2,
+    jsonlite,
     readr,
     stats,
     tibble

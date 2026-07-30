@@ -61,21 +61,24 @@ raw <- tribble(
 #
 # "varies*" — The source gives no single RMNCH figure for 12262 (malaria),
 #   12263 (tuberculosis), 13040 (HIV/AIDS) and 51010 (general budget
-#   support), because the RMNCH share of these sectors is set PER DONOR
-#   COUNTRY rather than globally. They are NA here because this table has one
-#   weight per (code, universe) and cannot hold a per-donor value — not
-#   because the numbers are unknowable.
+#   support), because Muskoka2 sets the RMNCH share of these sectors PER
+#   RECIPIENT COUNTRY AND YEAR, computed from disease-burden and government
+#   health-expenditure data. They are NA here because this table has one
+#   weight per (code, universe) and cannot hold a value that varies by
+#   recipient and year — not because the numbers are unknowable.
 #
-#   The donor-level weights are to be derived from the published per-donor
-#   RMNCH totals in Annex 3 of the source report. That derivation needs the
-#   CRS disbursements those totals were built from, so it waits on the OECD
-#   fetchers. When it lands it belongs in its own table keyed by donor —
-#   NOT as extra rows here, which would make `weight` mean different things
-#   in different rows.
+#   They live in `rmnch_recipient_weights` instead, joined to a disbursement
+#   on its recipient and year. See data-raw/rmnch_recipient_weights.R.
 #
-#   Until then `muskoka(universe = "rmnch")` must refuse to compute. Three of
-#   the four are large CRS sectors and a silent zero would understate every
-#   donor's total.
+#   An earlier version of this comment said the weights vary per DONOR and
+#   were to be recovered by solving published donor totals. That was a
+#   misreading of the method: they vary by recipient, and are computed from
+#   source data rather than recovered. `solve_donor_weights()` survives as an
+#   independent cross-check on the computed weights, not as their source.
+#
+#   Until the disease codes are built, `muskoka(universe = "rmnch")` must
+#   refuse to compute: three of the four are large CRS sectors and a silent
+#   zero would understate every result.
 
 # ---- a coincidence in the SRHR column, reviewed and accepted -------------
 # The SRHR values for 15170, 15180, 16064, 51010, 72010, 72040, 72050 and

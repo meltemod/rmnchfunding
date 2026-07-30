@@ -14,7 +14,8 @@
   The sector table is identical across editions; only the multilateral weights
   were revised.
 * Four RMNCH sector weights (12262, 12263, 13040, 51010) are recorded as `NA`
-  rather than `0`. Their RMNCH share is set per donor country, which a table
+  rather than `0`. Their RMNCH share is set per recipient country and year,
+  which a table
   with one weight per code cannot express; the donor-level weights are still
   to be derived. `muskoka(universe = "rmnch")` will refuse to compute rather
   than treat them as zero. SRHR and family planning are complete. The two
@@ -71,10 +72,35 @@
   a result but never a total.
 * `crs_recipients` gains `recipient_name`, from codelist `CL_AREA_ORG`, so that
   a zero-filled row says which country reported nothing.
+* Added `rmnch_recipient_weights`, the RMNCH weights that Muskoka2 sets per
+  recipient country and year rather than globally, with the reproductive-health,
+  maternal-newborn and child-health components kept as separate columns. Code
+  51010 (general budget support) is built from World Bank government health
+  expenditure and population structure; validated against the published
+  Muskoka2 reference for 2002-2017, where 94% of 2,195 recipient-years fall
+  within 0.02 of the reference and the median absolute difference is 0.0023.
+* **Corrected model.** These four weights were previously documented as varying
+  per DONOR and recoverable by solving published donor totals. They vary by
+  recipient and year and are computed from source data. `solve_donor_weights()`
+  is retained as an independent cross-check and its documentation now says so.
+* Every weight records its provenance: `source` distinguishes own data from a
+  regional substitute, and `source_year` records the year the data was observed
+  where a value was carried forward. World Bank health-expenditure coverage
+  stops in 2023 (203 economies, against 7 for 2024), so most 2024 weights are
+  carried; carrying is capped at three years, beyond which a weight is `NA`.
+* Added `recipient_crosswalk`, joining OECD recipient codes to World Bank ISO3
+  and recording each recipient's geographic ancestors for the regional
+  fallback. 170 of 182 recipients match directly; the 12 that do not each carry
+  a reason, and the build fails on any recipient that is neither matched nor
+  explained.
+* CRS codes 12262, 12263 and 13040 remain `NA`: they need an IHME Global Burden
+  of Disease extract, which cannot be fetched automatically because GHDx has no
+  unauthenticated API. See `data-raw/gbd/README.md` for the exact query.
+  `muskoka(universe = "rmnch")` therefore still refuses to compute.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
-`muskoka()` itself is not written yet, and the per-donor RMNCH weights are not
-yet derived.
+`muskoka()` itself is not written yet, and the RMNCH weights for the three
+disease codes await a GBD extract.
 
 <!--
 Conventions:

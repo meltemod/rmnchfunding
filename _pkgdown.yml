@@ -27,11 +27,13 @@ reference:
 
   - title: Coefficient tables
     desc: >
-      The weights the method depends on, transcribed from the Donors Delivering
-      for SRHR reports and cited there.
+      The weights the method depends on. Most are global constants transcribed
+      from the Donors Delivering for SRHR reports; four RMNCH weights vary by
+      recipient and year and are computed from source data.
     contents:
       - sector_weights
       - agency_weights
+      - rmnch_recipient_weights
 
   - title: Lookups
     desc: >
@@ -41,6 +43,7 @@ reference:
     contents:
       - crs_recipients
       - crs_recipient_tree
+      - recipient_crosswalk
       - agency_channels
 
   - title: Package
