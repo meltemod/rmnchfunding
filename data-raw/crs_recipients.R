@@ -103,6 +103,31 @@ crs_recipients$is_aggregate <- crs_recipients$n_children > 0L
 # and so do have members. Dedup keys on `is_aggregate` alone; this flag only
 # says whether a row's spending is attributable to a country.
 crs_recipients$is_unallocated <- grepl("_X$", crs_recipients$recipient_code)
+
+# ---- names ----------------------------------------------------------------
+# Names come from CL_AREA_ORG, the codelist the hierarchy declares as its
+# source (the hierarchy itself carries only code references). They are bundled
+# so that a recipient absent from a donor's data can still be labelled: a
+# zero-filled row with no name is far less useful than one that says which
+# country reported nothing.
+message("Fetching recipient names from CL_AREA_ORG ...")
+cl <- xml2::read_xml(paste0(
+  "https://sdmx.oecd.org/public/rest/codelist/OECD.DCD.FSD/CL_AREA_ORG/1.6"
+))
+cl_ns <- xml2::xml_ns(cl)
+cl_nodes <- xml2::xml_find_all(cl, ".//structure:Code", cl_ns)
+nm <- stats::setNames(
+  vapply(cl_nodes, function(n) {
+    xml2::xml_text(xml2::xml_find_first(n, "./common:Name", cl_ns))
+  }, character(1)),
+  vapply(cl_nodes, xml2::xml_attr, character(1), "id")
+)
+crs_recipients$recipient_name <- unname(nm[crs_recipients$recipient_code])
+
+crs_recipients <- crs_recipients[c(
+  "recipient_code", "recipient_name", "n_children", "n_appearances",
+  "min_depth", "is_aggregate", "is_unallocated"
+)]
 rownames(crs_recipients) <- NULL
 
 stopifnot(
@@ -135,7 +160,11 @@ stopifnot(
     c("INC_X", "INCWB_X")
   ),
   crs_recipients$is_unallocated[crs_recipients$recipient_code == "DPGC_X"],
-  !crs_recipients$is_unallocated[crs_recipients$recipient_code == "KEN"]
+  !crs_recipients$is_unallocated[crs_recipients$recipient_code == "KEN"],
+  # Every code must be named, or a zero-filled row would carry NA where a
+  # country name belongs.
+  !anyNA(crs_recipients$recipient_name),
+  crs_recipients$recipient_name[crs_recipients$recipient_code == "KEN"] == "Kenya"
 )
 
 message(
@@ -145,6 +174,7 @@ message(
   sum(crs_recipients$is_unallocated), " unallocated \"_X\" buckets)",
   "\n  total visits across overlapping groupings: ", length(code),
   " (max appearances for one code: ", max(crs_recipients$n_appearances), ")",
+  "\n  all ", nrow(crs_recipients), " named from CL_AREA_ORG",
   "\n  retrieved: ", as.character(Sys.Date())
 )
 

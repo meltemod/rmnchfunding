@@ -9,6 +9,7 @@ crs_classify(
   scheme = c("geographic", "dac_income", "wb_income"),
   level = 1L,
   by = c("donor", "year"),
+  complete = FALSE,
   tolerance = 0.5
 )
 }
@@ -25,6 +26,10 @@ scheme's own groups. See Levels.}
 
 \item{by}{Additional columns to break the totals down by, e.g.
 \code{"purpose_code"} or \code{c("donor", "year")}. Defaults to \code{c("donor", "year")}.}
+
+\item{complete}{Set \code{TRUE} to include every member of the level, filling
+those the donor did not fund with \code{0}. The default \code{FALSE} returns only
+members with data. See Completing a level.}
 
 \item{tolerance}{Absolute tolerance, in millions, for the check that the
 scheme sums to OECD's reported grand total.}
@@ -92,6 +97,30 @@ regional residuals; they are marked by \code{is_unallocated}.
 Groupings such as \code{HIPC}, \code{LLDC}, \code{SIDS} and \code{FSCAC} are \strong{not} schemes.
 They are overlapping flags — Ethiopia is in \code{F}, \code{F6}, \code{F3}, \code{LDC}, \code{LLDC},
 \code{OLICWB}, \code{HIPC} and \code{FSCAC} at once — and asking for one is an error.
+}
+
+\section{Completing a level}{
+
+By default a level lists only the members the donor actually funded, so the
+rows differ between donors and between years. \code{complete = TRUE} fills the
+rest with \code{0}, giving the same rows every time — for the United States over
+2021 to 2024, 151 recipients appear in the data out of 207 in the hierarchy,
+so 56 are added as explicit zeros.
+
+A zero and an absent row mean the same thing here, since OECD reports no row
+for a recipient a donor did not fund. Completing therefore changes the shape
+of the result but never a total.
+
+Note that membership of the World Bank income groups is a \strong{current
+snapshot}, and countries move between groups over time: Hungary was
+upper-middle income in the 1990s, high income from 2007, briefly
+upper-middle again in 2012 and 2013, and high income since 2014. That does
+not affect the figures here, because levels 0 and 1 use OECD's own reported
+aggregates and the country level returns one row per country rather than
+countries grouped by tier — all three schemes enumerate the same country
+set. It would matter if this package ever reported which countries belong to
+a tier in a given year, which would need the World Bank's historical
+classification rather than a codelist snapshot.
 }
 
 \examples{

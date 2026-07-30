@@ -192,3 +192,44 @@ test_that("an incomplete input is refused rather than under-reported", {
   expect_error(crs_classify(x, "geographic", level = "country"),
                "falls SHORT|does not sum")
 })
+
+test_that("complete= fills unfunded members with zero without moving a total", {
+  x <- fake_crs(100)
+  a <- crs_classify(x, "geographic", level = 1)
+  b <- crs_classify(x, "geographic", level = 1, complete = TRUE)
+
+  # The fixture omits Europe and Oceania, so completing must add them at zero.
+  expect_false(all(c("E", "O") %in% a$member))
+  expect_true(all(c("E", "O") %in% b$member))
+  expect_gt(nrow(b), nrow(a))
+  expect_equal(sum(b$value), sum(a$value), tolerance = 1e-9)
+  expect_true(all(b$value[b$member %in% c("E", "O")] == 0))
+
+  # And a zero-filled row must still say which recipient it is, taken from the
+  # bundled codelist since it is absent from the data.
+  expect_false(anyNA(b$member_name))
+  expect_equal(b$member_name[b$member == "E"], "Europe")
+})
+
+test_that("completing does not disturb the partition check", {
+  # Zeros cannot change a sum, so a completed result must pass the same check.
+  x <- fake_crs(100)
+  for (s in names(CRS_SCHEMES)) {
+    r <- crs_classify(x, s, level = 1, complete = TRUE)
+    expect_equal(sum(r$value), attr(r, "grand_total"), tolerance = 1e-9)
+  }
+})
+
+test_that("every recipient code carries a name", {
+  # The property `complete = TRUE` depends on: a member absent from the data is
+  # labelled from crs_recipients instead.
+  expect_false(anyNA(crs_recipients$recipient_name))
+  expect_equal(
+    crs_recipients$recipient_name[crs_recipients$recipient_code == "KEN"],
+    "Kenya"
+  )
+  expect_equal(
+    crs_recipients$recipient_name[crs_recipients$recipient_code == "DPGC_X"],
+    "Developing countries unspecified"
+  )
+})

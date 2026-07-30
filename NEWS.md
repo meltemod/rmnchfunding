@@ -63,6 +63,14 @@
 * Fixed `oecd_crs()` and `oecd_multi()` treating an empty OECD result as a
   network failure. OECD answers an empty query with HTTP 404 and the body
   "NoRecordsFound", which httr2 raised on before the body could be read.
+* `crs_classify()` gains `complete`, which fills members the donor did not fund
+  with an explicit `0` so that the rows are the same for every donor and year.
+  For the United States over 2021-2024, 151 recipients appear in the data out of
+  207 in the hierarchy. OECD reports no row at all for an unfunded recipient, so
+  a zero and an absent row mean the same thing: completing changes the shape of
+  a result but never a total.
+* `crs_recipients` gains `recipient_name`, from codelist `CL_AREA_ORG`, so that
+  a zero-filled row says which country reported nothing.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the per-donor RMNCH weights are not

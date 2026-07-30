@@ -176,9 +176,12 @@
 #' code that is a leaf of one grouping may parent members of another, and must
 #' still not be summed alongside them.
 #'
-#' @format A data frame with 290 rows and 6 columns:
+#' @format A data frame with 290 rows and 7 columns:
 #' \describe{
 #'   \item{recipient_code}{OECD recipient code. Unique.}
+#'   \item{recipient_name}{Official OECD name, from codelist `CL_AREA_ORG`.
+#'     Bundled so that a recipient absent from a donor's data can still be
+#'     labelled — see the `complete` argument of [crs_classify()].}
 #'   \item{n_children}{Most children the code has in any grouping.}
 #'   \item{n_appearances}{How many groupings the code appears in.}
 #'   \item{min_depth}{Shallowest depth at which it appears.}
@@ -205,8 +208,10 @@
 #' `INCWB_X`, group the countries of unspecified income classification and so
 #' do have members; they are aggregates as well as unallocated.
 #'
-#' @source OECD hierarchical codelist `HCL_DACRECIPIENTS` version 1.5,
-#'   retrieved 2026-07-29. Rebuild with `data-raw/crs_recipients.R`.
+#' @source Structure from OECD hierarchical codelist `HCL_DACRECIPIENTS`
+#'   version 1.5; names from codelist `CL_AREA_ORG` version 1.6, which the
+#'   hierarchy declares as its source. Retrieved 2026-07-30. Rebuild with
+#'   `data-raw/crs_recipients.R`.
 #'
 #' @seealso [oecd_crs()], whose `recipients` argument uses this.
 "crs_recipients"

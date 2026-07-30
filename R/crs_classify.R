@@ -132,12 +132,37 @@ descend_one <- function(codes, tree) {
 #'   scheme's own groups. See Levels.
 #' @param by Additional columns to break the totals down by, e.g.
 #'   `"purpose_code"` or `c("donor", "year")`. Defaults to `c("donor", "year")`.
+#' @param complete Set `TRUE` to include every member of the level, filling
+#'   those the donor did not fund with `0`. The default `FALSE` returns only
+#'   members with data. See Completing a level.
 #' @param tolerance Absolute tolerance, in millions, for the check that the
 #'   scheme sums to OECD's reported grand total.
 #'
 #' @return A tibble of one row per grouping variable and scheme member, with
 #'   `scheme`, `level`, `member`, `member_name`, `value`, `is_residual`,
 #'   `is_unallocated` and `share`. Carries a `grand_total` attribute.
+#'
+#' @section Completing a level:
+#' By default a level lists only the members the donor actually funded, so the
+#' rows differ between donors and between years. `complete = TRUE` fills the
+#' rest with `0`, giving the same rows every time — for the United States over
+#' 2021 to 2024, 151 recipients appear in the data out of 207 in the hierarchy,
+#' so 56 are added as explicit zeros.
+#'
+#' A zero and an absent row mean the same thing here, since OECD reports no row
+#' for a recipient a donor did not fund. Completing therefore changes the shape
+#' of the result but never a total.
+#'
+#' Note that membership of the World Bank income groups is a **current
+#' snapshot**, and countries move between groups over time: Hungary was
+#' upper-middle income in the 1990s, high income from 2007, briefly
+#' upper-middle again in 2012 and 2013, and high income since 2014. That does
+#' not affect the figures here, because levels 0 and 1 use OECD's own reported
+#' aggregates and the country level returns one row per country rather than
+#' countries grouped by tier — all three schemes enumerate the same country
+#' set. It would matter if this package ever reported which countries belong to
+#' a tier in a given year, which would need the World Bank's historical
+#' classification rather than a codelist snapshot.
 #'
 #' @seealso [oecd_crs()], [crs_recipients].
 #'
@@ -153,6 +178,7 @@ crs_classify <- function(x,
                          scheme = c("geographic", "dac_income", "wb_income"),
                          level = 1L,
                          by = c("donor", "year"),
+                         complete = FALSE,
                          tolerance = 0.5) {
   scheme <- match.arg(scheme)
   names_for_scheme <- CRS_SCHEME_LEVELS[[scheme]]
@@ -206,12 +232,28 @@ crs_classify <- function(x,
     keep["value"], by = as.list(keep[grp]), FUN = sum, na.rm = TRUE
   )
 
-  # A member absent from the data means that member had no disbursements, not
-  # that it is missing: reported as zero rather than dropped, so the scheme has
-  # the same shape whichever donor it is applied to.
   absent <- setdiff(members, present)
 
+  if (isTRUE(complete) && length(absent) > 0L) {
+    # OECD reports no row at all for a recipient a donor did not fund, so an
+    # absent member and a zero mean the same thing. Filling them in gives the
+    # same rows for every donor and year, which is what makes results
+    # comparable across donors; it cannot change a total.
+    combos <- unique(agg[by])
+    filler <- merge(combos, data.frame(recipient = absent,
+                                       stringsAsFactors = FALSE))
+    filler$value <- 0
+    agg <- rbind(agg[c(by, "recipient", "value")],
+                 filler[c(by, "recipient", "value")])
+  }
+
+  # Label from the data where possible, and from the bundled codelist where the
+  # member is absent from it — a zero-filled row with no name would not say
+  # which country reported nothing.
+  ur <- rmnchfunding::crs_recipients
   nm <- x$recipient_name[match(agg$recipient, x$recipient)]
+  gap <- is.na(nm)
+  nm[gap] <- ur$recipient_name[match(agg$recipient[gap], ur$recipient_code)]
   # Resolved before the tibble() call: inside it, `scheme` would resolve to the
   # column being created rather than to the argument.
   residual_code <- CRS_SCHEME_RESIDUAL[[scheme]]
@@ -228,7 +270,6 @@ crs_classify <- function(x,
   # Unallocated rows are flagged here too: a country-level cut still contains
   # regional residuals, and a caller summing "by country" needs to see which
   # rows are not countries.
-  ur <- rmnchfunding::crs_recipients
   out$is_unallocated <- ur$is_unallocated[match(out$member, ur$recipient_code)]
   out$is_unallocated[is.na(out$is_unallocated)] <- FALSE
   out <- out[c(by, "scheme", "level", "member", "member_name", "value",
