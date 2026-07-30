@@ -123,6 +123,212 @@ message("  general budget support: ", nrow(gbs), " economy-years computed, ",
         length(unique(gbs$iso3)), " economies, ",
         min(gbs$year), "-", max(gbs$year))
 
+
+# ---- disease codes 12262, 12263, 13040 ------------------------------------
+#
+# From IHME Global Burden of Disease case NUMBERS, by location, age, sex and
+# year. The extract is not fetchable — GHDx has no unauthenticated API and the
+# tool's data endpoint sits behind a Cloudflare challenge — so it is downloaded
+# by hand and committed under data-raw/gbd/. See that directory's README for
+# the exact query.
+#
+#   12262 malaria, Incidence:      RH = 0;   MNH = 0.15;  CH = <5 / all ages
+#   13040 HIV/AIDS, Prevalence:    RH = female 15-49 / all ages; MNH = 0;
+#                                  CH = <5 / all ages
+#   12263 tuberculosis, Prevalence: RH = 0;  MNH = 0;     CH = <5 / all ages
+#
+# All ratios use "Both" sexes except the HIV RH numerator, which is female.
+# MNH = 0.15 for malaria is a fixed constant from the Countdown method, not
+# derived from the data.
+
+MALARIA_MNH <- 0.15
+
+gbd_files <- list.files("data-raw/gbd", pattern = "[.]zip$", full.names = TRUE)
+gbd_csv <- list.files("data-raw/gbd", pattern = "[.]csv$", full.names = TRUE)
+
+read_gbd <- function() {
+  parts <- list()
+  for (z in gbd_files) {
+    inner <- utils::unzip(z, list = TRUE)$Name
+    inner <- inner[grepl("[.]csv$", inner)]
+    for (f in inner) {
+      con <- unz(z, f)
+      parts[[length(parts) + 1L]] <- utils::read.csv(con, stringsAsFactors = FALSE)
+    }
+  }
+  for (f in gbd_csv) {
+    parts[[length(parts) + 1L]] <- utils::read.csv(f, stringsAsFactors = FALSE)
+  }
+  if (length(parts) == 0L) return(NULL)
+  out <- do.call(rbind, parts)
+  message("  read ", length(parts), " GBD file(s)")
+
+  # Overlapping downloads must fail rather than double-count. The extract has
+  # to be split across files whenever it exceeds GBD's 100,000-row download
+  # cap — 2002-2023 is about 162,000 rows — and it is easy to request
+  # overlapping year ranges by accident. Every ratio would still be computed
+  # from correctly paired numerator and denominator, so nothing would look
+  # wrong; only the row counts would lie.
+  keycols <- intersect(
+    c("measure_name", "location_name", "sex_name", "age_name", "cause_name",
+      "metric_name", "year"),
+    names(out)
+  )
+  dup <- duplicated(out[keycols])
+  if (any(dup)) {
+    d <- out[dup, keycols, drop = FALSE]
+    stop(
+      sum(dup), " duplicated observation(s) across the GBD files in ",
+      "data-raw/gbd/, e.g. ",
+      paste(utils::head(apply(d, 1L, paste, collapse = " / "), 3L),
+            collapse = "; "),
+      ".\n  The files overlap. Remove the redundant download, or request ",
+      "non-overlapping year ranges: the 100,000-row cap means 2002-2023 has ",
+      "to be split, and it is easy to repeat a year by accident.",
+      call. = FALSE
+    )
+  }
+
+  # GBD has renamed these between rounds. Fail with what was actually found
+  # rather than computing from whatever column happens to be there.
+  need <- c("measure_name", "location_name", "sex_name", "age_name",
+            "cause_name", "metric_name", "year", "val")
+  missing <- setdiff(need, names(out))
+  if (length(missing) > 0L) {
+    stop("GBD extract is missing column(s): ", paste(missing, collapse = ", "),
+         ".\n  Found: ", paste(names(out), collapse = ", "),
+         "\n  See data-raw/gbd/README.md for the expected shape.",
+         call. = FALSE)
+  }
+  out[out$metric_name == "Number", need]
+}
+
+gbd <- read_gbd()
+
+# GBD keys by location NAME. Most match an OECD or World Bank name outright;
+# these are the ones that do not. Enumerated rather than fuzzy-matched, so a
+# new GBD spelling fails the coverage check below instead of being absorbed.
+# Note the apostrophes: OECD writes U+2019, GBD writes ASCII.
+gbd_name_to_code <- c(
+  "Bolivia (Plurinational State of)"      = "BOL",
+  "Côte d'Ivoire"                         = "CIV",
+  "Democratic People's Republic of Korea" = "PRK",
+  "Iran (Islamic Republic of)"            = "IRN",
+  "Lao People's Democratic Republic"      = "LAO",
+  "Micronesia (Federated States of)"      = "FSM",
+  "Palestine"                             = "PSE",
+  "Republic of Korea"                     = "KOR",
+  "Republic of Moldova"                   = "MDA",
+  "Taiwan"                                = "TWN",
+  "United Republic of Tanzania"           = "TZA",
+  "Venezuela (Bolivarian Republic of)"    = "VEN"
+)
+
+disease_weights <- NULL
+if (is.null(gbd)) {
+  message("No GBD extract in data-raw/gbd/; codes 12262, 12263 and 13040 ",
+          "will be absent. See data-raw/gbd/README.md.")
+} else {
+  message("Read GBD extract: ", nrow(gbd), " rows, years ",
+          min(gbd$year), "-", max(gbd$year), ", ",
+          length(unique(gbd$location_name)), " locations")
+
+  # One cell per (location, year, cause, measure, sex, age).
+  key <- function(cause, measure, sex, age) {
+    d <- gbd[gbd$cause_name == cause & gbd$measure_name == measure &
+               gbd$sex_name == sex & gbd$age_name == age, ]
+    stats::setNames(d$val, paste(d$location_name, d$year))
+  }
+  zero_burden <- 0L
+  ratio <- function(num, den) {
+    common <- intersect(names(num), names(den))
+    n <- num[common]; d <- den[common]
+    # A zero denominator means the disease is ABSENT from that location-year:
+    # GBD reports zero malaria incidence for 118 of its 204 locations in 2023,
+    # malaria having been eliminated across most of the world. Zero cases means
+    # zero child cases, so the child share is 0 and the weight reduces to the
+    # fixed MNH constant. This is not the same as missing data and must not be
+    # sent to the regional fallback — substituting a malarious neighbour's
+    # child share into a malaria-free country would invent burden that is not
+    # there. All of Europe is malaria-free, so a regional fallback could not
+    # help those countries anyway.
+    #
+    # A zero denominator with a NON-zero numerator is impossible (a subset
+    # cannot exceed its whole) and is left NA so that it surfaces rather than
+    # being quietly treated as absence.
+    out <- ifelse(d > 0, n / d, ifelse(n == 0, 0, NA_real_))
+    zero_burden <<- zero_burden + sum(d == 0 & n == 0)
+    stats::setNames(out, common)
+  }
+
+  mal_den <- key("Malaria", "Incidence", "Both", "All ages")
+  hiv_den <- key("HIV/AIDS", "Prevalence", "Both", "All ages")
+  tb_den  <- key("Tuberculosis", "Prevalence", "Both", "All ages")
+
+  mal_ch <- ratio(key("Malaria", "Incidence", "Both", "<5 years"), mal_den)
+  hiv_ch <- ratio(key("HIV/AIDS", "Prevalence", "Both", "<5 years"), hiv_den)
+  hiv_rh <- ratio(key("HIV/AIDS", "Prevalence", "Female", "15-49 years"),
+                  hiv_den)
+  tb_ch  <- ratio(key("Tuberculosis", "Prevalence", "Both", "<5 years"), tb_den)
+
+  as_rows <- function(code, rh, mnh, ch) {
+    ids <- names(ch)
+    loc <- sub(" [0-9]{4}$", "", ids)
+    yr <- as.integer(sub("^.* ", "", ids))
+    data.frame(
+      purpose_code = code,
+      location_name = loc,
+      year = yr,
+      rh = if (length(rh) == 1L) rep(rh, length(ids)) else unname(rh[ids]),
+      mnh = mnh,
+      ch = unname(ch),
+      stringsAsFactors = FALSE
+    )
+  }
+  disease_weights <- rbind(
+    as_rows("12262", 0, MALARIA_MNH, mal_ch),
+    as_rows("13040", hiv_rh, 0, hiv_ch),
+    as_rows("12263", 0, 0, tb_ch)
+  )
+  disease_weights$weight <-
+    disease_weights$rh + disease_weights$mnh + disease_weights$ch
+
+  # Map GBD location names onto OECD recipient codes.
+  cwn <- stats::setNames(crosswalk$recipient_code, crosswalk$recipient_name)
+  cwb <- stats::setNames(crosswalk$recipient_code, crosswalk$wb_name)
+  code <- unname(cwn[disease_weights$location_name])
+  gap <- is.na(code)
+  code[gap] <- unname(cwb[disease_weights$location_name[gap]])
+  gap <- is.na(code)
+  code[gap] <- unname(gbd_name_to_code[disease_weights$location_name[gap]])
+  disease_weights$recipient_code <- code
+
+  # Locations with no OECD recipient are dropped deliberately: GBD covers 204
+  # countries including donors and high-income territories that are not ODA
+  # recipients at all.
+  dropped <- sort(unique(
+    disease_weights$location_name[is.na(disease_weights$recipient_code)]
+  ))
+  disease_weights <- disease_weights[!is.na(disease_weights$recipient_code), ]
+  message("  mapped ", length(unique(disease_weights$recipient_code)),
+          " GBD locations to OECD recipients; dropped ", length(dropped),
+          " that are not ODA recipients",
+          "\n  zero-burden location-years (disease absent, child share 0): ",
+          zero_burden)
+
+  stopifnot(
+    all(disease_weights$weight >= 0 & disease_weights$weight <= 1,
+        na.rm = TRUE),
+    # The fixed pieces of the method, asserted rather than assumed.
+    all(disease_weights$mnh[disease_weights$purpose_code == "12262"] ==
+          MALARIA_MNH),
+    all(disease_weights$rh[disease_weights$purpose_code == "12262"] == 0),
+    all(disease_weights$mnh[disease_weights$purpose_code == "13040"] == 0),
+    all(disease_weights$rh[disease_weights$purpose_code == "12263"] == 0),
+    all(disease_weights$mnh[disease_weights$purpose_code == "12263"] == 0)
+  )
+}
+
 # ---- carry forward, flagged ----------------------------------------------
 # A recipient-year with no observation takes the most recent earlier year that
 # has one, and records which year that was. The flag is the point: an
@@ -159,6 +365,25 @@ rows <- merge(
   gbs_t, by = "iso3", all.x = TRUE
 )
 rows$purpose_code <- "51010"
+
+# The disease codes arrive keyed by recipient_code rather than iso3, and are
+# carried forward and attached the same way, so that every code goes through
+# one path and cannot diverge in how a gap is treated.
+if (!is.null(disease_weights)) {
+  dz <- disease_weights[!is.na(disease_weights$weight), ]
+  dz$grp <- paste(dz$purpose_code, dz$recipient_code)
+  dz_t <- carry_forward(dz, "grp", TARGET_YEARS, MAX_CARRY_FORWARD)
+  dz_t$grp <- NULL
+  dz_t$location_name <- NULL
+  message("  disease codes after carry-forward: ", nrow(dz_t), " rows, ",
+          sum(dz_t$source_year != dz_t$year), " carried from an earlier year")
+  dz_t <- merge(
+    crosswalk[c("recipient_code", "recipient_name", "iso3",
+                "continent", "region", "subregion")],
+    dz_t, by = "recipient_code"
+  )
+  rows <- rbind(rows[names(dz_t)], dz_t)
+}
 rows$source <- ifelse(is.na(rows$weight), NA_character_, "own")
 
 # ---- regional fallback, flagged ------------------------------------------
@@ -176,40 +401,54 @@ fill_from_group <- function(rows, group_col, label) {
   if (!any(need)) return(rows)
   donors <- rows[!is.na(rows$weight), ]
   key <- paste(donors[[group_col]], donors$year)
-  grp <- tapply(donors$weight, key, mean, na.rm = TRUE)
+  # Average all THREE components, not two. MNH is zero for general budget
+  # support and for tuberculosis, but a fixed 0.15 for malaria, so assuming
+  # zero here would leave a substituted malaria row whose components no longer
+  # sum to its total. Averaging is linear, so the summed means equal the mean
+  # total exactly and the identity rh + mnh + ch == weight survives.
   grp_rh <- tapply(donors$rh, key, mean, na.rm = TRUE)
+  grp_mnh <- tapply(donors$mnh, key, mean, na.rm = TRUE)
   grp_ch <- tapply(donors$ch, key, mean, na.rm = TRUE)
   want <- paste(rows[[group_col]], rows$year)
-  hit <- need & want %in% names(grp)
-  rows$weight[hit] <- as.numeric(grp[want[hit]])
+  hit <- need & want %in% names(grp_rh)
   rows$rh[hit] <- as.numeric(grp_rh[want[hit]])
+  rows$mnh[hit] <- as.numeric(grp_mnh[want[hit]])
   rows$ch[hit] <- as.numeric(grp_ch[want[hit]])
-  rows$mnh[hit] <- 0
+  rows$weight[hit] <- rows$rh[hit] + rows$mnh[hit] + rows$ch[hit]
   rows$source[hit] <- label
   rows
 }
 
-# Recipients with no data of their own have no year rows at all after the
-# merge, so the target years are laid out for them first.
-missing <- unique(rows$recipient_code[is.na(rows$weight)])
-if (length(missing) > 0L) {
-  skeleton <- merge(
-    crosswalk[crosswalk$recipient_code %in% missing,
-              c("recipient_code", "recipient_name", "iso3",
+# Every purpose code must cover every recipient and every target year, so the
+# full grid is laid out first and the gaps filled from geography. Done per
+# code, since a recipient may have data for one code and not another — a
+# country with no malaria burden still has government health expenditure.
+rows <- rows[!is.na(rows$weight), ]
+codes_present <- unique(rows$purpose_code)
+full <- do.call(rbind, lapply(codes_present, function(pc) {
+  have <- rows[rows$purpose_code == pc, ]
+  grid <- merge(
+    crosswalk[c("recipient_code", "recipient_name", "iso3",
                 "continent", "region", "subregion")],
     data.frame(year = TARGET_YEARS), by = NULL
   )
+  grid$purpose_code <- pc
+  gap <- !paste(grid$recipient_code, grid$year) %in%
+    paste(have$recipient_code, have$year)
+  skeleton <- grid[gap, ]
+  if (nrow(skeleton) == 0L) return(have)
   skeleton$rh <- NA_real_; skeleton$mnh <- NA_real_; skeleton$ch <- NA_real_
   skeleton$weight <- NA_real_; skeleton$source_year <- NA_integer_
-  skeleton$purpose_code <- "51010"; skeleton$source <- NA_character_
-  rows <- rbind(rows[!is.na(rows$weight), ], skeleton[names(rows)])
-}
-
-for (g in list(c("subregion", "regional (subregion)"),
-               c("region", "regional (region)"),
-               c("continent", "regional (continent)"))) {
-  rows <- fill_from_group(rows, g[1], g[2])
-}
+  skeleton$source <- NA_character_
+  out <- rbind(have[names(skeleton)], skeleton)
+  for (g in list(c("subregion", "regional (subregion)"),
+                 c("region", "regional (region)"),
+                 c("continent", "regional (continent)"))) {
+    out <- fill_from_group(out, g[1], g[2])
+  }
+  out
+}))
+rows <- full
 
 rmnch_recipient_weights <- tibble::tibble(
   purpose_code   = rows$purpose_code,
@@ -258,7 +497,7 @@ message(
   "\n  unresolved: ", sum(is.na(rmnch_recipient_weights$weight))
 )
 
-# ---- NOT YET BUILT: 12262, 12263, 13040 ----------------------------------
+# ---- provenance of the disease extract ------------------------------------
 #
 # The three disease codes need IHME Global Burden of Disease case NUMBERS, and
 # GHDx has no unauthenticated API — every /gbd-results/api/ path returns the

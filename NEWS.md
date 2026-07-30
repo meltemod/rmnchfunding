@@ -93,10 +93,24 @@
   fallback. 170 of 182 recipients match directly; the 12 that do not each carry
   a reason, and the build fails on any recipient that is neither matched nor
   explained.
-* CRS codes 12262, 12263 and 13040 remain `NA`: they need an IHME Global Burden
-  of Disease extract, which cannot be fetched automatically because GHDx has no
-  unauthenticated API. See `data-raw/gbd/README.md` for the exact query.
-  `muskoka(universe = "rmnch")` therefore still refuses to compute.
+* All four `varies*` codes are now built. Malaria (12262), tuberculosis (12263)
+  and STD control including HIV/AIDS (13040) come from an IHME Global Burden of
+  Disease 2023 extract covering 2011-2023, committed under `data-raw/gbd/`
+  because GHDx has no unauthenticated API. 2,912 weights: 4 codes x 182
+  recipients x 4 years, none unresolved.
+* Validated against the published Muskoka2 reference over the years it covers.
+  General budget support and tuberculosis reproduce it closely (94.2% and 80.5%
+  of observations within 0.02); malaria is moderate; **HIV agrees least well**,
+  and the divergence sits entirely in its RH component. All three plausible
+  readings of that formula were tested on identical rows and none reconciles
+  the two, so the documented formula is retained and the difference is
+  attributed to GBD revising HIV estimates between rounds. HIV weights are the
+  least certain of the four; see `?rmnch_recipient_weights`.
+* Where a disease is absent from a country entirely, the child share is 0 and
+  the weight reduces to the fixed component. GBD reports zero malaria incidence
+  for 118 of 204 locations, so this is the common case rather than an edge one.
+  It is deliberately not a regional substitute: taking a malarious neighbour's
+  child share would invent burden that is not there.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the RMNCH weights for the three

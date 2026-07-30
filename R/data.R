@@ -358,12 +358,44 @@
 #' small, and a population-weighted mean would let a group's largest member
 #' stand in for a territory of a few thousand people.
 #'
+#' @section Validation against the published method:
+#' The equations were re-run over the years the published Muskoka2 reference
+#' covers and compared with it. Exact agreement is not expected: the reference
+#' was built from the GBD 2017 round and World Bank data as it stood in 2018,
+#' while these weights use GBD 2023 and current World Bank series. The check is
+#' whether the logic reproduces the reference's structure and magnitudes.
+#'
+#' | Code | n | corr | median abs. diff. | within 0.02 |
+#' |---|---:|---:|---:|---:|
+#' | 51010 general budget support | 2195 | 0.80 | 0.0023 | 94.2% |
+#' | 12263 tuberculosis | 1008 | 0.81 | 0.0045 | 80.5% |
+#' | 12262 malaria | 1008 | 0.86 | 0.0249 | 42.0% |
+#' | 13040 HIV/AIDS | 1008 | 0.59 | 0.0856 | 16.2% |
+#'
+#' General budget support and tuberculosis reproduce the reference closely.
+#' Malaria is moderate. **HIV agrees least well, and the divergence sits
+#' entirely in its RH component** — the reproductive-health share, which is the
+#' only component of any code that is itself derived from a sex-and-age
+#' ratio rather than being zero or a fixed constant.
+#'
+#' That was tested rather than assumed. All three plausible readings of the RH
+#' formula were computed on identical rows: female 15-49 over both-sexes all
+#' ages (the documented method, correlation 0.567), female all ages over
+#' both-sexes all ages (0.536), and female 15-49 over both-sexes 15-49 (0.543).
+#' The alternatives bring the overall scale closer to the reference but make
+#' both correlation and proximity worse, so no choice of formula reconciles
+#' them. The documented formula is retained.
+#'
+#' The most likely explanation is the GBD round: HIV prevalence by age and sex
+#' was substantially revised between GBD 2017 and GBD 2023. Malaria and
+#' tuberculosis pass through exactly the same code path and validate far
+#' better, so the machinery is not in question. Treat HIV weights as the least
+#' certain of the four, and re-check them if a future round moves again.
+#'
 #' @section Coverage:
-#' Only code 51010 is currently built. The three disease codes need an IHME
-#' Global Burden of Disease extract, which cannot be fetched automatically —
-#' GHDx has no unauthenticated API. See `data-raw/gbd/README.md` for the exact
-#' query. Until it exists those codes are absent here and `NA` in
-#' [sector_weights], so an RMNCH total still cannot be computed.
+#' Disease weights are built from GBD 2023, which covers 1990-2023, so 2024 is
+#' carried forward from 2023. General budget support comes from World Bank
+#' series that effectively stop in 2023 for government health expenditure.
 #'
 #' @format A data frame with 728 rows and 11 columns:
 #' \describe{

@@ -64,16 +64,17 @@ test_that("substituted weights are confined to recipients with no source data", 
   expect_true(all(no_wb %in% subbed))
 })
 
-test_that("the disease codes are absent rather than wrong", {
-  # They need a GBD extract that cannot be fetched automatically. Absent is
-  # the correct state; a zero or a guessed value would not be.
-  expect_false(any(c("12262", "12263", "13040") %in%
-                     rmnch_recipient_weights$purpose_code))
-  # And they must still be NA in sector_weights, so muskoka() refuses.
+test_that("the four varies* codes stay NA in sector_weights", {
+  # They are computed per recipient and year, so a table with one weight per
+  # code cannot hold them. NA there is correct even now that the weights
+  # exist: the value lives in rmnch_recipient_weights, and anything reading
+  # sector_weights alone must not find a number that does not apply globally.
   sw <- sector_weights
-  disease <- sw$weight[sw$universe == "rmnch" &
-                         sw$purpose_code %in% c("12262", "12263", "13040")]
-  expect_true(all(is.na(disease)))
+  varies <- c("12262", "12263", "13040", "51010")
+  expect_true(all(is.na(sw$weight[sw$universe == "rmnch" &
+                                    sw$purpose_code %in% varies])))
+  # And every one of them must now be resolvable from the recipient table.
+  expect_setequal(unique(rmnch_recipient_weights$purpose_code), varies)
 })
 
 # ---- crosswalk ------------------------------------------------------------
@@ -109,4 +110,70 @@ test_that("the crosswalk excludes aggregates and organisations", {
                      r$recipient_code[r$is_unallocated]))
   # CL_AREA_ORG carries multilateral organisations too; none belongs here.
   expect_false(any(c("1UN019", "5WB002", "5ASDB01") %in% cw$recipient_code))
+})
+
+# ---- the disease codes ----------------------------------------------------
+
+test_that("all four purpose codes are present", {
+  expect_setequal(unique(rmnch_recipient_weights$purpose_code),
+                  c("12262", "12263", "13040", "51010"))
+  # Complete grid: every code, every recipient, every target year.
+  expect_equal(nrow(rmnch_recipient_weights), 4L * 182L * 4L)
+})
+
+test_that("the fixed components of each disease formula are respected", {
+  w <- rmnch_recipient_weights
+  # Malaria carries a fixed MNH of 0.15 from the Countdown method, and no RH.
+  mal <- w[w$purpose_code == "12262", ]
+  expect_true(all(mal$mnh == 0.15, na.rm = TRUE))
+  expect_true(all(mal$rh == 0, na.rm = TRUE))
+  # Tuberculosis is child health only.
+  tb <- w[w$purpose_code == "12263", ]
+  expect_true(all(tb$rh == 0, na.rm = TRUE))
+  expect_true(all(tb$mnh == 0, na.rm = TRUE))
+  # HIV has no maternal-newborn component.
+  hiv <- w[w$purpose_code == "13040", ]
+  expect_true(all(hiv$mnh == 0, na.rm = TRUE))
+  expect_true(any(hiv$rh > 0, na.rm = TRUE))
+})
+
+test_that("a malaria-free country gets the fixed MNH and nothing more", {
+  # GBD reports zero malaria incidence for most of the world, which makes the
+  # child share 0/0. Zero cases means zero child cases, so the weight reduces
+  # to the MNH constant. This must NOT become a regional substitute: taking a
+  # malarious neighbour's child share would invent burden that is not there.
+  # All of Europe is malaria-free, so Albania is a clean test.
+  alb <- rmnch_recipient_weights[
+    rmnch_recipient_weights$purpose_code == "12262" &
+      rmnch_recipient_weights$recipient_code == "ALB", ]
+  expect_gt(nrow(alb), 0L)
+  expect_true(all(alb$ch == 0))
+  expect_true(all(alb$weight == 0.15))
+  expect_true(all(alb$source == "own"))
+})
+
+test_that("a high-burden country has a substantial child share", {
+  # The other side of the same test: where malaria is endemic, CH must be a
+  # real number rather than the zero-burden default.
+  nga <- rmnch_recipient_weights[
+    rmnch_recipient_weights$purpose_code == "12262" &
+      rmnch_recipient_weights$recipient_code == "NGA", ]
+  expect_gt(nrow(nga), 0L)
+  expect_true(all(nga$ch > 0.2))
+  expect_true(all(nga$weight > 0.35))
+})
+
+test_that("regional substitutes keep components summing to their total", {
+  # The bug this guards: the fallback originally hardcoded MNH to zero, which
+  # is right for general budget support and tuberculosis but wrong for
+  # malaria's fixed 0.15, leaving substituted malaria rows whose parts no
+  # longer made their whole.
+  sub <- rmnch_recipient_weights[
+    !is.na(rmnch_recipient_weights$source) &
+      rmnch_recipient_weights$source != "own", ]
+  expect_gt(nrow(sub), 0L)
+  expect_true(all(abs((sub$rh + sub$mnh + sub$ch) - sub$weight) < 1e-9))
+  # And a substituted malaria row must still carry the constant.
+  submal <- sub[sub$purpose_code == "12262", ]
+  if (nrow(submal) > 0L) expect_true(all(abs(submal$mnh - 0.15) < 1e-9))
 })
