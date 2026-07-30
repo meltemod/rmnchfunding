@@ -20,6 +20,7 @@ request **one extract** with:
 
 | Field | Value |
 |---|---|
+| GBD Estimate | **Cause of death or injury** — see below, the name misleads |
 | GBD round | Latest available. **Record which**, in `VINTAGE.txt` below |
 | Measure | **Incidence** *and* **Prevalence** |
 | Metric | **Number** — case counts, not rates or percentages |
@@ -29,9 +30,35 @@ request **one extract** with:
 | Sex | **Both** and **Female** |
 | Year | **2002** to the latest available |
 
+### Why "Cause of death or injury"
+
+This is the first dropdown and the name is actively misleading: it sounds like
+mortality only. It is not. It is the **cause-level** estimate set, and the
+*Measure* dropdown is what decides whether you get deaths or case counts.
+IHME's own Appendix B, "GBD Estimate by Measure", marks both Incidence and
+Prevalence as available under it:
+
+| Measure | Cause of death or injury | Risk factor | Impairment | Injuries by nature |
+|---|:---:|:---:|:---:|:---:|
+| Deaths | X | X | | |
+| Prevalence | **X** | | X | X |
+| Incidence | **X** | | X | X |
+
+The only other estimate types offering Incidence and Prevalence are
+*Impairment* and *Injuries by nature*. Neither applies here: malaria,
+HIV/AIDS and tuberculosis are **causes** in the GBD hierarchy, not impairments
+or injuries. Every other option — Risk factor, Etiology, Summary exposure
+value, HALE, Population, Fertility, All-cause mortality, Probability of death
+by cause — offers neither measure, so picking one would leave the Measure
+dropdown without Incidence or Prevalence in it at all. That is the quickest
+way to tell you have chosen wrongly.
+
 Measure by code: malaria uses **Incidence**; HIV/AIDS and tuberculosis use
 **Prevalence**. Requesting both measures in one extract is simpler than two
 downloads and the build script selects the right one per cause.
+
+Source: [GBD Results Tool User Guide (2023)](https://www.healthdata.org/sites/default/files/2025-10/GBD_Results_Tool_User_Guide_2023.pdf),
+"To view Cause of death or injury results" and Appendix B.
 
 Age group `15-49` and sex `Female` are needed only for the HIV reproductive
 health numerator, but are cheap to include.
@@ -94,10 +121,16 @@ newborn, and child health: findings from application of the Muskoka2 method,
 2002–17." *The Lancet Global Health* 2020; 8(3): e374–e386,
 doi:10.1016/S2214-109X(20)30005-X, supplementary appendix sections I.2 and I.3.
 
-## One decision still open
+## Year coverage
 
-GBD's latest round reaches 2021, while the target window runs to 2024. The
-same carry-forward rule as the World Bank component applies — most recent
-observed year, capped at `MAX_CARRY_FORWARD` (3 years), with `source_year`
-recording which year a weight came from. That covers 2022–2024 from 2021. If
-a newer round extends coverage, the cap stops mattering.
+GBD 2023 covers **1990–2023**, so only 2024 needs extrapolating. The same
+carry-forward rule as the World Bank component applies: most recent observed
+year, capped at `MAX_CARRY_FORWARD` (3 years), with `source_year` recording
+which year a weight came from. One year carried from 2023 to 2024 sits well
+inside that cap.
+
+An earlier draft of this file said GBD reached 2021 and that 2022–2024 would
+all need carrying. That was wrong: the 2023 round's year range is 1990–2023,
+per the user guide. Record the actual range of whichever round you download in
+`VINTAGE.txt`, since the cap only bites if a round is further behind than
+expected.

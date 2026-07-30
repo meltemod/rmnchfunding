@@ -276,9 +276,13 @@ message(
 #     RH = 0; MNH = 0;
 #     CH = cases under 5, both sexes / cases all ages, both sexes
 #
-# The exact query to run is recorded in data-raw/gbd/README.md. Until the
-# extract exists these three codes stay absent from this dataset and remain NA
-# in `sector_weights`, so `muskoka(universe = "rmnch")` still refuses rather
-# than returning a total missing three large sectors.
+# The exact query is recorded in data-raw/gbd/README.md, including the one
+# field the GBD Results Tool asks for first and whose name misleads: the GBD
+# Estimate must be "Cause of death or injury", which despite sounding like
+# mortality is the cause-level set under which Incidence and Prevalence live
+# (IHME GBD Results Tool User Guide, Appendix B). Until the extract exists
+# these three codes stay absent from this dataset and remain NA in
+# `sector_weights`, so `muskoka(universe = "rmnch")` still refuses rather than
+# returning a total missing three large sectors.
 
 usethis::use_data(rmnch_recipient_weights, overwrite = TRUE, compress = "xz")
