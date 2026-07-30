@@ -55,6 +55,14 @@
   `INC_X`'s children although the reported `INC_X` value includes it, which
   costs 32% of a donor's total when an income classification is cut to country
   level.
+* `oecd_crs()` and `oecd_multi()` now return 0 rows with a warning, rather than
+  erroring, when a donor funded nothing in the requested sectors and years.
+  Greece has no records under codes 13020, 13030 or 13040 for 2021-2024, and
+  erroring on that would abort any loop over donors on its first sparse one.
+  The empty result carries the same columns and attributes as a populated one.
+* Fixed `oecd_crs()` and `oecd_multi()` treating an empty OECD result as a
+  network failure. OECD answers an empty query with HTTP 404 and the body
+  "NoRecordsFound", which httr2 raised on before the body could be read.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the per-donor RMNCH weights are not

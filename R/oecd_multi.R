@@ -50,6 +50,9 @@
 #' }
 #' with attributes `prices`, `base_year`, `measure` and `fetched_on`.
 #'
+#' As with [oecd_crs()], a donor with no core contributions in the requested
+#' years returns 0 rows with the same columns, and warns, rather than erroring.
+#'
 #' @seealso [oecd_crs()], [agency_channels], [agency_weights].
 #'
 #' @examplesIf interactive()
@@ -112,9 +115,11 @@ oecd_multi <- function(donor,
     start = min(years), end = max(years)
   )
   if (nrow(raw) == 0L) {
-    stop("OECD returned no multilateral records for donor(s) ",
-         paste(donor, collapse = ", "), " in ", min(years), "-", max(years),
-         ".", call. = FALSE)
+    # As in oecd_crs(): no core contributions is an answer, not an error.
+    warning("OECD has no multilateral records for donor(s) ",
+            paste(donor, collapse = ", "), " in ", min(years), "-", max(years),
+            "; returning 0 rows.", call. = FALSE)
+    return(empty_multi(pb, measure))
   }
   if (length(unique(raw$PRICE_BASE)) > 1L) {
     stop("OECD returned more than one price basis in a single response; ",

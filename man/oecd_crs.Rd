@@ -67,6 +67,12 @@ of United States disbursements in 2022. Sum without these for a
 country-attributable figure, and with them for a donor total.}
 }
 with attributes \code{prices}, \code{base_year} and \code{fetched_on}.
+
+A donor that funded nothing in the requested sectors and years returns \strong{0
+rows with those same columns}, and warns. That is a legitimate answer
+rather than a failure — small providers routinely report no
+reproductive-health disbursements at all — and erroring would abort any loop
+over donors on its first sparse one.
 }
 \description{
 Pulls a donor's disbursements from the OECD Creditor Reporting System for

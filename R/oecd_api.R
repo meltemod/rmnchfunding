@@ -108,6 +108,16 @@ oecd_fetch <- function(host, dataflow, version, key, start = NULL, end = NULL) {
     }
   )
   req <- httr2::req_timeout(req, 300)
+  # OECD answers an empty result with HTTP 404 and the body "NoRecordsFound".
+  # That is a legitimate outcome — a donor may simply have funded nothing in
+  # the requested sectors and years — not a failure, so 404 is allowed through
+  # for the body check below to interpret. Any other 4xx/5xx still raises.
+  req <- httr2::req_error(
+    req, is_error = function(resp) {
+      s <- httr2::resp_status(resp)
+      s >= 400L && s != 404L
+    }
+  )
 
   resp <- httr2::req_perform(req)
   body <- httr2::resp_body_string(resp)
@@ -116,8 +126,8 @@ oecd_fetch <- function(host, dataflow, version, key, start = NULL, end = NULL) {
     if (grepl("NoRecordsFound", body, fixed = TRUE)) {
       return(tibble::tibble())
     }
-    stop("Unexpected response from OECD:\n  ", substr(body, 1L, 300L),
-         call. = FALSE)
+    stop("Unexpected response from OECD (HTTP ", httr2::resp_status(resp),
+         "):\n  ", substr(body, 1L, 300L), call. = FALSE)
   }
 
   readr::read_csv(
@@ -245,4 +255,37 @@ check_prices <- function(prices, base) {
     stop("`base` must be a single year, e.g. base = 2023.", call. = FALSE)
   }
   list(prices = prices, base = base)
+}
+
+# Zero-row results with the full column schema, so that a donor with no data
+# flows through the same downstream code as one with data. Defined here rather
+# than inline so the two fetchers cannot drift from their own documented
+# return shapes.
+
+#' @noRd
+empty_crs <- function(pb) {
+  out <- tibble::tibble(
+    donor = character(0), donor_name = character(0),
+    recipient = character(0), recipient_name = character(0),
+    purpose_code = character(0), purpose_name = character(0),
+    year = integer(0), value = numeric(0),
+    is_aggregate = logical(0), is_unallocated = logical(0)
+  )
+  attr(out, "prices") <- pb$prices
+  attr(out, "base_year") <- pb$base
+  attr(out, "fetched_on") <- Sys.Date()
+  out
+}
+
+#' @noRd
+empty_multi <- function(pb, measure) {
+  out <- tibble::tibble(
+    donor = character(0), donor_name = character(0), agency = character(0),
+    year = integer(0), value = numeric(0), n_channels = integer(0)
+  )
+  attr(out, "prices") <- pb$prices
+  attr(out, "base_year") <- pb$base
+  attr(out, "measure") <- measure
+  attr(out, "fetched_on") <- Sys.Date()
+  out
 }

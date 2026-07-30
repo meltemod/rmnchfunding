@@ -79,6 +79,12 @@
 #' }
 #' with attributes `prices`, `base_year` and `fetched_on`.
 #'
+#' A donor that funded nothing in the requested sectors and years returns **0
+#' rows with those same columns**, and warns. That is a legitimate answer
+#' rather than a failure — small providers routinely report no
+#' reproductive-health disbursements at all — and erroring would abort any loop
+#' over donors on its first sparse one.
+#'
 #' @seealso [oecd_multi()] for the multilateral half, [crs_recipients] for the
 #'   aggregate/leaf distinction.
 #'
@@ -145,9 +151,16 @@ oecd_crs <- function(donor,
     start = min(years), end = max(years)
   )
   if (nrow(raw) == 0L) {
-    stop("OECD returned no CRS records for donor(s) ",
-         paste(donor, collapse = ", "), " in ", min(years), "-", max(years),
-         ".", call. = FALSE)
+    # A donor that funded nothing in the requested sectors and years is a
+    # legitimate answer, not a failure — small providers routinely report no
+    # reproductive-health disbursements at all. Erroring here would abort any
+    # loop over donors on its first sparse one. An empty result of the right
+    # shape lets downstream code keep working, and the warning stops it being
+    # mistaken for a zero total that was actually computed.
+    warning("OECD has no CRS records for donor(s) ",
+            paste(donor, collapse = ", "), " in ", min(years), "-", max(years),
+            " under the requested sectors; returning 0 rows.", call. = FALSE)
+    return(empty_crs(pb))
   }
 
   out <- tibble::tibble(

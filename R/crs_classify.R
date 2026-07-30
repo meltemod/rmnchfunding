@@ -259,9 +259,29 @@ crs_classify <- function(x,
         paste0("\n  Members absent from the data: ",
                paste(absent, collapse = ", "), ".")
       },
-      "\n  This means the scheme definition and OECD's aggregates have ",
-      "diverged at level ", level, " (\"", level_name, "\"); the parts no ",
-      "longer make the whole.",
+      "\n  The scheme definition and OECD's aggregates have diverged at level ",
+      level, " (\"", level_name, "\"); the parts no longer make the whole.",
+      # Name the two causes seen in practice, since neither is guessable from
+      # the numbers alone.
+      if (any(cmp$value_scheme[off] > cmp$value_dpgc[off])) {
+        paste0(
+          "\n  Scheme EXCEEDS the total, which means double counting. For ",
+          "wb_income this is the known case: eleven of its members (Bulgaria, ",
+          "Czechia, Estonia, Falkland Islands, Hungary, Latvia, Lithuania, ",
+          "Poland, Romania, Russia, Slovakia) sit outside DPGC. They carry no ",
+          "ODA, since they are not on the DAC List of ODA Recipients, so this ",
+          "should not arise for `measure = \"100\"`, but another measure may ",
+          "reach them."
+        )
+      } else {
+        paste0(
+          "\n  Scheme falls SHORT of the total, which means a member is ",
+          "missing. The known case is a residual whose children OECD's ",
+          "codelist does not list in full; see ?crs_recipient_tree for the ",
+          "INC_X -> DPGC_X repair, and re-run data-raw/crs_recipient_tree.R ",
+          "in case the hierarchy has moved."
+        )
+      },
       call. = FALSE
     )
   }

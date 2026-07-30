@@ -51,6 +51,9 @@ the \code{prices} and \code{base_year} attributes.}
 core channels in that year.}
 }
 with attributes \code{prices}, \code{base_year}, \code{measure} and \code{fetched_on}.
+
+As with \code{\link[=oecd_crs]{oecd_crs()}}, a donor with no core contributions in the requested
+years returns 0 rows with the same columns, and warns, rather than erroring.
 }
 \description{
 Pulls a provider's use of the multilateral system from the OECD table of the

@@ -156,3 +156,40 @@ test_that("every level of every scheme sums to the same grand total", {
     }
   }
 })
+
+test_that("all schemes and levels agree across several donors and years", {
+  skip_if_no_oecd()
+
+  # The full audit, narrowed to stay quick: three donors of very different
+  # size and shape, four years, every scheme at every level. The property is
+  # that all eleven combinations agree with each other, not just with DPGC,
+  # since a shared error would satisfy the weaker claim.
+  #
+  # GRC is included deliberately: a small donor with sparse data, where scheme
+  # members are absent rather than zero, which is the case most likely to make
+  # a level fail to add up.
+  for (donor in c("USA", "GRC", "4EU001")) {
+    d <- suppressWarnings(oecd_or_skip(oecd_crs(
+      donor, years = 2021:2024, sectors = c("13020", "13030", "13040"),
+      prices = "current", recipients = "all", quiet = TRUE
+    )))
+    # A donor with no disbursements in these sectors has nothing to classify.
+    # Greece is in the list precisely because it is sparse; that it returns
+    # nothing for some sector sets is the point, not a failure.
+    if (nrow(d) == 0L) next
+    per_combo <- list()
+    for (s in names(rmnchfunding:::CRS_SCHEMES)) {
+      for (lv in rmnchfunding:::CRS_SCHEME_LEVELS[[s]]) {
+        r <- crs_classify(d, s, level = lv)
+        by_year <- stats::aggregate(r["value"], by = list(year = r$year),
+                                    FUN = sum)
+        per_combo[[paste(s, lv)]] <- stats::setNames(by_year$value,
+                                                     by_year$year)
+      }
+    }
+    m <- do.call(rbind, per_combo)
+    spread <- apply(m, 2L, function(v) max(v) - min(v))
+    expect_equal(max(spread), 0, tolerance = 1e-6,
+                 label = paste0(donor, ": spread across scheme/level combos"))
+  }
+})

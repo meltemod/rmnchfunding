@@ -127,3 +127,30 @@ test_that("unallocated buckets are marked but not treated as aggregates", {
   # collation of "_" against letters differs between locales.
   expect_setequal(x$recipient_code[x$is_aggregate], c("INC_X", "INCWB_X"))
 })
+
+test_that("empty results have the full column schema, not zero columns", {
+  # A donor that funded nothing must flow through the same downstream code as
+  # one that did. A zero-row, zero-column tibble would fail on the first
+  # column reference instead.
+  pb <- list(prices = "constant", base = 2023L)
+  e <- empty_crs(pb)
+  expect_equal(nrow(e), 0L)
+  expect_true(all(c("donor", "recipient", "purpose_code", "year", "value",
+                    "is_aggregate", "is_unallocated") %in% names(e)))
+  expect_identical(attr(e, "prices"), "constant")
+  expect_identical(attr(e, "base_year"), 2023L)
+
+  m <- empty_multi(pb, "10")
+  expect_equal(nrow(m), 0L)
+  expect_true(all(c("donor", "agency", "year", "value", "n_channels")
+                  %in% names(m)))
+  expect_identical(attr(m, "measure"), "10")
+
+  # The empty shapes must match the populated ones, or code that works on one
+  # breaks on the other.
+  expect_setequal(
+    names(e),
+    c("donor", "donor_name", "recipient", "recipient_name", "purpose_code",
+      "purpose_name", "year", "value", "is_aggregate", "is_unallocated")
+  )
+})

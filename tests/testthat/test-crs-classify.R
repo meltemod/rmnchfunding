@@ -149,3 +149,46 @@ test_that("the INC_X -> DPGC_X repair is present in the tree", {
   expect_setequal(tr$parent_code[tr$child_code == "DPGC_X"],
                   c("DPGC", "INC_X"))
 })
+
+test_that("a scheme exceeding the total names double counting", {
+  # The two failure directions have different causes and different fixes, so
+  # the message must distinguish them rather than say only "does not sum".
+  x <- fake_crs(100)
+  x$value[x$recipient == "F"] <- 80          # geographic now sums to 120
+  expect_error(crs_classify(x, "geographic"), "EXCEEDS the total")
+  expect_error(crs_classify(x, "geographic"), "double counting")
+
+  x2 <- fake_crs(100)
+  x2$value[x2$recipient == "F"] <- 40        # now sums to 80
+  expect_error(crs_classify(x2, "geographic"), "falls SHORT")
+  expect_error(crs_classify(x2, "geographic"), "INC_X -> DPGC_X")
+})
+
+test_that("every scheme agrees with every other at the levels held here", {
+  # The audit property, on the fixture: not merely that each combination
+  # matches DPGC, but that all of them match EACH OTHER. Checked as a spread
+  # so a single drifting combination is caught wherever it sits.
+  #
+  # Levels 0 and 1 only. The fixture holds continent- and tier-level codes, so
+  # descending further finds nothing and crs_classify() rightly refuses —
+  # asserting agreement at those depths would be asserting that the fixture is
+  # complete, which it is not. Deeper levels are covered against live data in
+  # test-oecd-live.R.
+  x <- fake_crs(100)
+  totals <- unlist(lapply(names(CRS_SCHEMES), function(s) {
+    vapply(0:1, function(lv) sum(crs_classify(x, s, level = lv)$value),
+           numeric(1))
+  }))
+  expect_length(totals, 6L)
+  expect_equal(max(totals) - min(totals), 0, tolerance = 1e-9)
+})
+
+test_that("an incomplete input is refused rather than under-reported", {
+  # The flip side: the fixture cannot support a country-level cut, and asking
+  # for one must fail. This is the behaviour that makes the agreement test
+  # above meaningful — silence here would mean a level can quietly return less
+  # than the whole.
+  x <- fake_crs(100)
+  expect_error(crs_classify(x, "geographic", level = "country"),
+               "falls SHORT|does not sum")
+})
