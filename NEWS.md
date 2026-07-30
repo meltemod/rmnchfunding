@@ -42,6 +42,19 @@
   values are always fetched in current prices and deflated here with OECD's
   per-donor ODA deflators. Use base 2022 to reproduce the 2025 report edition
   and 2023 for the 2026 edition.
+* Added `crs_classify()`, which totals a donor's disbursements by recipient
+  classification. OECD classifies recipients geographically, by DAC List income
+  tier and by World Bank income group simultaneously; each is a different cut of
+  the same money, so each sums to the same grand total. Each can also be cut at
+  a chosen `level` — geography runs total, continent, region, subregion,
+  country; the income classifications run total, tier or group, country.
+  Overlapping flags such as `HIPC`, `LLDC`, `SIDS` and `FSCAC` are deliberately
+  not classifications: they partition nothing.
+* Added `crs_recipient_tree`, the hierarchy edges that make a level cut
+  possible. It carries one local repair — OECD's codelist omits `DPGC_X` from
+  `INC_X`'s children although the reported `INC_X` value includes it, which
+  costs 32% of a donor's total when an income classification is cut to country
+  level.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the per-donor RMNCH weights are not

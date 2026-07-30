@@ -41,12 +41,37 @@ crs <- oecd_crs("USA", years = 2022:2024, prices = "constant", base = 2023)
 mul <- oecd_multi("USA", years = 2022:2024, prices = "constant", base = 2023)
 ```
 
+Recipients can be classified three ways, each summing to the same total, and
+each cuttable at a chosen level:
+
+```r
+d <- oecd_crs("USA", years = 2022, prices = "constant", base = 2023,
+              recipients = "all")             # "all" keeps the aggregate rows
+
+crs_classify(d, "geographic")                      # continents
+crs_classify(d, "geographic", level = "subregion")
+crs_classify(d, "dac_income", level = "country")
+crs_classify(d, "wb_income")
+```
+
+| Classification | Levels |
+|---|---|
+| `geographic` | `total`, `continent`, `region`, `subregion`, `country` |
+| `dac_income` | `total`, `tier`, `country` |
+| `wb_income` | `total`, `group`, `country` |
+
+`HIPC`, `LLDC`, `SIDS`, `FSCAC` and `ACP` are deliberately *not* classifications
+— they are overlapping flags a country carries in addition to its place in each
+one above, so they partition nothing. See `vignette("rmnchfunding")` and
+`?crs_classify`.
+
 The coefficient tables and the two lookups the fetchers depend on:
 
 ```r
 sector_weights                # CRS purpose code -> share, per universe
 agency_weights                # multilateral agency -> share, per year and edition
 crs_recipients                # which recipient codes are aggregates
+crs_recipient_tree            # hierarchy edges, for cutting at a level
 agency_channels               # agency -> OECD channel code
 ```
 
@@ -135,6 +160,9 @@ then a subsection below it if the choice needs more than a line.
 | 10 | CRS and MULTI fetched from the `dcd-public` host | These two dataflows moved; the ordinary `public` host answers every query with HTTP 500, which reads as a broken request rather than a wrong address. |
 | 11 | Every hierarchical dimension pinned to its total | `RECIPIENT`, `CHANNEL`, `MODALITY` and `SECTOR` each return a `_T` total *and* its components. Left open, one figure comes back six or more times and sums to a multiple of the truth. |
 | 12 | Values fetched in current prices and deflated here | OECD rebases its constant series each release, and serves only the current base. Deflating locally lets any base be requested and keeps one code path. |
+| 13 | `crs_classify()` separate from `oecd_crs()` rather than an argument | One fetch serves every classification and level, so folding it in would mean re-downloading to change the view. |
+| 14 | Classification levels are frontiers, not depth slices | The hierarchy is ragged — Africa nests to subregions, Europe holds countries directly. A depth slice would drop every European country and stop adding up. |
+| 15 | One local repair to the hierarchy: `INC_X` -> `DPGC_X` | OECD's codelist omits an edge its own reported aggregates include. Without it, income classifications lose 32% of a donor's total at country level. |
 
 ### Decision 3 — unsupplied coefficients are `NA`, never `0`
 
