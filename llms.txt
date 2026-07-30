@@ -1,16 +1,19 @@
 # rmnchfunding
 
-Calculates bilateral and multilateral reproductive, maternal, newborn
-and child health (RMNCH) and family-planning funding from OECD Creditor
-Reporting System (CRS) data under three methodologies, with
-user-adjustable percentage tables. Provides muskoka1(), muskoka2() and
-revised_fp().
+Calculates bilateral and multilateral funding for reproductive,
+maternal, newborn and child health (RMNCH), sexual and reproductive
+health and rights (SRHR) and family planning from OECD Creditor
+Reporting System (CRS) flows and OECD providers’ total use of the
+multilateral system, using the revised Muskoka method.
 
-> **Status: scaffolding.** Generated from a package template. The only
-> code here is one example function,
-> [`rescale01()`](https://meltemod.github.io/rmnchfunding/reference/rescale01.md),
-> kept so the package builds, checks and tests from the first commit.
-> Delete it when you have real code.
+> **Status: under construction.** The coefficient tables and both OECD
+> fetchers are in place. `muskoka()` itself is not written yet, and the
+> four per-donor RMNCH weights are not yet derived, so the package does
+> not produce a Muskoka estimate — but
+> [`oecd_crs()`](https://meltemod.github.io/rmnchfunding/reference/oecd_crs.md)
+> and
+> [`oecd_multi()`](https://meltemod.github.io/rmnchfunding/reference/oecd_multi.md)
+> are usable on their own.
 
 ------------------------------------------------------------------------
 
@@ -26,13 +29,48 @@ Requires R \>= 4.1. Developed against R 4.6.x.
 
 ## 2. Usage
 
+Fetch a donor’s bilateral disbursements and multilateral core
+contributions:
+
 ``` r
 
 library(rmnchfunding)
 
-rescale01(c(2, 4, 6, 8))
-#> [1] 0.0000000 0.3333333 0.6666667 1.0000000
+# Bilateral, by recipient country, in the 2026 edition's price base
+crs <- oecd_crs("USA", years = 2022:2024, prices = "constant", base = 2023)
+
+# Core contributions to the eleven weighted agencies
+mul <- oecd_multi("USA", years = 2022:2024, prices = "constant", base = 2023)
 ```
+
+The coefficient tables and the two lookups the fetchers depend on:
+
+``` r
+
+sector_weights                # CRS purpose code -> share, per universe
+agency_weights                # multilateral agency -> share, per year and edition
+crs_recipients                # which recipient codes are aggregates
+agency_channels               # agency -> OECD channel code
+```
+
+The planned entry point is a single function covering all three
+universes:
+
+``` r
+
+muskoka(universe = "rmnch")           # or "srhr", or "fp"
+muskoka(universe = "fp", ida = 1)     # revised Muskoka 1% for IDA
+```
+
+Both tables are transcribed from the Donors Delivering for SRHR Report,
+[2026
+edition](https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf)
+pages 110–111 and [2025
+edition](https://donorsdelivering.report/wp-content/uploads/2025/06/DDSRHR2025.pdf)
+pages 104–105. The sector table is identical in both; the multilateral
+weights were revised, so `agency_weights` carries them per edition. The
+three universes overlap by construction, so their totals must never be
+added together.
 
 Full reference: <https://meltemod.github.io/rmnchfunding/>
 
@@ -89,9 +127,129 @@ Record every non-obvious choice here, with its reasoning, so a future
 maintainer can tell what was deliberate and what was incidental. Add a
 row, then a subsection below it if the choice needs more than a line.
 
-| \#  | Decision | Rationale in brief |
-|-----|----------|--------------------|
-|     |          |                    |
+| \# | Decision | Rationale in brief |
+|----|----|----|
+| 1 | One `muskoka(universe=)` rather than `muskoka1()`/`muskoka2()`/`revised_fp()` | The three universes share a method and differ only in coefficients. Three functions would triplicate the pipeline to vary a lookup. |
+| 2 | Coefficients stored as proportions, entered as percentages | Every use is a multiplication against a disbursement; a stray factor of 100 there is invisible in a total. `data-raw/` keeps percentages so it stays diffable against the source table. |
+| 3 | Unknown coefficients are `NA`, never `0` | A zero asserts the sector contributes nothing. Conflating the two understates totals silently. |
+| 4 | Weight tables held in long format | `muskoka()` takes one universe and joins on code; a wide table would need runtime column selection by name. |
+| 5 | Agency weights keyed by spending year *and* report edition | Weights are per spending year, and each edition recomputes earlier years. 31 of 66 overlapping cells differ between editions. |
+| 6 | Purpose codes stored as character | Keeps codes out of arithmetic and preserves leading digits when joining CRS extracts that store them as text. |
+| 7 | IDA’s FP treatment is a `muskoka()` argument, not a table row | 0% (Donors Delivering) and 1% (revised Muskoka) are two live methods. A row would imply 1% was once published. |
+| 8 | Per-donor RMNCH weights assumed constant across years | Turns one equation per published year into repeated observations of the same unknowns, which is what makes recovery possible at all. |
+| 9 | Unidentified donors return `NA`, not a point from the solution family | A donor spending in all four `varies*` codes is underdetermined by one. Picking a representative solution would present an undetermined number as a result. |
+| 10 | CRS and MULTI fetched from the `dcd-public` host | These two dataflows moved; the ordinary `public` host answers every query with HTTP 500, which reads as a broken request rather than a wrong address. |
+| 11 | Every hierarchical dimension pinned to its total | `RECIPIENT`, `CHANNEL`, `MODALITY` and `SECTOR` each return a `_T` total *and* its components. Left open, one figure comes back six or more times and sums to a multiple of the truth. |
+| 12 | Values fetched in current prices and deflated here | OECD rebases its constant series each release, and serves only the current base. Deflating locally lets any base be requested and keeps one code path. |
+
+### Decision 3 — unsupplied coefficients are `NA`, never `0`
+
+**Chosen:** Hold the four per-donor RMNCH weights as `NA`, and have
+`muskoka()` refuse to compute a total that depends on one.
+
+**Rejected:** Substituting `0`, which would let every call return a
+number.
+
+**Why.** The two are indistinguishable in a result but opposite in
+meaning. A zero says a sector contributes nothing to the universe; an
+`NA` says this table cannot express the value. Three of the four
+`varies*` RMNCH cells (12262 malaria, 12263 tuberculosis, 13040
+HIV/AIDS) are large CRS sectors, so treating them as zero would
+understate RMNCH totals substantially — and the output would carry no
+sign that anything was missing.
+
+Note the contrast with IDA’s family-planning weight, which *is* a plain
+`0`. That zero is a published methodological choice with a footnote
+explaining it, so it is data. The `varies*` cells are a shape mismatch,
+so they are absent.
+
+**Cost.** The package cannot produce an RMNCH total until the per-donor
+weights are derived. SRHR and FP are complete and unaffected.
+
+### Decision 7 — IDA’s family-planning treatment is an argument, not a row
+
+**Chosen:** `agency_weights` records IDA’s published FP weight of 0%.
+`muskoka(universe = "fp", ida = )` accepts `0` (default) or `1` to apply
+the revised Muskoka 1% instead.
+
+**Rejected:** An extra row in `agency_weights` carrying the 1% figure.
+
+**Why.** The report’s footnote says the Donors Delivering method does
+not count IDA contributions to FP, while the revised Muskoka method
+applies 1%, and that the two will be reconciled in a later report. Those
+are two live methods, not two vintages of one. Adding a row would assert
+that 1% was published in some year, which it was not. Making it an
+argument keeps the default reproducing the report exactly, and puts any
+departure from it in the caller’s own code.
+
+**Cost.** One more argument, and it only means anything for
+`universe = "fp"`. The default will need revisiting when the next report
+reconciles the two.
+
+### Decision 11 — every hierarchical dimension pinned to its total
+
+**Chosen:**
+[`oecd_crs()`](https://meltemod.github.io/rmnchfunding/reference/oecd_crs.md)
+pins `CHANNEL`, `MODALITY` and `UNIT_MEASURE`;
+[`oecd_multi()`](https://meltemod.github.io/rmnchfunding/reference/oecd_multi.md)
+pins `RECIPIENT`, `SECTOR` and `UNIT_MEASURE`. `RECIPIENT` in CRS is
+filtered after the fact against \[crs_recipients\] instead, because the
+per-recipient breakdown is itself wanted.
+
+**Rejected:** Leaving them open and summing whatever comes back.
+
+**Why.** SDMX dimensions here are hierarchies, and a query returns the
+`_T` total *alongside* every component, at more than one level of
+nesting. Measured: one donor, one purpose code, one recipient, one year
+came back as 34 CRS rows (channel `_T` plus 10000–60000, modality `_T`
+plus B/C/D plus B03/C01/D01/D02). For MULTI, one donor-agency-year came
+back six times — `RECIPIENT` `DPGC` and `DPGC_X` crossed with `SECTOR`
+`1000`, `998` and `99810`. Summing gave \$20.7bn for a US core
+contribution to the Global Fund whose true value is \$3.3bn.
+
+Nothing in the response marks which rows are totals, so this fails
+silently and plausibly. Both fetchers now also assert one row per key
+and stop rather than sum if that ever changes.
+
+**Cost.** Channel and modality breakdowns are not reachable through
+these functions. Adding them would mean returning those dimensions as
+columns rather than opening the filter.
+
+### Decision 5 — agency weights keyed by spending year *and* report edition
+
+**Chosen:** `agency_weights` carries both `data_year` (2021–2024) and
+`report_edition` (2025, 2026). 198 rows.
+
+**Rejected:** A single year column. That was the first implementation,
+and it was wrong — see below.
+
+**Why.** The two columns mean different things and neither is redundant.
+`data_year` is the year of the spending: the report computes each weight
+as the proportion of that agency’s own disbursements in that year
+benefiting the universe, so it moves with the agency’s disbursement mix.
+`report_edition` is the year of the report, and every edition
+*recomputes* the weights for all years it covers, including years
+already published, as the underlying data is revised.
+
+Those revisions are not cosmetic. Of the 66 agency-year-universe cells
+published in both editions, **31 changed** — the Asian Development
+Bank’s 2023 RMNCH weight is 5.18% as first published and 13.42% a year
+later. So weights and published totals must come from the *same*
+edition; mixing them reproduces neither report. The editions also differ
+in price base (2022 vs 2023 constant prices).
+
+The first version of this table had one `method_year` column, documented
+as the methodology vintage rather than the spending year. That reading
+did not survive contact with the 2025 edition: the columns are labelled
+2021–2023 there and 2022–2024 in 2026, which only makes sense as
+spending years, and the report says the percentages are computed from
+each multilateral’s disbursements “each year”. The edition axis was
+missing entirely.
+
+**Cost.** Callers must specify both keys, and each new edition adds ~99
+rows rather than replacing them. In exchange, the two editions together
+span four spending years — which is exactly what makes the four
+per-donor RMNCH weights identifiable.
 
 ------------------------------------------------------------------------
 
@@ -100,8 +258,27 @@ row, then a subsection below it if the choice needs more than a line.
 Things carried forward deliberately, so they read as choices rather than
 oversights.
 
-- [`rescale01()`](https://meltemod.github.io/rmnchfunding/reference/rescale01.md)
-  is placeholder code, not a feature.
+- **Four RMNCH sector weights are per-donor and not yet derived**
+  (12262, 12263, 13040, 51010). The source marks these `varies*` because
+  their RMNCH share is set per donor country. They must be back-derived
+  from the published per-donor totals in Annex 3 of the report, which
+  needs the CRS data those totals were built from — so this waits on the
+  fetchers. Until then `muskoka(universe = "rmnch")` will refuse to
+  compute rather than understate. SRHR and FP are complete.
+- **The per-donor weights are identifiable but not yet computed.**
+  Weights are taken as constant across years (Decision 8), so each
+  published year is one equation against four unknowns. The 2025 and
+  2026 editions together cover 2021–2024, which supplies the four
+  needed. What remains is the CRS disbursements those totals were built
+  from, i.e. the fetchers. Two hazards to watch when it runs: the
+  editions revise each other’s years, so equations must pair totals with
+  same-edition weights and be deflated to a common base; and
+  ill-conditioned donors amplify the 0.005-million rounding in the
+  published totals, which `solve_donor_weights()` reports as an explicit
+  error bound rather than leaving implicit.
+- **No agency crosswalk yet.** `agency_weights` identifies agencies by
+  display name. Joining to OECD data needs channel codes; matching on
+  name at run time would fail silently.
 - `README.md` is plain Markdown, not `README.Rmd`. The usage block above
   is therefore hand-written and not verified by anything. Run
   `usethis::use_readme_rmd()` if you want the examples executed on
@@ -118,8 +295,18 @@ oversights.
 
 ## All functions
 
-- [`rescale01()`](https://meltemod.github.io/rmnchfunding/reference/rescale01.md)
-  : Rescale a numeric vector to the unit interval
+- [`agency_channels`](https://meltemod.github.io/rmnchfunding/reference/agency_channels.md)
+  : Multilateral agency to OECD channel code crosswalk
+- [`agency_weights`](https://meltemod.github.io/rmnchfunding/reference/agency_weights.md)
+  : Multilateral agency weights for the revised Muskoka method
+- [`crs_recipients`](https://meltemod.github.io/rmnchfunding/reference/crs_recipients.md)
+  : CRS recipient codes: which are aggregates, which are countries
+- [`oecd_crs()`](https://meltemod.github.io/rmnchfunding/reference/oecd_crs.md)
+  : Fetch bilateral CRS disbursements for a donor
+- [`oecd_multi()`](https://meltemod.github.io/rmnchfunding/reference/oecd_multi.md)
+  : Fetch a provider's core contributions to multilateral agencies
+- [`sector_weights`](https://meltemod.github.io/rmnchfunding/reference/sector_weights.md)
+  : Sector weights for the revised Muskoka method
 
 # Articles
 

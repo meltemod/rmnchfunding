@@ -1,0 +1,96 @@
+# Sector weights for the revised Muskoka method
+
+The share of a disbursement in each OECD CRS purpose code that is
+attributed to a funding universe. These coefficients, applied to CRS
+bilateral flows, are one half of a Muskoka estimate;
+[agency_weights](https://meltemod.github.io/rmnchfunding/reference/agency_weights.md)
+is the other.
+
+## Usage
+
+``` r
+sector_weights
+```
+
+## Format
+
+A data frame with 99 rows (33 purpose codes x 3 universes) and 4
+columns:
+
+- purpose_code:
+
+  CRS five-digit purpose code, as character. Held as text so codes are
+  never treated as numbers and never lose a leading digit when joined
+  against a CRS extract.
+
+- purpose_name:
+
+  Purpose code description.
+
+- universe:
+
+  Factor with levels `"rmnch"`, `"srhr"`, `"fp"`.
+
+- weight:
+
+  Share of the disbursement attributed to the universe, as a proportion
+  in `[0, 1]` — not a percentage. `NA` where no weight has been agreed;
+  see Unresolved weights.
+
+## Source
+
+Donors Delivering for SRHR Report 2026, "Selected percentages per OECD
+DAC codes (as under the Muskoka 2, the Donors Delivering for SRHR, and
+the FP methodology)", pages 110-111.
+<https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf>
+
+RMNCH follows the Muskoka 2 methodology developed by the London School
+of Hygiene and Tropical Medicine; family planning follows the revised
+Muskoka methodology agreed at the 2012 London Summit; SRHR follows the
+Donors Delivering methodology. The three overlap by construction, so
+their totals must not be added together.
+
+## Weights that vary by donor
+
+Four of the 99 weights are `NA`, all in the RMNCH universe. The source
+table gives these as `varies*` rather than a single figure, because the
+RMNCH share of these sectors is set **per donor country** rather than
+globally:
+
+- 12262:
+
+  Malaria control
+
+- 12263:
+
+  Tuberculosis control
+
+- 13040:
+
+  STD control including HIV/AIDS
+
+- 51010:
+
+  General budget support-related aid
+
+They are `NA` here because a single column cannot hold a per-donor
+value, not because they are unknown in principle. The donor-level
+weights are recovered from the published per-donor RMNCH totals by
+`solve_donor_weights()`, which needs the CRS disbursements those totals
+were built from; until that runs there is nowhere for the numbers to
+live. `muskoka()` must therefore refuse to compute an RMNCH total rather
+than treat these as zero — three of the four are large CRS sectors, and
+a silent zero would understate every donor's result.
+
+Four unknown weights need four independent published years. The 2025 and
+2026 editions cover 2021-2023 and 2022-2024 respectively, so together
+they supply them; see
+[agency_weights](https://meltemod.github.io/rmnchfunding/reference/agency_weights.md)
+for why the two editions cannot be freely mixed while doing so.
+
+The SRHR and family-planning universes are complete and unaffected.
+
+## See also
+
+[agency_weights](https://meltemod.github.io/rmnchfunding/reference/agency_weights.md)
+for the multilateral half of the estimate.

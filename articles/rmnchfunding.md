@@ -7,27 +7,150 @@ library(rmnchfunding)
 
 ## Why this package exists
 
-Replace this section with the problem the package solves — the situation
-a reader is in *before* they install it. A vignette that opens with a
-feature list assumes the reader already knows they need one.
+No OECD dataset reports how much aid goes to reproductive, maternal,
+newborn and child health. The CRS records disbursements against purpose
+codes that are broader than RMNCH — “basic health care”, “basic
+nutrition” — and a provider’s contribution to the WHO or the Global Fund
+appears as a single core payment with no sectoral breakdown at all.
 
-## A worked example
+The Muskoka method closes both gaps with coefficients: a fixed share of
+each purpose code is attributed to the universe of interest, and a fixed
+share of each multilateral agency’s spending is attributed alongside it.
+This package holds those coefficients, fetches the two OECD sources they
+apply to, and does the arithmetic.
+
+## Status
+
+Under construction. The coefficient tables are in place; the OECD
+fetchers and `muskoka()` itself are not yet written, so there is nothing
+here that produces an estimate.
+
+## The three universes
+
+Every coefficient is given for three nested-in-spirit but separately
+estimated universes:
+
+| Universe | Scope                                            |
+|----------|--------------------------------------------------|
+| `rmnch`  | Reproductive, maternal, newborn and child health |
+| `srhr`   | Sexual and reproductive health and rights        |
+| `fp`     | Family planning                                  |
+
+`muskoka()` will take one of these as its `universe` argument.
+
+## The coefficient tables
+
+Bilateral flows are weighted by CRS purpose code:
 
 ``` r
 
-x <- c(2, 4, 6, 8)
-rescale01(x)
-#> [1] 0.0000000 0.3333333 0.6666667 1.0000000
+head(sector_weights[sector_weights$universe == "rmnch", ], 8)
+#>   purpose_code                                purpose_name universe weight
+#> 1        11230                Basic life skills for adults    rmnch    0.0
+#> 2        11231                 Basic life skills for youth    rmnch    0.0
+#> 3        12110 Health policy and administrative management    rmnch    0.4
+#> 4        12181                  Medical education/training    rmnch    0.4
+#> 5        12182                            Medical research    rmnch    0.0
+#> 6        12191                            Medical services    rmnch    1.0
+#> 7        12220                           Basic health care    rmnch    0.4
+#> 8        12230                 Basic health infrastructure    rmnch    0.4
 ```
 
-Every chunk here is executed when the package is built, so a vignette
-that still knits is a second, coarser test suite: it catches interface
-changes that unit tests written against internals would miss.
+Multilateral spending is weighted by agency, and needs two keys rather
+than one:
+
+``` r
+
+agency_weights[
+  agency_weights$agency == "Global Fund" & agency_weights$universe == "rmnch",
+]
+#>          agency data_year universe weight report_edition
+#> 10  Global Fund      2021    rmnch 0.4378           2025
+#> 11  Global Fund      2022    rmnch 0.4270           2025
+#> 12  Global Fund      2023    rmnch 0.4268           2025
+#> 109 Global Fund      2022    rmnch 0.4342           2026
+#> 110 Global Fund      2023    rmnch 0.4411           2026
+#> 111 Global Fund      2024    rmnch 0.4491           2026
+```
+
+`data_year` is the year of the *spending*: each weight is the proportion
+of that agency’s own disbursements in that year benefiting the universe,
+so it moves as the agency’s disbursement mix moves.
+
+`report_edition` is the year of the *report*. Every edition recomputes
+the weights for all the years it covers, including years an earlier
+edition already published, as the underlying data is revised. Those
+revisions are large enough to matter:
+
+``` r
+
+adb <- agency_weights[
+  agency_weights$agency == "Asian Development Bank" &
+    agency_weights$universe == "rmnch" &
+    agency_weights$data_year %in% 2022:2023,
+]
+adb[order(adb$data_year, adb$report_edition), ]
+#>                     agency data_year universe weight report_edition
+#> 5   Asian Development Bank      2022    rmnch 0.0324           2025
+#> 103 Asian Development Bank      2022    rmnch 0.0719           2026
+#> 6   Asian Development Bank      2023    rmnch 0.0518           2025
+#> 104 Asian Development Bank      2023    rmnch 0.1342           2026
+```
+
+The 2023 weight is 5.18% as first published and 13.42% a year later. So
+**take the weights and the published totals from the same edition** —
+mixing them reproduces neither report. The editions also differ in price
+base: 2022 constant prices in 2025, 2023 constant prices in 2026.
+
+Between them the two editions cover four spending years, 2021 to 2024,
+which is what makes the four per-donor RMNCH weights recoverable — four
+unknowns need four independent published years, and neither edition
+alone has them.
+
+## Weights that are missing on purpose
+
+Some coefficients are `NA`, and that is not the same as zero:
+
+``` r
+
+na_cells <- sector_weights[is.na(sector_weights$weight), ]
+table(na_cells$universe)
+#> 
+#> rmnch  srhr    fp 
+#>     4     0     0
+```
+
+All four are RMNCH weights — malaria control, tuberculosis control, STD
+control including HIV/AIDS, and general budget support. The source marks
+these `varies*` because their RMNCH share is set **per donor country**,
+and a table with one weight per code cannot hold a per-donor value. They
+will move to their own donor-keyed table once derived. The SRHR and
+family-planning universes are complete. See
+[`?sector_weights`](https://meltemod.github.io/rmnchfunding/reference/sector_weights.md).
+
+## Where the coefficients come from
+
+Both tables are transcribed from the Donors Delivering for SRHR Report
+2026, pages 110–111. RMNCH follows the Muskoka 2 methodology developed
+by the London School of Hygiene and Tropical Medicine, family planning
+follows the revised Muskoka methodology agreed at the 2012 London
+Summit, and SRHR follows the Donors Delivering methodology.
+
+The three universes overlap by construction. Adding a donor’s RMNCH,
+SRHR and FP figures together double-counts, and the report says so
+explicitly — they are meant to be read separately.
+
+Because a missing weight is unknown rather than zero, `muskoka()` will
+refuse to compute a total that depends on one instead of quietly
+treating it as nothing — a zero here would understate the result without
+leaving a trace.
 
 ## What this vignette is not
 
 Reference documentation. That is generated from the roxygen comments and
 reached with
-[`?rescale01`](https://meltemod.github.io/rmnchfunding/reference/rescale01.md).
+[`?sector_weights`](https://meltemod.github.io/rmnchfunding/reference/sector_weights.md)
+and
+[`?agency_weights`](https://meltemod.github.io/rmnchfunding/reference/agency_weights.md).
 A vignette explains *when and why*; the help page explains *what and
 how*.

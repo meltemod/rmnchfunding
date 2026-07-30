@@ -1,10 +1,13 @@
 # rmnchfunding: Tools For Reproducible RMNCH Funding Analysis
 
-Calculates bilateral and multilateral reproductive, maternal, newborn
-and child health (RMNCH) and family-planning funding from OECD Creditor
-Reporting System (CRS) data under three methodologies, with
-user-adjustable percentage tables. Provides muskoka1(), muskoka2() and
-revised_fp().
+Calculates bilateral and multilateral funding for reproductive,
+maternal, newborn and child health (RMNCH), sexual and reproductive
+health and rights (SRHR) and family planning from OECD Creditor
+Reporting System (CRS) flows and OECD providers' total use of the
+multilateral system, using the revised Muskoka method. Fetches both
+sources from the OECD SDMX API and ships the sector and
+multilateral-agency coefficient tables the method depends on, keyed by
+spending year and report edition and adjustable by the user.
 
 ## See also
 

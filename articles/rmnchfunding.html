@@ -65,28 +65,152 @@
 <div class="section level2">
 <h2 id="why-this-package-exists">Why this package exists<a class="anchor" aria-label="anchor" href="#why-this-package-exists"></a>
 </h2>
-<p>Replace this section with the problem the package solves — the
-situation a reader is in <em>before</em> they install it. A vignette
-that opens with a feature list assumes the reader already knows they
-need one.</p>
+<p>No OECD dataset reports how much aid goes to reproductive, maternal,
+newborn and child health. The CRS records disbursements against purpose
+codes that are broader than RMNCH — “basic health care”, “basic
+nutrition” — and a provider’s contribution to the WHO or the Global Fund
+appears as a single core payment with no sectoral breakdown at all.</p>
+<p>The Muskoka method closes both gaps with coefficients: a fixed share
+of each purpose code is attributed to the universe of interest, and a
+fixed share of each multilateral agency’s spending is attributed
+alongside it. This package holds those coefficients, fetches the two
+OECD sources they apply to, and does the arithmetic.</p>
 </div>
 <div class="section level2">
-<h2 id="a-worked-example">A worked example<a class="anchor" aria-label="anchor" href="#a-worked-example"></a>
+<h2 id="status">Status<a class="anchor" aria-label="anchor" href="#status"></a>
 </h2>
+<p>Under construction. The coefficient tables are in place; the OECD
+fetchers and <code>muskoka()</code> itself are not yet written, so there
+is nothing here that produces an estimate.</p>
+</div>
+<div class="section level2">
+<h2 id="the-three-universes">The three universes<a class="anchor" aria-label="anchor" href="#the-three-universes"></a>
+</h2>
+<p>Every coefficient is given for three nested-in-spirit but separately
+estimated universes:</p>
+<table class="table">
+<thead><tr class="header">
+<th>Universe</th>
+<th>Scope</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>rmnch</code></td>
+<td>Reproductive, maternal, newborn and child health</td>
+</tr>
+<tr class="even">
+<td><code>srhr</code></td>
+<td>Sexual and reproductive health and rights</td>
+</tr>
+<tr class="odd">
+<td><code>fp</code></td>
+<td>Family planning</td>
+</tr>
+</tbody>
+</table>
+<p><code>muskoka()</code> will take one of these as its
+<code>universe</code> argument.</p>
+</div>
+<div class="section level2">
+<h2 id="the-coefficient-tables">The coefficient tables<a class="anchor" aria-label="anchor" href="#the-coefficient-tables"></a>
+</h2>
+<p>Bilateral flows are weighted by CRS purpose code:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">6</span>, <span class="fl">8</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/rescale01.html">rescale01</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.0000000 0.3333333 0.6666667 1.0000000</span></span></code></pre></div>
-<p>Every chunk here is executed when the package is built, so a vignette
-that still knits is a second, coarser test suite: it catches interface
-changes that unit tests written against internals would miss.</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sector_weights</span><span class="op">[</span><span class="va">sector_weights</span><span class="op">$</span><span class="va">universe</span> <span class="op">==</span> <span class="st">"rmnch"</span>, <span class="op">]</span>, <span class="fl">8</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   purpose_code                                purpose_name universe weight</span></span>
+<span><span class="co">#&gt; 1        11230                Basic life skills for adults    rmnch    0.0</span></span>
+<span><span class="co">#&gt; 2        11231                 Basic life skills for youth    rmnch    0.0</span></span>
+<span><span class="co">#&gt; 3        12110 Health policy and administrative management    rmnch    0.4</span></span>
+<span><span class="co">#&gt; 4        12181                  Medical education/training    rmnch    0.4</span></span>
+<span><span class="co">#&gt; 5        12182                            Medical research    rmnch    0.0</span></span>
+<span><span class="co">#&gt; 6        12191                            Medical services    rmnch    1.0</span></span>
+<span><span class="co">#&gt; 7        12220                           Basic health care    rmnch    0.4</span></span>
+<span><span class="co">#&gt; 8        12230                 Basic health infrastructure    rmnch    0.4</span></span></code></pre></div>
+<p>Multilateral spending is weighted by agency, and needs two keys
+rather than one:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">agency_weights</span><span class="op">[</span></span>
+<span>  <span class="va">agency_weights</span><span class="op">$</span><span class="va">agency</span> <span class="op">==</span> <span class="st">"Global Fund"</span> <span class="op">&amp;</span> <span class="va">agency_weights</span><span class="op">$</span><span class="va">universe</span> <span class="op">==</span> <span class="st">"rmnch"</span>,</span>
+<span><span class="op">]</span></span>
+<span><span class="co">#&gt;          agency data_year universe weight report_edition</span></span>
+<span><span class="co">#&gt; 10  Global Fund      2021    rmnch 0.4378           2025</span></span>
+<span><span class="co">#&gt; 11  Global Fund      2022    rmnch 0.4270           2025</span></span>
+<span><span class="co">#&gt; 12  Global Fund      2023    rmnch 0.4268           2025</span></span>
+<span><span class="co">#&gt; 109 Global Fund      2022    rmnch 0.4342           2026</span></span>
+<span><span class="co">#&gt; 110 Global Fund      2023    rmnch 0.4411           2026</span></span>
+<span><span class="co">#&gt; 111 Global Fund      2024    rmnch 0.4491           2026</span></span></code></pre></div>
+<p><code>data_year</code> is the year of the <em>spending</em>: each
+weight is the proportion of that agency’s own disbursements in that year
+benefiting the universe, so it moves as the agency’s disbursement mix
+moves.</p>
+<p><code>report_edition</code> is the year of the <em>report</em>. Every
+edition recomputes the weights for all the years it covers, including
+years an earlier edition already published, as the underlying data is
+revised. Those revisions are large enough to matter:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">adb</span> <span class="op">&lt;-</span> <span class="va">agency_weights</span><span class="op">[</span></span>
+<span>  <span class="va">agency_weights</span><span class="op">$</span><span class="va">agency</span> <span class="op">==</span> <span class="st">"Asian Development Bank"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">agency_weights</span><span class="op">$</span><span class="va">universe</span> <span class="op">==</span> <span class="st">"rmnch"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">agency_weights</span><span class="op">$</span><span class="va">data_year</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fl">2022</span><span class="op">:</span><span class="fl">2023</span>,</span>
+<span><span class="op">]</span></span>
+<span><span class="va">adb</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">adb</span><span class="op">$</span><span class="va">data_year</span>, <span class="va">adb</span><span class="op">$</span><span class="va">report_edition</span><span class="op">)</span>, <span class="op">]</span></span>
+<span><span class="co">#&gt;                     agency data_year universe weight report_edition</span></span>
+<span><span class="co">#&gt; 5   Asian Development Bank      2022    rmnch 0.0324           2025</span></span>
+<span><span class="co">#&gt; 103 Asian Development Bank      2022    rmnch 0.0719           2026</span></span>
+<span><span class="co">#&gt; 6   Asian Development Bank      2023    rmnch 0.0518           2025</span></span>
+<span><span class="co">#&gt; 104 Asian Development Bank      2023    rmnch 0.1342           2026</span></span></code></pre></div>
+<p>The 2023 weight is 5.18% as first published and 13.42% a year later.
+So <strong>take the weights and the published totals from the same
+edition</strong> — mixing them reproduces neither report. The editions
+also differ in price base: 2022 constant prices in 2025, 2023 constant
+prices in 2026.</p>
+<p>Between them the two editions cover four spending years, 2021 to
+2024, which is what makes the four per-donor RMNCH weights recoverable —
+four unknowns need four independent published years, and neither edition
+alone has them.</p>
+</div>
+<div class="section level2">
+<h2 id="weights-that-are-missing-on-purpose">Weights that are missing on purpose<a class="anchor" aria-label="anchor" href="#weights-that-are-missing-on-purpose"></a>
+</h2>
+<p>Some coefficients are <code>NA</code>, and that is not the same as
+zero:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">na_cells</span> <span class="op">&lt;-</span> <span class="va">sector_weights</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">sector_weights</span><span class="op">$</span><span class="va">weight</span><span class="op">)</span>, <span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">na_cells</span><span class="op">$</span><span class="va">universe</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; rmnch  srhr    fp </span></span>
+<span><span class="co">#&gt;     4     0     0</span></span></code></pre></div>
+<p>All four are RMNCH weights — malaria control, tuberculosis control,
+STD control including HIV/AIDS, and general budget support. The source
+marks these <code>varies*</code> because their RMNCH share is set
+<strong>per donor country</strong>, and a table with one weight per code
+cannot hold a per-donor value. They will move to their own donor-keyed
+table once derived. The SRHR and family-planning universes are complete.
+See <code><a href="../reference/sector_weights.html">?sector_weights</a></code>.</p>
+</div>
+<div class="section level2">
+<h2 id="where-the-coefficients-come-from">Where the coefficients come from<a class="anchor" aria-label="anchor" href="#where-the-coefficients-come-from"></a>
+</h2>
+<p>Both tables are transcribed from the Donors Delivering for SRHR
+Report 2026, pages 110–111. RMNCH follows the Muskoka 2 methodology
+developed by the London School of Hygiene and Tropical Medicine, family
+planning follows the revised Muskoka methodology agreed at the 2012
+London Summit, and SRHR follows the Donors Delivering methodology.</p>
+<p>The three universes overlap by construction. Adding a donor’s RMNCH,
+SRHR and FP figures together double-counts, and the report says so
+explicitly — they are meant to be read separately.</p>
+<p>Because a missing weight is unknown rather than zero,
+<code>muskoka()</code> will refuse to compute a total that depends on
+one instead of quietly treating it as nothing — a zero here would
+understate the result without leaving a trace.</p>
 </div>
 <div class="section level2">
 <h2 id="what-this-vignette-is-not">What this vignette is not<a class="anchor" aria-label="anchor" href="#what-this-vignette-is-not"></a>
 </h2>
 <p>Reference documentation. That is generated from the roxygen comments
-and reached with <code><a href="../reference/rescale01.html">?rescale01</a></code>. A vignette explains <em>when
-and why</em>; the help page explains <em>what and how</em>.</p>
+and reached with <code><a href="../reference/sector_weights.html">?sector_weights</a></code> and
+<code><a href="../reference/agency_weights.html">?agency_weights</a></code>. A vignette explains <em>when and why</em>;
+the help page explains <em>what and how</em>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

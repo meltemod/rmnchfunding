@@ -35,8 +35,19 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.0.9000" id="rmnchfunding-0009000">rmnchfunding 0.0.0.9000<a class="anchor" aria-label="anchor" href="#rmnchfunding-0009000"></a></h2>
-<ul><li>Initial scaffolding. No user-facing functionality yet.</li>
-</ul><!--
+<ul><li>Added <code>sector_weights</code>: the share of each of 33 OECD CRS purpose codes attributed to the RMNCH, SRHR and family-planning universes.</li>
+<li>Added <code>agency_weights</code>: the share of 11 multilateral agencies’ spending attributed to each universe, keyed by spending year (2021-2024) <em>and</em> by the report edition that published it (2025, 2026). Both keys matter — each edition recomputes years an earlier one already published, and 31 of the 66 overlapping cells differ, by as much as 5.18% vs 13.42%. Weights and published totals must be taken from the same edition, which also fixes the price base (2022 constant prices in 2025, 2023 in 2026).</li>
+<li>Both tables are transcribed from the Donors Delivering for SRHR Report, 2026 edition pp. 110-111 and 2025 edition pp. 104-105, and cited as such. The sector table is identical across editions; only the multilateral weights were revised.</li>
+<li>Four RMNCH sector weights (12262, 12263, 13040, 51010) are recorded as <code>NA</code> rather than <code>0</code>. Their RMNCH share is set per donor country, which a table with one weight per code cannot express; the donor-level weights are still to be derived. <code>muskoka(universe = "rmnch")</code> will refuse to compute rather than treat them as zero. SRHR and family planning are complete. The two report editions together span the four years needed to identify them.</li>
+<li>IDA’s family-planning weight is <code>0</code> in every year and edition, matching the published method. The revised Muskoka 1% alternative will be reachable as <code>muskoka(universe = "fp", ida = 1)</code> rather than as a table entry.</li>
+<li>Added an internal <code>solve_donor_weights()</code>, which recovers a donor’s four per-donor RMNCH weights from published totals by bounded least squares, assuming the weights are constant across years. It reports which weights are identified, which codes the donor never disbursed in, and which donors are underdetermined, plus a bound on the error induced by rounding in the published totals. Not yet wired to anything: it needs the CRS disbursements the totals were built from.</li>
+<li>Added <code><a href="../reference/oecd_crs.html">oecd_crs()</a></code>, which fetches a donor’s bilateral CRS disbursements for the Muskoka purpose codes, by recipient and year.</li>
+<li>Added <code><a href="../reference/oecd_multi.html">oecd_multi()</a></code>, which fetches a provider’s core contributions to the eleven weighted multilateral agencies.</li>
+<li>Added <code>crs_recipients</code>, the recipient hierarchy, and <code>agency_channels</code>, the agency-to-OECD-channel crosswalk. Both are what stop the fetchers from double counting or matching on names.</li>
+<li>Both fetchers take <code>prices = "constant"</code> with an explicit <code>base</code> year, or <code>prices = "current"</code>. The base is never implicit: OECD rebases its own constant series with each release (2024 now, 2023 a few months ago), so values are always fetched in current prices and deflated here with OECD’s per-donor ODA deflators. Use base 2022 to reproduce the 2025 report edition and 2023 for the 2026 edition.</li>
+<li>Removed the <code>rescale01()</code> placeholder that shipped with the template.</li>
+</ul><p><code>muskoka()</code> itself is not written yet, and the per-donor RMNCH weights are not yet derived.</p>
+<!--
 Conventions:
 
 * The heading must carry a PARSEABLE VERSION NUMBER. R builds its news
@@ -49,7 +60,8 @@ Conventions:
 * Credit contributors as (<a href='https://github.com/handle'>@handle</a>, #issue).
 * On release, rename this heading to the release version, then open a fresh
   development heading above it.
---></div>
+-->
+</div>
   </main></div>
 
 
