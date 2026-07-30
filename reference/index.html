@@ -33,9 +33,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="fetching-oecd-data">Fetching OECD data<a class="anchor" aria-label="anchor" href="#fetching-oecd-data"></a></h2>
 
-
+      <div class="section-desc"><p>Retrieve the two sources the Muskoka method applies coefficients to. Both take an explicit price basis, because OECD rebases its own constant series with each release.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -43,27 +43,6 @@
 
 
       <dl><dt>
-
-          <code><a href="agency_channels.html">agency_channels</a></code>
-
-        </dt>
-        <dd>Multilateral agency to OECD channel code crosswalk</dd>
-
-        <dt>
-
-          <code><a href="agency_weights.html">agency_weights</a></code>
-
-        </dt>
-        <dd>Multilateral agency weights for the revised Muskoka method</dd>
-
-        <dt>
-
-          <code><a href="crs_recipients.html">crs_recipients</a></code>
-
-        </dt>
-        <dd>CRS recipient codes: which are aggregates, which are countries</dd>
-
-        <dt>
 
           <code><a href="oecd_crs.html">oecd_crs()</a></code>
 
@@ -76,15 +55,94 @@
 
         </dt>
         <dd>Fetch a provider's core contributions to multilateral agencies</dd>
+      </dl></div><div class="section level2">
+      <h2 id="classifying-recipients">Classifying recipients<a class="anchor" aria-label="anchor" href="#classifying-recipients"></a></h2>
 
-        <dt>
+      <div class="section-desc"><p>OECD classifies recipients geographically, by DAC List income tier and by World Bank income group, all at once. Each is a different cut of the same money, so each sums to the same total, and each can be cut at a chosen level.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="crs_classify.html">crs_classify()</a></code>
+
+        </dt>
+        <dd>Total a donor's disbursements by recipient classification</dd>
+      </dl></div><div class="section level2">
+      <h2 id="coefficient-tables">Coefficient tables<a class="anchor" aria-label="anchor" href="#coefficient-tables"></a></h2>
+
+      <div class="section-desc"><p>The weights the method depends on, transcribed from the Donors Delivering for SRHR reports and cited there.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
 
           <code><a href="sector_weights.html">sector_weights</a></code>
 
         </dt>
         <dd>Sector weights for the revised Muskoka method</dd>
+
+        <dt>
+
+          <code><a href="agency_weights.html">agency_weights</a></code>
+
+        </dt>
+        <dd>Multilateral agency weights for the revised Muskoka method</dd>
+      </dl></div><div class="section level2">
+      <h2 id="lookups">Lookups<a class="anchor" aria-label="anchor" href="#lookups"></a></h2>
+
+      <div class="section-desc"><p>Reference data the fetchers depend on: which recipient codes are aggregates, how the hierarchy nests, and how report agency names map to OECD channel codes.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="crs_recipients.html">crs_recipients</a></code>
+
+        </dt>
+        <dd>CRS recipient codes: which are aggregates, which are countries</dd>
+
+        <dt>
+
+          <code><a href="crs_recipient_tree.html">crs_recipient_tree</a></code>
+
+        </dt>
+        <dd>CRS recipient hierarchy edges</dd>
+
+        <dt>
+
+          <code><a href="agency_channels.html">agency_channels</a></code>
+
+        </dt>
+        <dd>Multilateral agency to OECD channel code crosswalk</dd>
+      </dl></div><div class="section level2">
+      <h2 id="package">Package<a class="anchor" aria-label="anchor" href="#package"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rmnchfunding-package.html">rmnchfunding</a></code> <code><a href="rmnchfunding-package.html">rmnchfunding-package</a></code>
+
+        </dt>
+        <dd>rmnchfunding: Tools For Reproducible RMNCH Funding Analysis</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

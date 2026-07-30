@@ -117,6 +117,12 @@ A tibble of one row per donor, recipient, purpose code and year:
 
 with attributes `prices`, `base_year` and `fetched_on`.
 
+A donor that funded nothing in the requested sectors and years returns
+**0 rows with those same columns**, and warns. That is a legitimate
+answer rather than a failure — small providers routinely report no
+reproductive-health disbursements at all — and erroring would abort any
+loop over donors on its first sparse one.
+
 ## Details
 
 Recipient rows are de-duplicated by default. This matters more than it

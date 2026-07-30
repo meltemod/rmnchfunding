@@ -150,6 +150,11 @@ country-attributable figure, and with them for a donor total.</p></dd>
 
 
 </dl><p>with attributes <code>prices</code>, <code>base_year</code> and <code>fetched_on</code>.</p>
+<p>A donor that funded nothing in the requested sectors and years returns <strong>0
+rows with those same columns</strong>, and warns. That is a legitimate answer
+rather than a failure — small providers routinely report no
+reproductive-health disbursements at all — and erroring would abort any loop
+over donors on its first sparse one.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

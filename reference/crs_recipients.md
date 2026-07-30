@@ -14,11 +14,18 @@ crs_recipients
 
 ## Format
 
-A data frame with 290 rows and 6 columns:
+A data frame with 290 rows and 7 columns:
 
 - recipient_code:
 
   OECD recipient code. Unique.
+
+- recipient_name:
+
+  Official OECD name, from codelist `CL_AREA_ORG`. Bundled so that a
+  recipient absent from a donor's data can still be labelled — see the
+  `complete` argument of
+  [`crs_classify()`](https://meltemod.github.io/rmnchfunding/reference/crs_classify.md).
 
 - n_children:
 
@@ -44,8 +51,10 @@ A data frame with 290 rows and 6 columns:
 
 ## Source
 
-OECD hierarchical codelist `HCL_DACRECIPIENTS` version 1.5, retrieved
-2026-07-29. Rebuild with `data-raw/crs_recipients.R`.
+Structure from OECD hierarchical codelist `HCL_DACRECIPIENTS` version
+1.5; names from codelist `CL_AREA_ORG` version 1.6, which the hierarchy
+declares as its source. Retrieved 2026-07-30. Rebuild with
+`data-raw/crs_recipients.R`.
 
 ## Details
 

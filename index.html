@@ -77,14 +77,55 @@
 <span></span>
 <span><span class="co"># Core contributions to the eleven weighted agencies</span></span>
 <span><span class="va">mul</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/oecd_multi.html">oecd_multi</a></span><span class="op">(</span><span class="st">"USA"</span>, years <span class="op">=</span> <span class="fl">2022</span><span class="op">:</span><span class="fl">2024</span>, prices <span class="op">=</span> <span class="st">"constant"</span>, base <span class="op">=</span> <span class="fl">2023</span><span class="op">)</span></span></code></pre></div>
-<p>The coefficient tables and the two lookups the fetchers depend on:</p>
+<p>Recipients can be classified three ways, each summing to the same total, and each cuttable at a chosen level:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/oecd_crs.html">oecd_crs</a></span><span class="op">(</span><span class="st">"USA"</span>, years <span class="op">=</span> <span class="fl">2022</span>, prices <span class="op">=</span> <span class="st">"constant"</span>, base <span class="op">=</span> <span class="fl">2023</span>,</span>
+<span>              recipients <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span>             <span class="co"># "all" keeps the aggregate rows</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/crs_classify.html">crs_classify</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"geographic"</span><span class="op">)</span>                      <span class="co"># continents</span></span>
+<span><span class="fu"><a href="reference/crs_classify.html">crs_classify</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"geographic"</span>, level <span class="op">=</span> <span class="st">"subregion"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/crs_classify.html">crs_classify</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"dac_income"</span>, level <span class="op">=</span> <span class="st">"country"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/crs_classify.html">crs_classify</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"wb_income"</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Classification</th>
+<th>Levels</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>geographic</code></td>
+<td>
+<code>total</code>, <code>continent</code>, <code>region</code>, <code>subregion</code>, <code>country</code>
+</td>
+</tr>
+<tr>
+<td><code>dac_income</code></td>
+<td>
+<code>total</code>, <code>tier</code>, <code>country</code>
+</td>
+</tr>
+<tr>
+<td><code>wb_income</code></td>
+<td>
+<code>total</code>, <code>group</code>, <code>country</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p><code>HIPC</code>, <code>LLDC</code>, <code>SIDS</code>, <code>FSCAC</code> and <code>ACP</code> are deliberately <em>not</em> classifications — they are overlapping flags a country carries in addition to its place in each one above, so they partition nothing. See <code><a href="articles/rmnchfunding.html">vignette("rmnchfunding")</a></code> and <code><a href="reference/crs_classify.html">?crs_classify</a></code>.</p>
+<p>The coefficient tables and the two lookups the fetchers depend on:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sector_weights</span>                <span class="co"># CRS purpose code -&gt; share, per universe</span></span>
 <span><span class="va">agency_weights</span>                <span class="co"># multilateral agency -&gt; share, per year and edition</span></span>
 <span><span class="va">crs_recipients</span>                <span class="co"># which recipient codes are aggregates</span></span>
+<span><span class="va">crs_recipient_tree</span>            <span class="co"># hierarchy edges, for cutting at a level</span></span>
 <span><span class="va">agency_channels</span>               <span class="co"># agency -&gt; OECD channel code</span></span></code></pre></div>
 <p>The planned entry point is a single function covering all three universes:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">muskoka</span><span class="op">(</span>universe <span class="op">=</span> <span class="st">"rmnch"</span><span class="op">)</span>           <span class="co"># or "srhr", or "fp"</span></span>
 <span><span class="fu">muskoka</span><span class="op">(</span>universe <span class="op">=</span> <span class="st">"fp"</span>, ida <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>     <span class="co"># revised Muskoka 1% for IDA</span></span></code></pre></div>
 <p>Both tables are transcribed from the Donors Delivering for SRHR Report, <a href="https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf" class="external-link">2026 edition</a> pages 110–111 and <a href="https://donorsdelivering.report/wp-content/uploads/2025/06/DDSRHR2025.pdf" class="external-link">2025 edition</a> pages 104–105. The sector table is identical in both; the multilateral weights were revised, so <code>agency_weights</code> carries them per edition. The three universes overlap by construction, so their totals must never be added together.</p>
@@ -93,9 +134,9 @@
 <div class="section level2">
 <h2 id="id_3-development">3. Development<a class="anchor" aria-label="anchor" href="#id_3-development"></a>
 </h2>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">Rscript</span> dev/00-setup.R        <span class="co"># installs dev tooling, documents</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">Rscript</span> dev/00-setup.R        <span class="co"># installs dev tooling, documents</span></span></code></pre></div>
 <p>Then, from an R session at the package root:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">load_all</span><span class="op">(</span><span class="op">)</span>          <span class="co"># attach the package as it stands, no install</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">document</span><span class="op">(</span><span class="op">)</span>          <span class="co"># regenerate man/ and NAMESPACE from roxygen</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">test</span><span class="op">(</span><span class="op">)</span>              <span class="co"># run tests/testthat/</span></span>
@@ -209,6 +250,23 @@
 <td>12</td>
 <td>Values fetched in current prices and deflated here</td>
 <td>OECD rebases its constant series each release, and serves only the current base. Deflating locally lets any base be requested and keeps one code path.</td>
+</tr>
+<tr>
+<td>13</td>
+<td>
+<code><a href="reference/crs_classify.html">crs_classify()</a></code> separate from <code><a href="reference/oecd_crs.html">oecd_crs()</a></code> rather than an argument</td>
+<td>One fetch serves every classification and level, so folding it in would mean re-downloading to change the view.</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Classification levels are frontiers, not depth slices</td>
+<td>The hierarchy is ragged — Africa nests to subregions, Europe holds countries directly. A depth slice would drop every European country and stop adding up.</td>
+</tr>
+<tr>
+<td>15</td>
+<td>One local repair to the hierarchy: <code>INC_X</code> -&gt; <code>DPGC_X</code>
+</td>
+<td>OECD’s codelist omits an edge its own reported aggregates include. Without it, income classifications lose 32% of a donor’s total at country level.</td>
 </tr>
 </tbody>
 </table>

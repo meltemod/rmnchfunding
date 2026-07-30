@@ -43,6 +43,33 @@ crs <- oecd_crs("USA", years = 2022:2024, prices = "constant", base = 2023)
 mul <- oecd_multi("USA", years = 2022:2024, prices = "constant", base = 2023)
 ```
 
+Recipients can be classified three ways, each summing to the same total,
+and each cuttable at a chosen level:
+
+``` r
+
+d <- oecd_crs("USA", years = 2022, prices = "constant", base = 2023,
+              recipients = "all")             # "all" keeps the aggregate rows
+
+crs_classify(d, "geographic")                      # continents
+crs_classify(d, "geographic", level = "subregion")
+crs_classify(d, "dac_income", level = "country")
+crs_classify(d, "wb_income")
+```
+
+| Classification | Levels                                                 |
+|----------------|--------------------------------------------------------|
+| `geographic`   | `total`, `continent`, `region`, `subregion`, `country` |
+| `dac_income`   | `total`, `tier`, `country`                             |
+| `wb_income`    | `total`, `group`, `country`                            |
+
+`HIPC`, `LLDC`, `SIDS`, `FSCAC` and `ACP` are deliberately *not*
+classifications — they are overlapping flags a country carries in
+addition to its place in each one above, so they partition nothing. See
+[`vignette("rmnchfunding")`](https://meltemod.github.io/rmnchfunding/articles/rmnchfunding.md)
+and
+[`?crs_classify`](https://meltemod.github.io/rmnchfunding/reference/crs_classify.md).
+
 The coefficient tables and the two lookups the fetchers depend on:
 
 ``` r
@@ -50,6 +77,7 @@ The coefficient tables and the two lookups the fetchers depend on:
 sector_weights                # CRS purpose code -> share, per universe
 agency_weights                # multilateral agency -> share, per year and edition
 crs_recipients                # which recipient codes are aggregates
+crs_recipient_tree            # hierarchy edges, for cutting at a level
 agency_channels               # agency -> OECD channel code
 ```
 
@@ -141,6 +169,9 @@ row, then a subsection below it if the choice needs more than a line.
 | 10 | CRS and MULTI fetched from the `dcd-public` host | These two dataflows moved; the ordinary `public` host answers every query with HTTP 500, which reads as a broken request rather than a wrong address. |
 | 11 | Every hierarchical dimension pinned to its total | `RECIPIENT`, `CHANNEL`, `MODALITY` and `SECTOR` each return a `_T` total *and* its components. Left open, one figure comes back six or more times and sums to a multiple of the truth. |
 | 12 | Values fetched in current prices and deflated here | OECD rebases its constant series each release, and serves only the current base. Deflating locally lets any base be requested and keeps one code path. |
+| 13 | [`crs_classify()`](https://meltemod.github.io/rmnchfunding/reference/crs_classify.md) separate from [`oecd_crs()`](https://meltemod.github.io/rmnchfunding/reference/oecd_crs.md) rather than an argument | One fetch serves every classification and level, so folding it in would mean re-downloading to change the view. |
+| 14 | Classification levels are frontiers, not depth slices | The hierarchy is ragged — Africa nests to subregions, Europe holds countries directly. A depth slice would drop every European country and stop adding up. |
+| 15 | One local repair to the hierarchy: `INC_X` -\> `DPGC_X` | OECD’s codelist omits an edge its own reported aggregates include. Without it, income classifications lose 32% of a donor’s total at country level. |
 
 ### Decision 3 — unsupplied coefficients are `NA`, never `0`
 
@@ -293,20 +324,55 @@ oversights.
 
 # Package index
 
-## All functions
+## Fetching OECD data
 
-- [`agency_channels`](https://meltemod.github.io/rmnchfunding/reference/agency_channels.md)
-  : Multilateral agency to OECD channel code crosswalk
-- [`agency_weights`](https://meltemod.github.io/rmnchfunding/reference/agency_weights.md)
-  : Multilateral agency weights for the revised Muskoka method
-- [`crs_recipients`](https://meltemod.github.io/rmnchfunding/reference/crs_recipients.md)
-  : CRS recipient codes: which are aggregates, which are countries
+Retrieve the two sources the Muskoka method applies coefficients to.
+Both take an explicit price basis, because OECD rebases its own constant
+series with each release.
+
 - [`oecd_crs()`](https://meltemod.github.io/rmnchfunding/reference/oecd_crs.md)
   : Fetch bilateral CRS disbursements for a donor
 - [`oecd_multi()`](https://meltemod.github.io/rmnchfunding/reference/oecd_multi.md)
   : Fetch a provider's core contributions to multilateral agencies
+
+## Classifying recipients
+
+OECD classifies recipients geographically, by DAC List income tier and
+by World Bank income group, all at once. Each is a different cut of the
+same money, so each sums to the same total, and each can be cut at a
+chosen level.
+
+- [`crs_classify()`](https://meltemod.github.io/rmnchfunding/reference/crs_classify.md)
+  : Total a donor's disbursements by recipient classification
+
+## Coefficient tables
+
+The weights the method depends on, transcribed from the Donors
+Delivering for SRHR reports and cited there.
+
 - [`sector_weights`](https://meltemod.github.io/rmnchfunding/reference/sector_weights.md)
   : Sector weights for the revised Muskoka method
+- [`agency_weights`](https://meltemod.github.io/rmnchfunding/reference/agency_weights.md)
+  : Multilateral agency weights for the revised Muskoka method
+
+## Lookups
+
+Reference data the fetchers depend on: which recipient codes are
+aggregates, how the hierarchy nests, and how report agency names map to
+OECD channel codes.
+
+- [`crs_recipients`](https://meltemod.github.io/rmnchfunding/reference/crs_recipients.md)
+  : CRS recipient codes: which are aggregates, which are countries
+- [`crs_recipient_tree`](https://meltemod.github.io/rmnchfunding/reference/crs_recipient_tree.md)
+  : CRS recipient hierarchy edges
+- [`agency_channels`](https://meltemod.github.io/rmnchfunding/reference/agency_channels.md)
+  : Multilateral agency to OECD channel code crosswalk
+
+## Package
+
+- [`rmnchfunding`](https://meltemod.github.io/rmnchfunding/reference/rmnchfunding-package.md)
+  [`rmnchfunding-package`](https://meltemod.github.io/rmnchfunding/reference/rmnchfunding-package.md)
+  : rmnchfunding: Tools For Reproducible RMNCH Funding Analysis
 
 # Articles
 

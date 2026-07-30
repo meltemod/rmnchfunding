@@ -95,6 +95,11 @@ A tibble of one row per donor, agency and year:
 
 with attributes `prices`, `base_year`, `measure` and `fetched_on`.
 
+As with
+[`oecd_crs()`](https://meltemod.github.io/rmnchfunding/reference/oecd_crs.md),
+a donor with no core contributions in the requested years returns 0 rows
+with the same columns, and warns, rather than erroring.
+
 ## Details
 
 Only **core** contributions are returned by default. OECD splits this

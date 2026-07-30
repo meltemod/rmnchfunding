@@ -21,9 +21,20 @@ apply to, and does the arithmetic.
 
 ## Status
 
-Under construction. The coefficient tables are in place; the OECD
-fetchers and `muskoka()` itself are not yet written, so there is nothing
-here that produces an estimate.
+Under construction. The coefficient tables and both OECD fetchers are in
+place. `muskoka()` itself is not written yet, and four per-donor RMNCH
+weights are still to be derived, so the package does not produce a
+Muskoka estimate — but
+[`oecd_crs()`](https://meltemod.github.io/rmnchfunding/reference/oecd_crs.md),
+[`oecd_multi()`](https://meltemod.github.io/rmnchfunding/reference/oecd_multi.md)
+and
+[`crs_classify()`](https://meltemod.github.io/rmnchfunding/reference/crs_classify.md)
+are usable on their own.
+
+The chunks that reach the OECD API are shown but not executed here, so
+that building this vignette never depends on a network connection.
+Figures quoted in the text are from the United States in 2022, in
+constant 2023 prices.
 
 ## The three universes
 
@@ -144,6 +155,147 @@ Because a missing weight is unknown rather than zero, `muskoka()` will
 refuse to compute a total that depends on one instead of quietly
 treating it as nothing — a zero here would understate the result without
 leaving a trace.
+
+## Fetching the two OECD sources
+
+[`oecd_crs()`](https://meltemod.github.io/rmnchfunding/reference/oecd_crs.md)
+pulls a donor’s bilateral disbursements for the weighted purpose codes,
+broken down by recipient and year:
+
+``` r
+
+crs <- oecd_crs("USA", years = 2022, prices = "constant", base = 2023)
+```
+
+[`oecd_multi()`](https://meltemod.github.io/rmnchfunding/reference/oecd_multi.md)
+pulls the other half — core contributions to the eleven weighted
+multilateral agencies:
+
+``` r
+
+mul <- oecd_multi("USA", years = 2022, prices = "constant", base = 2023)
+```
+
+Two arguments deserve attention.
+
+**`prices` is never implicit.** `"current"` leaves each year in its own
+prices. `"constant"` requires a `base` year, because OECD rebases its
+own constant series with each release — 2024 at the time of writing,
+2023 a few months earlier — so a default would change meaning underneath
+you between releases. Values are always fetched in current prices and
+deflated here with OECD’s per-donor deflators, which is what allows any
+base year to be requested. To reproduce a published Donors Delivering
+figure, match its edition: base 2022 for the 2025 edition, base 2023 for
+the 2026 edition.
+
+**`recipients` controls de-duplication.** A CRS query with the recipient
+dimension open returns aggregates and countries as sibling rows, so
+“Developing countries”, “Africa” and “Kenya” all come back together.
+Summing them counts Kenya four times. The default `"countries"` keeps
+only non-aggregate rows and is the only setting whose rows can safely be
+summed. `"all"` keeps everything, which is what
+[`crs_classify()`](https://meltemod.github.io/rmnchfunding/reference/crs_classify.md)
+needs.
+
+Note that de-duplicating is not the same as reducing to countries. OECD
+reports the part of a donor’s spending it cannot attribute to any
+country in `_X` buckets — “Developing countries unspecified”,
+“Sub-Saharan Africa unspecified”. These have no members, so they are
+correctly kept and summed alongside countries, but they are not
+countries: for the United States in 2022 they are 42% of the total. They
+carry `is_unallocated` so you can sum either way.
+
+## Classifying recipients
+
+OECD classifies recipients several ways at the same time, and this is
+easy to get wrong: the recipient codelist has nineteen top-level
+groupings that look comparable in a flat list but are not.
+[`crs_classify()`](https://meltemod.github.io/rmnchfunding/reference/crs_classify.md)
+returns one *classification* at a time, each of which sums to the same
+grand total.
+
+``` r
+
+d <- oecd_crs("USA", years = 2022, prices = "constant", base = 2023,
+              recipients = "all")
+
+crs_classify(d, "geographic")
+crs_classify(d, "dac_income")
+crs_classify(d, "wb_income")
+```
+
+For the United States in 2022, all three come to the same 24,281.9
+million:
+
+| Geographic    |         | DAC income       |          | World Bank income |          |
+|---------------|--------:|------------------|---------:|-------------------|---------:|
+| Africa        | 9,817.6 | *unallocated*    | 10,089.9 | *unallocated*     | 10,089.9 |
+| *unspecified* | 7,766.8 | Least developed  |  8,759.5 | Low income        |  6,506.8 |
+| Asia          | 4,164.2 | Lower-middle     |  3,018.9 | Lower-middle      |  4,352.9 |
+| America       | 1,435.2 | Upper-middle     |  1,861.4 | Upper-middle      |  2,034.4 |
+| Europe        |   890.0 | Other low income |    552.1 | Not classified    |  1,274.4 |
+| Oceania       |   208.0 |                  |          | High income       |     23.5 |
+| **24,281.9**  |         | **24,281.9**     |          | **24,281.9**      |          |
+
+Three things follow that are worth knowing before using these figures.
+
+**“Developing countries” is the total, and “least developed countries”
+is not a separate universe.** `DPGC` is the grand total. `LDC` is a
+*tier* of the DAC income classification — the same money cut a different
+way — so adding it to a geographic figure double counts.
+
+**The two income classifications are genuinely different.** The DAC List
+of ODA Recipients has a least-developed tier and no high-income group;
+the World Bank classification has the reverse, plus a group for
+countries it does not classify at all.
+
+**Some groupings are not classifications.** `HIPC`, `LLDC`, `SIDS`,
+`FSCAC` and `ACP` are overlapping flags a country carries *in addition*
+to its place in every classification above — Ethiopia is in Africa,
+Sub-Saharan Africa, Eastern Africa, least developed, landlocked, World
+Bank low income, heavily indebted and fragile simultaneously. They do
+not partition anything (`FSCAC` alone is 47% of the United States
+total), so `scheme` cannot name them.
+
+## Levels
+
+Each classification can be cut at a chosen depth, and every level still
+sums to the same total:
+
+``` r
+
+crs_classify(d, "geographic", level = "continent")   # the default, level 1
+crs_classify(d, "geographic", level = "subregion")
+crs_classify(d, "dac_income", level = "country")
+```
+
+| Classification | Levels                                                 |
+|----------------|--------------------------------------------------------|
+| `geographic`   | `total`, `continent`, `region`, `subregion`, `country` |
+| `dac_income`   | `total`, `tier`, `country`                             |
+| `wb_income`    | `total`, `group`, `country`                            |
+
+A level is a **frontier**, not a slice at a fixed depth. Branches that
+have already ended stand in for themselves, because the hierarchy is
+ragged: Africa divides into regions and then subregions, while Europe
+holds its countries directly. So the geographic `"region"` level
+contains African regions and European countries side by side. Taking
+“every node at depth two” instead would drop every European country, and
+the level would no longer add up.
+
+The same applies to unallocated spending, which enters at whatever level
+it was reported. A country-level cut therefore still contains regional
+residuals such as “Sub-Saharan Africa unspecified”; those rows are
+marked `is_unallocated`.
+
+[`crs_classify()`](https://meltemod.github.io/rmnchfunding/reference/crs_classify.md)
+verifies on every call that the parts sum to OECD’s own reported total,
+and fails rather than return parts that do not make a whole. That is not
+defensiveness for its own sake: OECD’s published hierarchy does not
+always describe its published aggregates. `INC_X` includes `DPGC_X` in
+the data but does not list it as a child in the codelist, which cost
+exactly 7,766.8 million — 32% of this donor’s total — the first time an
+income classification was cut to country level.
 
 ## What this vignette is not
 

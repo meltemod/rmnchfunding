@@ -51,6 +51,46 @@
   ago), so values are always fetched in current prices and deflated here
   with OECD’s per-donor ODA deflators. Use base 2022 to reproduce the
   2025 report edition and 2023 for the 2026 edition.
+- Added
+  [`crs_classify()`](https://meltemod.github.io/rmnchfunding/reference/crs_classify.md),
+  which totals a donor’s disbursements by recipient classification. OECD
+  classifies recipients geographically, by DAC List income tier and by
+  World Bank income group simultaneously; each is a different cut of the
+  same money, so each sums to the same grand total. Each can also be cut
+  at a chosen `level` — geography runs total, continent, region,
+  subregion, country; the income classifications run total, tier or
+  group, country. Overlapping flags such as `HIPC`, `LLDC`, `SIDS` and
+  `FSCAC` are deliberately not classifications: they partition nothing.
+- Added `crs_recipient_tree`, the hierarchy edges that make a level cut
+  possible. It carries one local repair — OECD’s codelist omits `DPGC_X`
+  from `INC_X`’s children although the reported `INC_X` value includes
+  it, which costs 32% of a donor’s total when an income classification
+  is cut to country level.
+- [`oecd_crs()`](https://meltemod.github.io/rmnchfunding/reference/oecd_crs.md)
+  and
+  [`oecd_multi()`](https://meltemod.github.io/rmnchfunding/reference/oecd_multi.md)
+  now return 0 rows with a warning, rather than erroring, when a donor
+  funded nothing in the requested sectors and years. Greece has no
+  records under codes 13020, 13030 or 13040 for 2021-2024, and erroring
+  on that would abort any loop over donors on its first sparse one. The
+  empty result carries the same columns and attributes as a populated
+  one.
+- Fixed
+  [`oecd_crs()`](https://meltemod.github.io/rmnchfunding/reference/oecd_crs.md)
+  and
+  [`oecd_multi()`](https://meltemod.github.io/rmnchfunding/reference/oecd_multi.md)
+  treating an empty OECD result as a network failure. OECD answers an
+  empty query with HTTP 404 and the body “NoRecordsFound”, which httr2
+  raised on before the body could be read.
+- [`crs_classify()`](https://meltemod.github.io/rmnchfunding/reference/crs_classify.md)
+  gains `complete`, which fills members the donor did not fund with an
+  explicit `0` so that the rows are the same for every donor and year.
+  For the United States over 2021-2024, 151 recipients appear in the
+  data out of 207 in the hierarchy. OECD reports no row at all for an
+  unfunded recipient, so a zero and an absent row mean the same thing:
+  completing changes the shape of a result but never a total.
+- `crs_recipients` gains `recipient_name`, from codelist `CL_AREA_ORG`,
+  so that a zero-filled row says which country reported nothing.
 - Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the per-donor RMNCH weights

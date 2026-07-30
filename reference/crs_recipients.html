@@ -51,8 +51,13 @@ recipients or for a single one.</p>
 
     <div class="section level2">
     <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
-    <p>A data frame with 290 rows and 6 columns:</p><dl><dt>recipient_code</dt>
+    <p>A data frame with 290 rows and 7 columns:</p><dl><dt>recipient_code</dt>
 <dd><p>OECD recipient code. Unique.</p></dd>
+
+<dt>recipient_name</dt>
+<dd><p>Official OECD name, from codelist <code>CL_AREA_ORG</code>.
+Bundled so that a recipient absent from a donor's data can still be
+labelled — see the <code>complete</code> argument of <code><a href="crs_classify.html">crs_classify()</a></code>.</p></dd>
 
 <dt>n_children</dt>
 <dd><p>Most children the code has in any grouping.</p></dd>
@@ -75,8 +80,10 @@ spending not attributable to a country. See Leaves are not countries.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="source">Source<a class="anchor" aria-label="anchor" href="#source"></a></h2>
-    <p>OECD hierarchical codelist <code>HCL_DACRECIPIENTS</code> version 1.5,
-retrieved 2026-07-29. Rebuild with <code>data-raw/crs_recipients.R</code>.</p>
+    <p>Structure from OECD hierarchical codelist <code>HCL_DACRECIPIENTS</code>
+version 1.5; names from codelist <code>CL_AREA_ORG</code> version 1.6, which the
+hierarchy declares as its source. Retrieved 2026-07-30. Rebuild with
+<code>data-raw/crs_recipients.R</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

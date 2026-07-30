@@ -79,9 +79,16 @@ OECD sources they apply to, and does the arithmetic.</p>
 <div class="section level2">
 <h2 id="status">Status<a class="anchor" aria-label="anchor" href="#status"></a>
 </h2>
-<p>Under construction. The coefficient tables are in place; the OECD
-fetchers and <code>muskoka()</code> itself are not yet written, so there
-is nothing here that produces an estimate.</p>
+<p>Under construction. The coefficient tables and both OECD fetchers are
+in place. <code>muskoka()</code> itself is not written yet, and four
+per-donor RMNCH weights are still to be derived, so the package does not
+produce a Muskoka estimate — but <code><a href="../reference/oecd_crs.html">oecd_crs()</a></code>,
+<code><a href="../reference/oecd_multi.html">oecd_multi()</a></code> and <code><a href="../reference/crs_classify.html">crs_classify()</a></code> are usable on
+their own.</p>
+<p>The chunks that reach the OECD API are shown but not executed here,
+so that building this vignette never depends on a network connection.
+Figures quoted in the text are from the United States in 2022, in
+constant 2023 prices.</p>
 </div>
 <div class="section level2">
 <h2 id="the-three-universes">The three universes<a class="anchor" aria-label="anchor" href="#the-three-universes"></a>
@@ -203,6 +210,217 @@ explicitly — they are meant to be read separately.</p>
 <code>muskoka()</code> will refuse to compute a total that depends on
 one instead of quietly treating it as nothing — a zero here would
 understate the result without leaving a trace.</p>
+</div>
+<div class="section level2">
+<h2 id="fetching-the-two-oecd-sources">Fetching the two OECD sources<a class="anchor" aria-label="anchor" href="#fetching-the-two-oecd-sources"></a>
+</h2>
+<p><code><a href="../reference/oecd_crs.html">oecd_crs()</a></code> pulls a donor’s bilateral disbursements for
+the weighted purpose codes, broken down by recipient and year:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">crs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/oecd_crs.html">oecd_crs</a></span><span class="op">(</span><span class="st">"USA"</span>, years <span class="op">=</span> <span class="fl">2022</span>, prices <span class="op">=</span> <span class="st">"constant"</span>, base <span class="op">=</span> <span class="fl">2023</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="../reference/oecd_multi.html">oecd_multi()</a></code> pulls the other half — core contributions
+to the eleven weighted multilateral agencies:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mul</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/oecd_multi.html">oecd_multi</a></span><span class="op">(</span><span class="st">"USA"</span>, years <span class="op">=</span> <span class="fl">2022</span>, prices <span class="op">=</span> <span class="st">"constant"</span>, base <span class="op">=</span> <span class="fl">2023</span><span class="op">)</span></span></code></pre></div>
+<p>Two arguments deserve attention.</p>
+<p><strong><code>prices</code> is never implicit.</strong>
+<code>"current"</code> leaves each year in its own prices.
+<code>"constant"</code> requires a <code>base</code> year, because OECD
+rebases its own constant series with each release — 2024 at the time of
+writing, 2023 a few months earlier — so a default would change meaning
+underneath you between releases. Values are always fetched in current
+prices and deflated here with OECD’s per-donor deflators, which is what
+allows any base year to be requested. To reproduce a published Donors
+Delivering figure, match its edition: base 2022 for the 2025 edition,
+base 2023 for the 2026 edition.</p>
+<p><strong><code>recipients</code> controls de-duplication.</strong> A
+CRS query with the recipient dimension open returns aggregates and
+countries as sibling rows, so “Developing countries”, “Africa” and
+“Kenya” all come back together. Summing them counts Kenya four times.
+The default <code>"countries"</code> keeps only non-aggregate rows and
+is the only setting whose rows can safely be summed. <code>"all"</code>
+keeps everything, which is what <code><a href="../reference/crs_classify.html">crs_classify()</a></code> needs.</p>
+<p>Note that de-duplicating is not the same as reducing to countries.
+OECD reports the part of a donor’s spending it cannot attribute to any
+country in <code>_X</code> buckets — “Developing countries unspecified”,
+“Sub-Saharan Africa unspecified”. These have no members, so they are
+correctly kept and summed alongside countries, but they are not
+countries: for the United States in 2022 they are 42% of the total. They
+carry <code>is_unallocated</code> so you can sum either way.</p>
+</div>
+<div class="section level2">
+<h2 id="classifying-recipients">Classifying recipients<a class="anchor" aria-label="anchor" href="#classifying-recipients"></a>
+</h2>
+<p>OECD classifies recipients several ways at the same time, and this is
+easy to get wrong: the recipient codelist has nineteen top-level
+groupings that look comparable in a flat list but are not.
+<code><a href="../reference/crs_classify.html">crs_classify()</a></code> returns one <em>classification</em> at a
+time, each of which sums to the same grand total.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/oecd_crs.html">oecd_crs</a></span><span class="op">(</span><span class="st">"USA"</span>, years <span class="op">=</span> <span class="fl">2022</span>, prices <span class="op">=</span> <span class="st">"constant"</span>, base <span class="op">=</span> <span class="fl">2023</span>,</span>
+<span>              recipients <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/crs_classify.html">crs_classify</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"geographic"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/crs_classify.html">crs_classify</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"dac_income"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/crs_classify.html">crs_classify</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"wb_income"</span><span class="op">)</span></span></code></pre></div>
+<p>For the United States in 2022, all three come to the same 24,281.9
+million:</p>
+<table class="table">
+<colgroup>
+<col width="14%">
+<col width="19%">
+<col width="14%">
+<col width="19%">
+<col width="14%">
+<col width="19%">
+</colgroup>
+<thead><tr class="header">
+<th>Geographic</th>
+<th align="right"></th>
+<th>DAC income</th>
+<th align="right"></th>
+<th>World Bank income</th>
+<th align="right"></th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Africa</td>
+<td align="right">9,817.6</td>
+<td><em>unallocated</em></td>
+<td align="right">10,089.9</td>
+<td><em>unallocated</em></td>
+<td align="right">10,089.9</td>
+</tr>
+<tr class="even">
+<td><em>unspecified</em></td>
+<td align="right">7,766.8</td>
+<td>Least developed</td>
+<td align="right">8,759.5</td>
+<td>Low income</td>
+<td align="right">6,506.8</td>
+</tr>
+<tr class="odd">
+<td>Asia</td>
+<td align="right">4,164.2</td>
+<td>Lower-middle</td>
+<td align="right">3,018.9</td>
+<td>Lower-middle</td>
+<td align="right">4,352.9</td>
+</tr>
+<tr class="even">
+<td>America</td>
+<td align="right">1,435.2</td>
+<td>Upper-middle</td>
+<td align="right">1,861.4</td>
+<td>Upper-middle</td>
+<td align="right">2,034.4</td>
+</tr>
+<tr class="odd">
+<td>Europe</td>
+<td align="right">890.0</td>
+<td>Other low income</td>
+<td align="right">552.1</td>
+<td>Not classified</td>
+<td align="right">1,274.4</td>
+</tr>
+<tr class="even">
+<td>Oceania</td>
+<td align="right">208.0</td>
+<td></td>
+<td align="right"></td>
+<td>High income</td>
+<td align="right">23.5</td>
+</tr>
+<tr class="odd">
+<td><strong>24,281.9</strong></td>
+<td align="right"></td>
+<td><strong>24,281.9</strong></td>
+<td align="right"></td>
+<td><strong>24,281.9</strong></td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
+<p>Three things follow that are worth knowing before using these
+figures.</p>
+<p><strong>“Developing countries” is the total, and “least developed
+countries” is not a separate universe.</strong> <code>DPGC</code> is the
+grand total. <code>LDC</code> is a <em>tier</em> of the DAC income
+classification — the same money cut a different way — so adding it to a
+geographic figure double counts.</p>
+<p><strong>The two income classifications are genuinely
+different.</strong> The DAC List of ODA Recipients has a least-developed
+tier and no high-income group; the World Bank classification has the
+reverse, plus a group for countries it does not classify at all.</p>
+<p><strong>Some groupings are not classifications.</strong>
+<code>HIPC</code>, <code>LLDC</code>, <code>SIDS</code>,
+<code>FSCAC</code> and <code>ACP</code> are overlapping flags a country
+carries <em>in addition</em> to its place in every classification above
+— Ethiopia is in Africa, Sub-Saharan Africa, Eastern Africa, least
+developed, landlocked, World Bank low income, heavily indebted and
+fragile simultaneously. They do not partition anything
+(<code>FSCAC</code> alone is 47% of the United States total), so
+<code>scheme</code> cannot name them.</p>
+</div>
+<div class="section level2">
+<h2 id="levels">Levels<a class="anchor" aria-label="anchor" href="#levels"></a>
+</h2>
+<p>Each classification can be cut at a chosen depth, and every level
+still sums to the same total:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/crs_classify.html">crs_classify</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"geographic"</span>, level <span class="op">=</span> <span class="st">"continent"</span><span class="op">)</span>   <span class="co"># the default, level 1</span></span>
+<span><span class="fu"><a href="../reference/crs_classify.html">crs_classify</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"geographic"</span>, level <span class="op">=</span> <span class="st">"subregion"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/crs_classify.html">crs_classify</a></span><span class="op">(</span><span class="va">d</span>, <span class="st">"dac_income"</span>, level <span class="op">=</span> <span class="st">"country"</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr class="header">
+<th>Classification</th>
+<th>Levels</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>geographic</code></td>
+<td>
+<code>total</code>, <code>continent</code>, <code>region</code>,
+<code>subregion</code>, <code>country</code>
+</td>
+</tr>
+<tr class="even">
+<td><code>dac_income</code></td>
+<td>
+<code>total</code>, <code>tier</code>, <code>country</code>
+</td>
+</tr>
+<tr class="odd">
+<td><code>wb_income</code></td>
+<td>
+<code>total</code>, <code>group</code>, <code>country</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>A level is a <strong>frontier</strong>, not a slice at a fixed depth.
+Branches that have already ended stand in for themselves, because the
+hierarchy is ragged: Africa divides into regions and then subregions,
+while Europe holds its countries directly. So the geographic
+<code>"region"</code> level contains African regions and European
+countries side by side. Taking “every node at depth two” instead would
+drop every European country, and the level would no longer add up.</p>
+<p>The same applies to unallocated spending, which enters at whatever
+level it was reported. A country-level cut therefore still contains
+regional residuals such as “Sub-Saharan Africa unspecified”; those rows
+are marked <code>is_unallocated</code>.</p>
+<p><code><a href="../reference/crs_classify.html">crs_classify()</a></code> verifies on every call that the parts sum
+to OECD’s own reported total, and fails rather than return parts that do
+not make a whole. That is not defensiveness for its own sake: OECD’s
+published hierarchy does not always describe its published aggregates.
+<code>INC_X</code> includes <code>DPGC_X</code> in the data but does not
+list it as a child in the codelist, which cost exactly 7,766.8 million —
+32% of this donor’s total — the first time an income classification was
+cut to country level.</p>
 </div>
 <div class="section level2">
 <h2 id="what-this-vignette-is-not">What this vignette is not<a class="anchor" aria-label="anchor" href="#what-this-vignette-is-not"></a>
