@@ -141,11 +141,19 @@ family-planning universes are complete. See
 
 ## Where the coefficients come from
 
-Both tables are transcribed from the Donors Delivering for SRHR Report
-2026, pages 110–111. RMNCH follows the Muskoka 2 methodology developed
-by the London School of Hygiene and Tropical Medicine, family planning
-follows the revised Muskoka methodology agreed at the 2012 London
-Summit, and SRHR follows the Donors Delivering methodology.
+The four varying weights follow the Muskoka2 method (Dingle et al.,
+*Lancet Global Health* 2020). Its full workbook is not shipped with this
+package — it is 187 MB and CC BY-NC 3.0 — but anyone wanting to inspect
+the method at source can download it from
+<https://doi.org/10.17037/DATA.00001526> (v1.4, accessed 2026-07-30). It
+is a binary `.xlsb`; `readxl` will not open it, Python’s `pyxlsb` will.
+
+Both fixed-coefficient tables are transcribed from the Donors Delivering
+for SRHR Report 2026, pages 110–111. RMNCH follows the Muskoka 2
+methodology developed by the London School of Hygiene and Tropical
+Medicine, family planning follows the revised Muskoka methodology agreed
+at the 2012 London Summit, and SRHR follows the Donors Delivering
+methodology.
 
 The three universes overlap by construction. Adding a donor’s RMNCH,
 SRHR and FP figures together double-counts, and the report says so
@@ -312,15 +320,27 @@ leave them without a weight, their geographic group’s figure is
 substituted, trying the narrowest group first: subregion, then region,
 then continent.
 
+The group is always an **OECD DAC** grouping, never a GBD or World Bank
+region, even though the weights themselves come from GBD and World Bank
+data. That is deliberate: it keeps one regional taxonomy in the package,
+and it averages over the same universe the disbursements come from. The
+published method does the opposite — it assigns such recipients to a GBD
+region and uses that region’s aggregate — so substituted weights here
+will not reproduce the published figures exactly. This affects 26 of 182
+recipients, all small, and `source` marks every one.
+
 That figure is a **burden-weighted** mean of the group’s members —
 weighted by all-age case counts for the disease codes, and by population
-for general budget support. This is not a stylistic choice: a ratio of
-summed cases across a group is identically a mean of member ratios
-weighted by their denominators, so weighting this way makes a
-substituted value equal what an aggregate of the source data over that
-group would report. An unweighted mean would let a country with almost
-no tuberculosis count as heavily as one carrying most of the region’s
-cases; for the Caribbean the two differ by 38%.
+for general budget support. The weighting follows the published method
+even though the grouping does not: because a GBD regional aggregate is a
+ratio of summed cases, Muskoka2’s substituted values are burden-weighted
+by construction. This is not a stylistic choice: a ratio of summed cases
+across a group is identically a mean of member ratios weighted by their
+denominators, so weighting this way makes a substituted value equal what
+an aggregate of the source data over that group would report. An
+unweighted mean would let a country with almost no tuberculosis count as
+heavily as one carrying most of the region’s cases; for the Caribbean
+the two differ by 38%.
 
 Every weight records how it was obtained, so a substituted value is
 never mistaken for an observed one:

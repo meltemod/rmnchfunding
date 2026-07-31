@@ -233,6 +233,27 @@
   argument that would quietly break comparability with the published
   series.
 
+- Stated explicitly that the group a substituted weight is drawn from is
+  always an **OECD DAC** grouping, never a GBD or World Bank region. The
+  published method assigns such recipients to a GBD region and uses its
+  aggregate; this package keeps one taxonomy throughout and averages
+  over the same universe the disbursements come from. Substituted
+  weights therefore will not reproduce the published figures exactly,
+  for 26 of 182 recipients, all small and all marked by `source`.
+
+- The burden weighting itself does follow the published method, and that
+  is now evidenced rather than reasoned: Muskoka2 substitutes a GBD
+  regional aggregate, which is a ratio of summed cases and so
+  burden-weighted by construction.
+
+- Recorded that the Muskoka2 workbook was accessed 2026-07-30, and that
+  it is not redistributed with the package: at 187 MB it exceeds
+  GitHub’s per-file limit and it is CC BY-NC 3.0 rather than MIT.
+  [`?rmnch_recipient_weights`](https://meltemod.github.io/rmnchfunding/reference/rmnch_recipient_weights.md),
+  the vignette and `data-raw/reference/README.md` all point at the DOI
+  for anyone wanting to inspect the method at source, and note that the
+  binary `.xlsb` needs Python’s `pyxlsb` rather than `readxl`.
+
 - Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the RMNCH weights for the

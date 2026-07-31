@@ -96,7 +96,12 @@ Muskoka2 method, 2002-17." The Lancet Global Health 2020; 8(3): e374-e386.
 <p>Values decoded from the accompanying data collection,
 <code>Muskoka2-290120v2.xlsb</code> (v1.4, 24 March 2020),
 <a href="https://doi.org/10.17037/DATA.00001526" class="external-link">doi:10.17037/DATA.00001526</a>
-, CC BY-NC 3.0.</p>
+, CC BY-NC 3.0. Accessed 2026-07-30.</p>
+<p>That workbook is <strong>not redistributed with this package</strong>: it is 187 MB and
+CC BY-NC 3.0 rather than MIT. Anyone wanting to inspect the method at
+source can download it from the DOI above. It is a binary <code>.xlsb</code>, which
+<code>readxl</code> and <code>openxlsx</code> do not read; Python's <code>pyxlsb</code> does. Nothing in the
+build depends on it.</p>
 <p>General budget support inputs: World Bank API v2, indicators
 <code>SH.XPD.GHED.GE.ZS</code> (originating from the WHO Global Health Expenditure
 Database), <code>SP.POP.TOTL.FE.ZS</code>, <code>SP.POP.TOTL.MA.ZS</code>, <code>SP.POP.0004.FE.5Y</code>,
@@ -164,6 +169,35 @@ carrying tens of millions of cases. For tuberculosis in the Caribbean the
 two differ by 38%.</p>
 <p>Weighting is applied to each component separately, so <code>rh + mnh + ch</code> still
 equals <code>weight</code> exactly.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-substitution-group-is-oecd-deliberately">The substitution group is OECD, deliberately<a class="anchor" aria-label="anchor" href="#the-substitution-group-is-oecd-deliberately"></a></h2>
+
+
+<p>The group a borrowed weight is drawn from is always an <strong>OECD DAC</strong> grouping
+— the same hierarchy <code><a href="crs_classify.html">crs_classify()</a></code> uses and the same one CRS disbursements
+are organised by. It is never a GBD or World Bank region, even though the
+weights themselves are computed from GBD and World Bank data.</p>
+<p>This is a deliberate departure from the published method, which does the
+opposite. Muskoka2's own working sheet assigns recipients that GBD does not
+cover separately to a GBD <em>region</em> — Anguilla to "Caribbean", Cook Islands to
+"Oceania" — and takes that region's aggregate ratio. Since a regional
+aggregate is a ratio of summed cases, their substituted value is
+burden-weighted, which is why this package weights the same way.</p>
+<p>Where it differs is the group's membership. A GBD region contains every
+country in it, ODA recipient or not: GBD's "Caribbean" includes Puerto Rico.
+An OECD group contains only recipients, so a substituted weight is an
+average over the same universe the disbursements come from.</p>
+<p>Two further reasons for keeping the grouping OECD throughout. It avoids
+carrying two different regional taxonomies inside one package, where a
+recipient could sit in one region for classification and another for
+imputation. And the published mapping contains at least two assignments that
+contradict its own region column — Wallis and Futuna, a Pacific territory,
+assigned to the Caribbean, and Mayotte, off the African coast, assigned to
+Oceania — which would be inherited wholesale by adopting it.</p>
+<p>The cost is that substituted weights for those recipients will not reproduce
+the published figures exactly. That affects 26 of 182 recipients, all small,
+and <code>source</code> marks every one of them.</p>
 <p>Where every member of a group has zero burden the weights are all zero and a
 weighted mean is undefined, but the answer is not: no cases anywhere means a
 zero child share, and a fixed component keeps its constant. Europe is
