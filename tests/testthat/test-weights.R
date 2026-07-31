@@ -92,17 +92,29 @@ test_that("sectors whose RMNCH weight varies by donor are NA, not zero", {
 })
 
 test_that("the SRHR universe is fully specified", {
-  # SRHR carries a weight for every purpose code. This is worth asserting
-  # because eight of those values repeat the column's own first eight, which
-  # reads as a spreadsheet fill; it was queried and confirmed correct. The
-  # test stops a future reader from "fixing" them back to NA.
+  # SRHR carries a weight for every purpose code.
   srhr <- sector_weights[sector_weights$universe == "srhr", ]
   expect_false(anyNA(srhr$weight))
+
+  # These eight follow the 2023 and 2024 editions, not the 2026, whose table
+  # misprints them by repeating the SRHR column's own first eight values in
+  # order. Pinned because the 2026 report is the stated source and a future
+  # reader checking against it would otherwise "correct" them back.
   expect_equal(
     srhr$weight[srhr$purpose_code %in% c("15170", "15180", "16064", "51010",
                                          "72010", "72040", "72050", "73010")],
-    c(0.044, 0.094, 0.154, 0.161, 0.000, 0.175, 0.100, 0.136)
+    c(0.076, 0.415, 0.500, 0.000, 0.023, 0.001, 0.007, 0.006)
   )
+  expect_false(identical(
+    srhr$weight[srhr$purpose_code %in% c("15170", "15180", "16064", "51010",
+                                         "72010", "72040", "72050", "73010")],
+    c(0.044, 0.094, 0.154, 0.161, 0.000, 0.175, 0.100, 0.136)  # the misprint
+  ))
+
+  # 12191 is 40% in the 2023 and 2024 editions and 100% in the 2026. 40%
+  # reproduces the 2026 edition's own RMNCH totals; 100% does not.
+  rmnch <- sector_weights[sector_weights$universe == "rmnch", ]
+  expect_equal(rmnch$weight[rmnch$purpose_code == "12191"], 0.40)
 })
 
 test_that("IDA's FP weight is a published zero in every year and edition", {

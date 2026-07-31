@@ -186,14 +186,33 @@
   vignette and `data-raw/reference/README.md` all point at the DOI for anyone
   wanting to inspect the method at source, and note that the binary `.xlsb`
   needs Python's `pyxlsb` rather than `readxl`.
+* **`sector_weights` now departs from the 2026 report on nine values**, which
+  that edition misprints. Eight are SRHR weights (15170, 15180, 16064, 51010,
+  72010, 72040, 72050, 73010) whose printed values repeat the SRHR column's
+  own first eight in order — a spreadsheet fill — and one is 12191's RMNCH
+  weight, printed as 100% where the earlier editions give 40%. The package
+  uses the 2023/2024 values, which agree with each other and which reproduce
+  the 2026 edition's own published donor totals.
+
+  This was found by solving the weights from the report's published totals
+  (99 provider-year equations, 33 unknowns) after validating the same solver
+  against family planning, whose weights are known correct. The printed SRHR
+  weights are not merely a worse fit but arithmetically impossible: 27 of 99
+  provider-years would need a negative multilateral half, EU Institutions
+  2023 needing −3,411 million. The 2023 and 2024 editions, consulted
+  afterwards, print exactly the recovered values.
+
+  SRHR estimates change materially — median error against published totals
+  falls from 11.43% to 0.01%, and the All-DAC 2022 total now reproduces
+  exactly. `vignette("rmnchfunding")` has the derivation.
+
 * Added `muskoka2()`, the entry point: it fetches both OECD sources, applies the
   sector and agency weights, and returns provider-year totals for RMNCH, SRHR or
   family planning. `detail = TRUE` returns the weighted rows instead.
 * Against the published Donors Delivering 2026 totals for the United States,
   2022-2024, in 2023 constant prices: family planning reproduces **exactly**,
-  RMNCH within 1%. SRHR runs 7-17% high for the United States and Germany but
-  within 5% for the United Kingdom; the cause is not yet identified and is
-  documented as an open question rather than papered over.
+  RMNCH within 1%, and SRHR to 0.01% median across all 33 providers once the
+  misprinted weights above are corrected.
 * `recipient_crosswalk` and `rmnch_recipient_weights` now cover the unallocated
   `_X` recipients (207 recipients, 3,312 weights). They are not places and have
   no source data, but CRS reports real disbursements against them — 48% of the

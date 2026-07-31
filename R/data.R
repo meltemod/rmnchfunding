@@ -37,17 +37,59 @@
 #' data; the results live in [rmnch_recipient_weights] and are joined to a
 #' disbursement on its recipient and year.
 #'
-#' Only 51010 is built so far. The three disease codes need an IHME Global
-#' Burden of Disease extract that cannot be fetched automatically, so
-#' `muskoka(universe = "rmnch")` still refuses to compute rather than return a
-#' total missing three large CRS sectors. See `data-raw/gbd/README.md`.
+#' All four are built. See [rmnch_recipient_weights] for how they are computed
+#' and `data-raw/gbd/README.md` for the Global Burden of Disease extract they
+#' depend on.
 #'
-#' The SRHR and family-planning universes are complete and unaffected.
+#' @section Nine values are corrected against the 2026 edition:
+#' Eight SRHR weights and one RMNCH weight are taken from the 2023 and 2024
+#' editions rather than the 2026, because the 2026 table misprints them. The
+#' two earlier editions agree with each other, and their values — not the
+#' 2026 table's — reproduce the 2026 edition's own published donor totals.
+#'
+#' | code | name | this package | 2026 table |
+#' | --- | --- | --- | --- |
+#' | 15170 | Women's equality organisations | 7.6% | 4.4% |
+#' | 15180 | Ending violence against women and girls | 41.5% | 9.4% |
+#' | 16064 | Social mitigation of HIV and AIDS | 50.0% | 15.4% |
+#' | 51010 | General budget support-related aid | 0.0% | 16.1% |
+#' | 72010 | Material relief assistance and services | 2.3% | 0.0% |
+#' | 72040 | Emergency food aid | 0.1% | 17.5% |
+#' | 72050 | Relief coordination, protection and support | 0.7% | 10.0% |
+#' | 73010 | Reconstruction relief and rehabilitation | 0.6% | 13.6% |
+#' | 12191 | Medical services (RMNCH, not SRHR) | 40% | 100% |
+#'
+#' The first eight are consecutive rows of the SRHR column, and the 2026
+#' table gives them that column's own first eight values in order — 4.4, 9.4,
+#' 15.4, 16.1, 0.0, 17.5, 10.0, 13.6 — which is what a spreadsheet fill
+#' produces.
+#'
+#' Using the printed 2026 weights, SRHR estimates miss the published donor
+#' totals by 11.4% at the median and only 8 of 99 provider-years land within
+#' 1%. Using the values above, the median error is 0.01% and 93 of 99 land
+#' within 1%. For 12191, the RMNCH median error is 0.20% at 40% against 2.79%
+#' at 100%.
+#'
+#' The printed weights are not merely a worse fit but arithmetically
+#' impossible: under them, 27 of 99 provider-years would need a **negative**
+#' multilateral half to reach their published total — EU Institutions 2023
+#' would need −3,411 million — and a weighted sum of non-negative
+#' contributions cannot be negative. Under the corrected values, 1 of 99 does.
+#'
+#' `vignette("rmnchfunding")` gives the full derivation, including how the
+#' eight were identified from the published totals alone, before the 2023 and
+#' 2024 editions were consulted.
 #'
 #' @source Donors Delivering for SRHR Report 2026, "Selected percentages per
 #'   OECD DAC codes (as under the Muskoka 2, the Donors Delivering for SRHR,
 #'   and the FP methodology)", pages 110-111.
 #'   \url{https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf}
+#'
+#'   Nine values instead follow the 2023 and 2024 editions, which agree with
+#'   each other and which the 2026 edition's own donor totals bear out; see
+#'   Nine values are corrected against the 2026 edition.
+#'   \url{https://donorsdelivering.report/wp-content/uploads/2024/05/DD_Report2024_FINALspreads.pdf}
+#'   \url{https://donorsdelivering.report/wp-content/uploads/2023/06/DD_Report2023_v6_spreads.pdf}
 #'
 #'   RMNCH follows the Muskoka 2 methodology developed by the London School
 #'   of Hygiene and Tropical Medicine; family planning follows the revised
@@ -132,6 +174,12 @@
 #'   OECD DAC codes (as under the Muskoka 2, the Donors Delivering for SRHR,
 #'   and the FP methodology)", pages 110-111.
 #'   \url{https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf}
+#'
+#'   Nine values instead follow the 2023 and 2024 editions, which agree with
+#'   each other and which the 2026 edition's own donor totals bear out; see
+#'   Nine values are corrected against the 2026 edition.
+#'   \url{https://donorsdelivering.report/wp-content/uploads/2024/05/DD_Report2024_FINALspreads.pdf}
+#'   \url{https://donorsdelivering.report/wp-content/uploads/2023/06/DD_Report2023_v6_spreads.pdf}
 #'
 #'   Donors Delivering for SRHR Report 2025, same table, pages 104-105.
 #'   \url{https://donorsdelivering.report/wp-content/uploads/2025/06/DDSRHR2025.pdf}

@@ -3,8 +3,9 @@
 #
 #   Rscript data-raw/sector_weights.R
 #
-## Source: Donors Delivering for SRHR Report 2026, pp. 110-111.
-## Full citation under "Provenance" below.
+## Sources: Donors Delivering for SRHR Report 2026, pp. 110-111, EXCEPT for
+## nine misprinted values taken from the 2023 and 2024 editions instead.
+## See "nine values are NOT taken from the 2026 edition" below.
 
 library(tibble)
 
@@ -27,7 +28,7 @@ raw <- tribble(
   "12110",       "Health policy and administrative management",                     40,  15.4,    5,
   "12181",       "Medical education/training",                                      40,  16.1,    5,
   "12182",       "Medical research",                                                 0,   0.0,    0,
-  "12191",       "Medical services",                                               100,  17.5,    5,
+  "12191",       "Medical services",                                                40,  17.5,    5,  # 2026 misprint: 100
   "12220",       "Basic health care",                                               40,  10.0,    5,
   "12230",       "Basic health infrastructure",                                     40,  13.6,    5,
   "12240",       "Basic nutrition",                                                100,  38.4,    0,
@@ -46,14 +47,14 @@ raw <- tribble(
   "14032",       "Basic sanitation",                                                15,   0.0,    0,
   "15150",       "Democratic participation and civil society",                       0,   1.2,    0,
   "15160",       "Human rights",                                                     0,   6.3,    0,
-  "15170",       "Women's equality organisations and institutions",                  0,   4.4,    0,
-  "15180",       "Ending violence against women and girls",                          0,   9.4,    0,
-  "16064",       "Social mitigation of HIV and AIDS",                                0,  15.4,    0,
-  "51010",       "General budget support-related aid",                              NA,  16.1,  0.5, # rmnch varies*
-  "72010",       "Material relief assistance and services",                        4.4,   0.0,    0,
-  "72040",       "Emergency food aid",                                             1.9,  17.5,    0,
-  "72050",       "Relief coordination, protection and support services",           2.1,  10.0,    0,
-  "73010",       "Reconstruction relief and rehabilitation",                       1.4,  13.6,    0,
+  "15170",       "Women's equality organisations and institutions",                  0,   7.6,    0,  # 2026 misprint: 4.4
+  "15180",       "Ending violence against women and girls",                          0,  41.5,    0,  # 2026 misprint: 9.4
+  "16064",       "Social mitigation of HIV and AIDS",                                0,  50.0,    0,  # 2026 misprint: 15.4
+  "51010",       "General budget support-related aid",                              NA,   0.0,  0.5, # rmnch varies*; 2026 misprint: 16.1
+  "72010",       "Material relief assistance and services",                        4.4,   2.3,    0,  # 2026 misprint: 0.0
+  "72040",       "Emergency food aid",                                             1.9,   0.1,    0,  # 2026 misprint: 17.5
+  "72050",       "Relief coordination, protection and support services",           2.1,   0.7,    0,  # 2026 misprint: 10.0
+  "73010",       "Reconstruction relief and rehabilitation",                       1.4,   0.6,    0,  # 2026 misprint: 13.6
   "74020",       "Multi-hazard response preparedness",                             1.5,   0.3,    0
 )
 
@@ -80,14 +81,48 @@ raw <- tribble(
 #   refuse to compute: three of the four are large CRS sectors and a silent
 #   zero would understate every result.
 
-# ---- a coincidence in the SRHR column, reviewed and accepted -------------
-# The SRHR values for 15170, 15180, 16064, 51010, 72010, 72040, 72050 and
-# 73010 happen to reproduce the SRHR values of the table's first eight rows
-# (11230, 11231, 12110, 12181, 12182, 12191, 12220, 12230) exactly and in
-# order: 4.4, 9.4, 15.4, 16.1, 0.0, 17.5, 10.0, 13.6. This looks like a
-# spreadsheet fill and was queried as one. It is not: the values are correct
-# as given. Recorded here so the next person to notice the pattern does not
-# spend the same time on it.
+# ---- nine values are NOT taken from the 2026 edition ----------------------
+# Eight SRHR values and one RMNCH value in the 2026 table are misprints. The
+# values above are the 2023 and 2024 editions', which are identical to each
+# other and which reproduce the 2026 edition's own published donor totals.
+#
+# THE SRHR FILL. In the 2026 table the SRHR column for 15170, 15180, 16064,
+# 51010, 72010, 72040, 72050 and 73010 repeats the column's first eight
+# values -- 4.4, 9.4, 15.4, 16.1, 0.0, 17.5, 10.0, 13.6 -- exactly and in
+# order. Eight consecutive cells overwritten with the top of their own
+# column is what a spreadsheet fill does. An earlier version of this file
+# flagged the pattern, queried it, and then recorded it as correct as given.
+# That was wrong, and the note is replaced rather than amended so nobody
+# reads the old conclusion.
+#
+# HOW IT WAS ESTABLISHED, before the 2023/2024 editions were consulted. The
+# 2026 report publishes SRHR totals for 33 providers over three years. With
+# 33 sector weights that is 99 equations in 33 unknowns, so the weights can
+# be solved for by constrained least squares and compared with the printed
+# table. Validating the same solver on family planning -- whose weights are
+# known correct, since they reproduce the published FP totals exactly --
+# recovers them to within 0.3 points. Applied to SRHR it returns the printed
+# value for 25 of 33 codes and disagrees on exactly the eight above.
+#
+# The eight are not merely a worse fit, they are arithmetically impossible.
+# Under the printed weights, 27 of 99 provider-years require a NEGATIVE
+# multilateral half to reach their published total; EU Institutions 2023
+# needs -3,411m. No agency weights can produce that, since a weighted sum of
+# non-negative contributions cannot be negative. Under the values above only
+# 1 of 99 does.
+#
+# The 2023 and 2024 editions then confirmed it outright: they print the
+# values used above, and the solved figures match them to a mean of 0.08
+# percentage points across the eight. Median error against the published
+# donor totals falls from 11.4% to 0.07%.
+#
+# THE RMNCH MISPRINT. Separately, 12191 medical services is 40% in the 2023
+# and 2024 editions and 100% in the 2026. 40% is right: it gives a median
+# error against the 2026 edition's own RMNCH totals of 0.20% (83 of 99
+# provider-years within 2%), against 2.79% at 100% (42 of 99). This one is
+# not part of the fill and has its own cause, unknown.
+#
+# Full analysis: vignettes/errata.Rmd.
 
 # ---- provenance ----------------------------------------------------------
 # Donors Delivering for SRHR Report 2026, "Selected percentages per OECD DAC

@@ -24,6 +24,12 @@ OECD DAC codes (as under the Muskoka 2, the Donors Delivering for SRHR,
 and the FP methodology)", pages 110-111.
 \url{https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf}
 
+Nine values instead follow the 2023 and 2024 editions, which agree with
+each other and which the 2026 edition's own donor totals bear out; see
+Nine values are corrected against the 2026 edition.
+\url{https://donorsdelivering.report/wp-content/uploads/2024/05/DD_Report2024_FINALspreads.pdf}
+\url{https://donorsdelivering.report/wp-content/uploads/2023/06/DD_Report2023_v6_spreads.pdf}
+
 RMNCH follows the Muskoka 2 methodology developed by the London School
 of Hygiene and Tropical Medicine; family planning follows the revised
 Muskoka methodology agreed at the 2012 London Summit; SRHR follows the
@@ -59,12 +65,50 @@ computes them from open disease-burden and government-health-expenditure
 data; the results live in \link{rmnch_recipient_weights} and are joined to a
 disbursement on its recipient and year.
 
-Only 51010 is built so far. The three disease codes need an IHME Global
-Burden of Disease extract that cannot be fetched automatically, so
-\code{muskoka(universe = "rmnch")} still refuses to compute rather than return a
-total missing three large CRS sectors. See \code{data-raw/gbd/README.md}.
+All four are built. See \link{rmnch_recipient_weights} for how they are computed
+and \code{data-raw/gbd/README.md} for the Global Burden of Disease extract they
+depend on.
+}
 
-The SRHR and family-planning universes are complete and unaffected.
+\section{Nine values are corrected against the 2026 edition}{
+
+Eight SRHR weights and one RMNCH weight are taken from the 2023 and 2024
+editions rather than the 2026, because the 2026 table misprints them. The
+two earlier editions agree with each other, and their values — not the
+2026 table's — reproduce the 2026 edition's own published donor totals.\tabular{llll}{
+   code \tab name \tab this package \tab 2026 table \cr
+   15170 \tab Women's equality organisations \tab 7.6\% \tab 4.4\% \cr
+   15180 \tab Ending violence against women and girls \tab 41.5\% \tab 9.4\% \cr
+   16064 \tab Social mitigation of HIV and AIDS \tab 50.0\% \tab 15.4\% \cr
+   51010 \tab General budget support-related aid \tab 0.0\% \tab 16.1\% \cr
+   72010 \tab Material relief assistance and services \tab 2.3\% \tab 0.0\% \cr
+   72040 \tab Emergency food aid \tab 0.1\% \tab 17.5\% \cr
+   72050 \tab Relief coordination, protection and support \tab 0.7\% \tab 10.0\% \cr
+   73010 \tab Reconstruction relief and rehabilitation \tab 0.6\% \tab 13.6\% \cr
+   12191 \tab Medical services (RMNCH, not SRHR) \tab 40\% \tab 100\% \cr
+}
+
+
+The first eight are consecutive rows of the SRHR column, and the 2026
+table gives them that column's own first eight values in order — 4.4, 9.4,
+15.4, 16.1, 0.0, 17.5, 10.0, 13.6 — which is what a spreadsheet fill
+produces.
+
+Using the printed 2026 weights, SRHR estimates miss the published donor
+totals by 11.4\% at the median and only 8 of 99 provider-years land within
+1\%. Using the values above, the median error is 0.01\% and 93 of 99 land
+within 1\%. For 12191, the RMNCH median error is 0.20\% at 40\% against 2.79\%
+at 100\%.
+
+The printed weights are not merely a worse fit but arithmetically
+impossible: under them, 27 of 99 provider-years would need a \strong{negative}
+multilateral half to reach their published total — EU Institutions 2023
+would need −3,411 million — and a weighted sum of non-negative
+contributions cannot be negative. Under the corrected values, 1 of 99 does.
+
+\code{vignette("rmnchfunding")} gives the full derivation, including how the
+eight were identified from the published totals alone, before the 2023 and
+2024 editions were consulted.
 }
 
 \seealso{
