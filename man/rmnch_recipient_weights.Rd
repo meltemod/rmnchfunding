@@ -122,6 +122,25 @@ entirely malaria-free, which is how Gibraltar and Kosovo get a malaria
 weight of exactly 0.15, the MNH constant alone.
 }
 
+\section{The malaria constant is unconditional}{
+
+Malaria's MNH component is 0.15 for every country and year, with no
+endemicity condition — all 1,232 malaria MNH cells in the published
+reference carry it. So a recipient with no recorded malaria has a weight of
+exactly 0.15, the constant alone.
+
+Zeroing the constant where there is no burden was tested against the
+reference and is \strong{worse}: agreement within 0.10 falls from 83.2\% to 59.1\%,
+because not one of the 713 zero-burden reference values falls below 0.15.
+The published method never assigns a malaria weight under the constant, so
+0.15 is already below the reference there rather than above it.
+
+\code{vignette("rmnchfunding")} gives the full comparison and the two lines
+needed to construct the variant for a sensitivity analysis. It is documented
+rather than implemented, to avoid offering a switch that would quietly break
+comparability with the published series.
+}
+
 \section{Validation against the published method}{
 
 The equations were re-run over 2005-2017, the overlap between the GBD

@@ -161,6 +161,14 @@
   mean is undefined, but the answer is not — no cases anywhere means a zero
   child share. Europe is entirely malaria-free, so Gibraltar and Kosovo take
   the MNH constant alone.
+* Documented why malaria's 0.15 MNH constant is applied unconditionally, with
+  the alternative tested rather than asserted. Zeroing it where no burden is
+  recorded is **worse** against the published reference — agreement within 0.10
+  falls from 83.2% to 59.1% — because not one of the 713 zero-burden reference
+  values falls below 0.15. The variant is documented in
+  `vignette("rmnchfunding")` with the two lines needed to construct it, rather
+  than exposed as an argument that would quietly break comparability with the
+  published series.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the RMNCH weights for the three
