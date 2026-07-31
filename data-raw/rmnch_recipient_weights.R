@@ -509,11 +509,20 @@ full <- do.call(rbind, lapply(codes_present, function(pc) {
   skeleton$weight <- NA_real_; skeleton$source_year <- NA_integer_
   skeleton$source <- NA_character_
   out <- rbind(have[names(skeleton)], skeleton)
+  # Narrowest group first. The global step exists for DPGC_X, "developing
+  # countries unspecified", whose geographic parent IS the root: it sits in the
+  # continent-level partition itself, so subregion, region and continent all
+  # resolve to itself and none of them has data. It is also the largest single
+  # unallocated bucket — 32% of United States disbursements in the four varying
+  # codes — so leaving it unweighted would be the opposite of harmless.
+  out$global <- "DPGC"
   for (g in list(c("subregion", "regional (subregion)"),
                  c("region", "regional (region)"),
-                 c("continent", "regional (continent)"))) {
+                 c("continent", "regional (continent)"),
+                 c("global", "global"))) {
     out <- fill_from_group(out, g[1], g[2])
   }
+  out$global <- NULL
   out
 }))
 rows <- full

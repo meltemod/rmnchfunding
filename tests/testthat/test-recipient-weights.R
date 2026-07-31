@@ -38,7 +38,7 @@ test_that("every weight records where it came from", {
   expect_true(all(is.na(w$weight) | !is.na(w$source)))
   expect_true(all(w$source %in%
     c("own", "regional (subregion)", "regional (region)",
-      "regional (continent)"), na.rm = TRUE))
+      "regional (continent)", "global"), na.rm = TRUE))
   # source_year applies to own-data rows. A regional substitute is a mean over
   # group members whose own source years may differ, so it has no single
   # observation year and carries NA rather than an invented one.
@@ -101,13 +101,19 @@ test_that("every recipient has a geographic line for the fallback", {
   expect_false(anyNA(cw$subregion))
 })
 
-test_that("the crosswalk excludes aggregates and organisations", {
+test_that("the crosswalk excludes aggregates but includes unallocated buckets", {
   cw <- recipient_crosswalk
   r <- crs_recipients
+  # Aggregates are sums of other rows and would double count.
   expect_false(any(cw$recipient_code %in%
                      r$recipient_code[r$is_aggregate]))
-  expect_false(any(cw$recipient_code %in%
-                     r$recipient_code[r$is_unallocated]))
+  # The `_X` buckets ARE included, deliberately. They are not places and have
+  # no source data of their own, but CRS reports real disbursements against
+  # them — 48% of the value in the four varying codes for the United States —
+  # so excluding them would leave muskoka2() unable to weight half the money.
+  expect_true(any(cw$recipient_code %in%
+                    r$recipient_code[r$is_unallocated]))
+  expect_true(all(is.na(cw$iso3[grepl("_X$", cw$recipient_code)])))
   # CL_AREA_ORG carries multilateral organisations too; none belongs here.
   expect_false(any(c("1UN019", "5WB002", "5ASDB01") %in% cw$recipient_code))
 })
@@ -118,7 +124,9 @@ test_that("all four purpose codes are present", {
   expect_setequal(unique(rmnch_recipient_weights$purpose_code),
                   c("12262", "12263", "13040", "51010"))
   # Complete grid: every code, every recipient, every target year.
-  expect_equal(nrow(rmnch_recipient_weights), 4L * 182L * 4L)
+  # 4 codes x every recipient in the crosswalk x 4 target years.
+  expect_equal(nrow(rmnch_recipient_weights),
+               4L * nrow(recipient_crosswalk) * 4L)
 })
 
 test_that("the fixed components of each disease formula are respected", {
@@ -237,7 +245,8 @@ test_that("the crosswalk CSV ships and matches the dataset", {
   vals <- unlist(csv[srccols], use.names = FALSE)
   expect_false(anyNA(vals))
   expect_true(all(vals %in% c("own", "regional (subregion)",
-                              "regional (region)", "regional (continent)")))
+                              "regional (region)", "regional (continent)",
+                              "global")))
 })
 
 test_that("the CSV's imputation flags agree with the weights", {
@@ -285,10 +294,14 @@ test_that("an absent geographic level reads as absent", {
   expect_true(all(is.na(cw$region_name[self])))
   expect_false(any(is.na(cw$region_name[!self])))
 
-  # Every recipient without a region level is European, which is the only
-  # continent the DAC does not subdivide. If that ever changes, the assumption
-  # behind the cascade's middle step deserves rechecking.
-  expect_true(all(cw$continent[self] == "E"))
+  # A recipient with no region level is either European — the one continent
+  # the DAC does not subdivide — or an unallocated `_X` bucket that sits at the
+  # continent frontier itself, such as DPGC_X. Anything else would mean the
+  # hierarchy had changed shape, and the cascade's middle step would deserve
+  # rechecking.
+  expect_false(any(self & cw$continent != "E" &
+                     !grepl("_X$", cw$recipient_code)))
+  expect_true(any(self & cw$continent == "E"))
 
   # The continent level always exists.
   expect_false(anyNA(cw$continent))

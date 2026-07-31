@@ -193,3 +193,60 @@ test_that("all schemes and levels agree across several donors and years", {
                  label = paste0(donor, ": spread across scheme/level combos"))
   }
 })
+
+test_that("muskoka2() reproduces the published family-planning totals", {
+  skip_if_no_oecd()
+
+  # The strongest end-to-end check available. Donors Delivering 2026 Annex 3
+  # publishes United States FP funding for 2022-2024 in 2023 constant prices,
+  # and this pipeline reproduces all three EXACTLY — fetchers, deflation,
+  # sector weights, agency weights and the multilateral half all together.
+  # Family planning is the universe where every coefficient is a published
+  # constant, so an exact match is achievable and anything else means
+  # something upstream has moved.
+  published <- c(`2022` = 924.92, `2023` = 834.99, `2024` = 979.42)
+  r <- oecd_or_skip(muskoka2(
+    "USA", years = 2022:2024, universe = "fp",
+    prices = "constant", base = 2023, quiet = TRUE
+  ))
+  for (y in names(published)) {
+    got <- r$total[r$year == as.integer(y)]
+    expect_equal(got, published[[y]], tolerance = 1e-4,
+                 label = paste("USA family planning", y))
+  }
+})
+
+test_that("muskoka2() reproduces the published RMNCH totals within 1%", {
+  skip_if_no_oecd()
+
+  # RMNCH cannot match exactly: its four varying weights are recomputed from
+  # GBD 2023 while the published figures used an earlier round. Within 1% is
+  # what that difference costs, and a wider gap would mean something beyond
+  # the data vintage had changed.
+  published <- c(`2022` = 7521.99, `2023` = 5327.42, `2024` = 7662.28)
+  r <- oecd_or_skip(muskoka2(
+    "USA", years = 2022:2024, universe = "rmnch",
+    prices = "constant", base = 2023, quiet = TRUE
+  ))
+  for (y in names(published)) {
+    got <- r$total[r$year == as.integer(y)]
+    expect_lt(abs(got - published[[y]]) / published[[y]], 0.01)
+  }
+})
+
+test_that("muskoka2() weights every disbursement row", {
+  skip_if_no_oecd()
+
+  # muskoka2() errors rather than treat a missing weight as zero, so a
+  # successful run already proves coverage. This pins the case that failed
+  # first: the unallocated `_X` recipients, 48% of the value in the four
+  # varying codes, which had no recipient-year weight until the crosswalk was
+  # extended to cover them.
+  d <- oecd_or_skip(muskoka2(
+    "USA", years = 2022, prices = "current", detail = TRUE, quiet = TRUE
+  ))
+  expect_false(anyNA(d$weight))
+  bil <- d[d$half == "bilateral", ]
+  expect_true(any(grepl("_X$", bil$recipient)))
+  expect_false(anyNA(bil$weight[grepl("_X$", bil$recipient)]))
+})

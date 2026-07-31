@@ -50,7 +50,19 @@ descendants <- function(root) {
 }
 under_dpgc <- descendants("DPGC")
 leaves <- setdiff(under_dpgc, tree$parent_code)
-universe <- recips[recips$recipient_code %in% leaves & !recips$is_unallocated, ]
+universe <- recips[recips$recipient_code %in% leaves, ]
+
+# The `_X` unallocated buckets ARE included, unlike aggregates. They are not
+# places and have no population or disease burden of their own, but CRS reports
+# real disbursements against them — for the United States in 2022 they are 48%
+# of the value in the four codes whose weight varies by recipient. Excluding
+# them would leave `muskoka()` unable to weight half the money.
+#
+# They carry no source data, so they take their geographic parent'"'"'s figure
+# through the same substitution as any other recipient without data: F6_X
+# (Sub-Saharan Africa unspecified) from F6, A3_X from A3, and so on. This is
+# the same thing the published method does by mapping its "regional" rows to a
+# GBD region, differing only in that the group stays OECD.
 
 # ---- geographic ancestors -------------------------------------------------
 # The frontier of DPGC's subtree at each depth, as `crs_classify()` computes
@@ -121,6 +133,8 @@ manual_iso3 <- c(
 # to their region's weight; recorded here so that "no data" is a documented
 # status rather than an unexplained gap.
 no_wb_data <- c(
+  # The unallocated buckets, added programmatically below: not places, so
+  # neither source has a record for them by construction.
   AIA   = "small territory, not a World Bank economy",
   COK   = "small territory, not a World Bank economy",
   MSR   = "small territory, not a World Bank economy",
@@ -133,6 +147,13 @@ no_wb_data <- c(
   INDUS = "OECD programme, not a country",
   MKNG  = "OECD programme, not a country",
   TWN   = "not in the World Bank economy list"
+)
+
+unalloc <- universe$recipient_code[universe$is_unallocated]
+no_wb_data <- c(
+  no_wb_data,
+  stats::setNames(rep("unallocated bucket, not a place", length(unalloc)),
+                  unalloc)
 )
 
 universe$iso3 <- ifelse(
@@ -263,6 +284,11 @@ if (length(unmatched) > 0L) {
 stopifnot(
   !anyDuplicated(recipient_crosswalk$recipient_code),
   nrow(recipient_crosswalk) > 150L,
+  # The unallocated buckets must be present and must have no source data.
+  "DPGC_X" %in% recipient_crosswalk$recipient_code,
+  "F6_X" %in% recipient_crosswalk$recipient_code,
+  all(is.na(recipient_crosswalk$iso3[
+    grepl("_X$", recipient_crosswalk$recipient_code)])),
   # Every recipient must have a geographic line, or the regional fallback has
   # nothing to fall back to.
   !anyNA(recipient_crosswalk$continent),

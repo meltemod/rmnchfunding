@@ -11,10 +11,10 @@ newborn and child health (RMNCH), sexual and reproductive health and rights
 OECD providers' total use of the multilateral system, using the revised Muskoka
 method.
 
-> **Status: under construction.** The coefficient tables and both OECD fetchers
-> are in place. `muskoka()` itself is not written yet, and the four per-donor
-> RMNCH weights are not yet derived, so the package does not produce a Muskoka
-> estimate — but `oecd_crs()` and `oecd_multi()` are usable on their own.
+> **Status: working, under refinement.** `muskoka2()` produces estimates for all
+> three universes. Against the published Donors Delivering 2026 totals for the
+> United States it reproduces family planning **exactly** and RMNCH within 1%;
+> SRHR is 7-17% high for some providers and under investigation.
 
 ---
 
@@ -99,11 +99,12 @@ The geography is the **OECD DAC** hierarchy — not UN M49, not World Bank
 regions. They disagree about Türkiye, Egypt and Central Asia, which changes
 which recipients are grouped for imputation.
 
-The planned entry point is a single function covering all three universes:
+The entry point is a single function covering all three universes:
 
 ```r
-muskoka(universe = "rmnch")           # or "srhr", or "fp"
-muskoka(universe = "fp", ida = 1)     # revised Muskoka 1% for IDA
+muskoka2("USA", years = 2022:2024, prices = "constant", base = 2023)
+muskoka2("USA", years = 2022, universe = "fp", prices = "current", ida = 1)
+muskoka2("USA", years = 2022, prices = "current", detail = TRUE)  # row by row
 ```
 
 Both tables are transcribed from the Donors Delivering for SRHR Report,

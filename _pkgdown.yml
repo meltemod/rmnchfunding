@@ -7,6 +7,13 @@ template:
 # point: a newly exported function or dataset cannot be quietly left off the
 # site. Add it here when you add it to the package.
 reference:
+  - title: Estimating funding
+    desc: >
+      The revised Muskoka method applied end to end: bilateral disbursements
+      weighted by purpose code, plus core contributions weighted by agency.
+    contents:
+      - muskoka2
+
   - title: Fetching OECD data
     desc: >
       Retrieve the two sources the Muskoka method applies coefficients to. Both

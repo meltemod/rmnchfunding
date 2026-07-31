@@ -186,6 +186,20 @@
   vignette and `data-raw/reference/README.md` all point at the DOI for anyone
   wanting to inspect the method at source, and note that the binary `.xlsb`
   needs Python's `pyxlsb` rather than `readxl`.
+* Added `muskoka2()`, the entry point: it fetches both OECD sources, applies the
+  sector and agency weights, and returns provider-year totals for RMNCH, SRHR or
+  family planning. `detail = TRUE` returns the weighted rows instead.
+* Against the published Donors Delivering 2026 totals for the United States,
+  2022-2024, in 2023 constant prices: family planning reproduces **exactly**,
+  RMNCH within 1%. SRHR runs 7-17% high for the United States and Germany but
+  within 5% for the United Kingdom; the cause is not yet identified and is
+  documented as an open question rather than papered over.
+* `recipient_crosswalk` and `rmnch_recipient_weights` now cover the unallocated
+  `_X` recipients (207 recipients, 3,312 weights). They are not places and have
+  no source data, but CRS reports real disbursements against them — 48% of the
+  value in the four varying codes for the United States — so `muskoka2()` could
+  not weight half the money without them. They take their geographic parent's
+  figure, and DPGC_X takes a global one, since its parent is the root.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the RMNCH weights for the three
