@@ -14,8 +14,8 @@ sector_weights
 
 ## Format
 
-A data frame with 99 rows (33 purpose codes x 3 universes) and 4
-columns:
+A data frame with 396 rows (33 purpose codes x 3 universes x 4 report
+editions) and 7 columns:
 
 - purpose_code:
 
@@ -31,11 +31,32 @@ columns:
 
   Factor with levels `"rmnch"`, `"srhr"`, `"fp"`.
 
+- report_edition:
+
+  Which Donors Delivering edition the row describes: 2023, 2024, 2025 or
+  2026.
+
 - weight:
 
   Share of the disbursement attributed to the universe, as a proportion
-  in `[0, 1]` — not a percentage. `NA` where no weight has been agreed;
-  see Unresolved weights.
+  in `[0, 1]` — not a percentage. This is the figure to compute with,
+  and is the same in every edition. `NA` for the four RMNCH cells the
+  source gives as `varies*`.
+
+- weight_printed:
+
+  What that edition's own table prints. Identical to `weight` except for
+  the nine misprinted values.
+
+- is_misprint:
+
+  `TRUE` where `weight` and `weight_printed` differ.
+
+Editions before 2023 are excluded. They publish SRHR as three components
+(RH + MNH + SRR) on a different basis — 15170 is 17.0% in the 2022
+edition against 7.6% in 2023 — and split their purpose codes
+differently. That is a methodology revision rather than an erratum, and
+mixing the two bases would give weights comparable to neither.
 
 ## Source
 
@@ -91,26 +112,27 @@ All four are built. See
 for how they are computed and `data-raw/gbd/README.md` for the Global
 Burden of Disease extract they depend on.
 
-## Nine values are corrected against the 2026 edition
+## Nine values the 2025 and 2026 editions misprint
 
-Eight SRHR weights and one RMNCH weight are taken from the 2023 and 2024
-editions rather than the 2026, because the 2026 table misprints them.
-The two earlier editions agree with each other, and their values — not
-the 2026 table's — reproduce the 2026 edition's own published donor
-totals.
+The four editions agree on every cell but nine. For those, `weight`
+follows the 2023 and 2024 editions, which are identical to each other
+and whose values — not the later tables' — reproduce the 2025 and 2026
+editions' own published donor totals. They are errata rather than
+revisions, which is why `weight` is the same in all four editions and
+only `weight_printed` differs.
 
-|       |                                             |              |            |
-|-------|---------------------------------------------|--------------|------------|
-| code  | name                                        | this package | 2026 table |
-| 15170 | Women's equality organisations              | 7.6%         | 4.4%       |
-| 15180 | Ending violence against women and girls     | 41.5%        | 9.4%       |
-| 16064 | Social mitigation of HIV and AIDS           | 50.0%        | 15.4%      |
-| 51010 | General budget support-related aid          | 0.0%         | 16.1%      |
-| 72010 | Material relief assistance and services     | 2.3%         | 0.0%       |
-| 72040 | Emergency food aid                          | 0.1%         | 17.5%      |
-| 72050 | Relief coordination, protection and support | 0.7%         | 10.0%      |
-| 73010 | Reconstruction relief and rehabilitation    | 0.6%         | 13.6%      |
-| 12191 | Medical services (RMNCH, not SRHR)          | 40%          | 100%       |
+|  |  |  |  |
+|----|----|----|----|
+| code | name | `weight` | `weight_printed` (2025, 2026) |
+| 15170 | Women's equality organisations | 7.6% | 4.4% |
+| 15180 | Ending violence against women and girls | 41.5% | 9.4% |
+| 16064 | Social mitigation of HIV and AIDS | 50.0% | 15.4% |
+| 51010 | General budget support-related aid | 0.0% | 16.1% |
+| 72010 | Material relief assistance and services | 2.3% | 0.0% |
+| 72040 | Emergency food aid | 0.1% | 17.5% |
+| 72050 | Relief coordination, protection and support | 0.7% | 10.0% |
+| 73010 | Reconstruction relief and rehabilitation | 0.6% | 13.6% |
+| 12191 | Medical services (RMNCH, not SRHR) | 40% | 100% |
 
 The first eight are consecutive rows of the SRHR column, and the 2026
 table gives them that column's own first eight values in order — 4.4,
@@ -134,6 +156,8 @@ values, 1 of 99 does.
 gives the full derivation, including how the eight were identified from
 the published totals alone, before the 2023 and 2024 editions were
 consulted.
+[`muskoka_weights()`](https://meltemod.github.io/rmnchfunding/reference/muskoka_weights.md)
+shows both columns side by side for any edition.
 
 ## See also
 

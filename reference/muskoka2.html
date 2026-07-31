@@ -88,8 +88,10 @@ fetchers, so the two halves are always on the same basis.</p></dd>
 
 
 <dt id="arg-report-edition">report_edition<a class="anchor" aria-label="anchor" href="#arg-report-edition"></a></dt>
-<dd><p>Which edition's multilateral weights to apply: <code>2025</code>
-or <code>2026</code>. Defaults to the most recent.</p></dd>
+<dd><p>Which edition's coefficients to apply: <code>2023</code>,
+<code>2024</code>, <code>2025</code> or <code>2026</code>. Selects both halves — sector weights and agency
+weights — so an estimate never mixes editions. Defaults to the most
+recent. <code><a href="muskoka_weights.html">muskoka_weights()</a></code> shows what a given edition applies.</p></dd>
 
 
 <dt id="arg-ida">ida<a class="anchor" aria-label="anchor" href="#arg-ida"></a></dt>
@@ -164,17 +166,22 @@ report them separately.</p>
     <h2 id="choosing-an-edition-and-a-price-base">Choosing an edition and a price base<a class="anchor" aria-label="anchor" href="#choosing-an-edition-and-a-price-base"></a></h2>
 
 
-<p><code>report_edition</code> selects which vintage of the multilateral weights to use.
-Each edition recomputes the weights for every year it covers, and the
+<p><code>report_edition</code> selects the coefficient vintage for both halves. Each
+edition recomputes its agency weights for every year it covers, and the
 revisions are large: the Asian Development Bank's 2023 RMNCH weight is 5.18%
 in the 2025 edition and 13.42% in the 2026 edition. Reproducing a published
 figure means matching its edition, and matching its price base too — 2022
 constant prices for the 2025 edition, 2023 for the 2026.</p>
+<p>Sector weights barely move between editions; the nine values the 2025 and
+2026 editions misprint are corrected here in every edition, because they
+are errata rather than revisions and each edition's own published totals
+are reproduced by the corrected figure. See <a href="sector_weights.html">sector_weights</a>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="oecd_crs.html">oecd_crs()</a></code> and <code><a href="oecd_multi.html">oecd_multi()</a></code> for the inputs, <a href="sector_weights.html">sector_weights</a>,
-<a href="rmnch_recipient_weights.html">rmnch_recipient_weights</a> and <a href="agency_weights.html">agency_weights</a> for the coefficients.</p></div>
+    <div class="dont-index"><p><code><a href="oecd_crs.html">oecd_crs()</a></code> and <code><a href="oecd_multi.html">oecd_multi()</a></code> for the inputs, <code><a href="muskoka_weights.html">muskoka_weights()</a></code>
+to read the coefficients an edition applies, <a href="sector_weights.html">sector_weights</a>,
+<a href="rmnch_recipient_weights.html">rmnch_recipient_weights</a> and <a href="agency_weights.html">agency_weights</a> for the tables themselves.</p></div>
     </div>
 
     <div class="section level2">

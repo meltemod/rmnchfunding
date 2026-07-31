@@ -46,8 +46,11 @@ muskoka2(
 
 - report_edition:
 
-  Which edition's multilateral weights to apply: `2025` or `2026`.
-  Defaults to the most recent.
+  Which edition's coefficients to apply: `2023`, `2024`, `2025` or
+  `2026`. Selects both halves — sector weights and agency weights — so
+  an estimate never mixes editions. Defaults to the most recent.
+  [`muskoka_weights()`](https://meltemod.github.io/rmnchfunding/reference/muskoka_weights.md)
+  shows what a given edition applies.
 
 - ida:
 
@@ -134,12 +137,18 @@ report them separately.
 
 ## Choosing an edition and a price base
 
-`report_edition` selects which vintage of the multilateral weights to
-use. Each edition recomputes the weights for every year it covers, and
-the revisions are large: the Asian Development Bank's 2023 RMNCH weight
-is 5.18% in the 2025 edition and 13.42% in the 2026 edition. Reproducing
-a published figure means matching its edition, and matching its price
-base too — 2022 constant prices for the 2025 edition, 2023 for the 2026.
+`report_edition` selects the coefficient vintage for both halves. Each
+edition recomputes its agency weights for every year it covers, and the
+revisions are large: the Asian Development Bank's 2023 RMNCH weight is
+5.18% in the 2025 edition and 13.42% in the 2026 edition. Reproducing a
+published figure means matching its edition, and matching its price base
+too — 2022 constant prices for the 2025 edition, 2023 for the 2026.
+
+Sector weights barely move between editions; the nine values the 2025
+and 2026 editions misprint are corrected here in every edition, because
+they are errata rather than revisions and each edition's own published
+totals are reproduced by the corrected figure. See
+[sector_weights](https://meltemod.github.io/rmnchfunding/reference/sector_weights.md).
 
 ## See also
 
@@ -147,11 +156,13 @@ base too — 2022 constant prices for the 2025 edition, 2023 for the 2026.
 and
 [`oecd_multi()`](https://meltemod.github.io/rmnchfunding/reference/oecd_multi.md)
 for the inputs,
+[`muskoka_weights()`](https://meltemod.github.io/rmnchfunding/reference/muskoka_weights.md)
+to read the coefficients an edition applies,
 [sector_weights](https://meltemod.github.io/rmnchfunding/reference/sector_weights.md),
 [rmnch_recipient_weights](https://meltemod.github.io/rmnchfunding/reference/rmnch_recipient_weights.md)
 and
 [agency_weights](https://meltemod.github.io/rmnchfunding/reference/agency_weights.md)
-for the coefficients.
+for the tables themselves.
 
 ## Examples
 

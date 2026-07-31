@@ -15,8 +15,8 @@ agency_weights
 
 ## Format
 
-A data frame with 198 rows (11 agencies x 3 spending years x 3 universes
-x 2 report editions) and 5 columns:
+A data frame with 396 rows (11 agencies x 3 spending years x 3 universes
+x 4 report editions) and 5 columns:
 
 - agency:
 
@@ -24,7 +24,9 @@ x 2 report editions) and 5 columns:
 
 - data_year:
 
-  Integer year of the **spending**: 2021 to 2024.
+  Integer year of the **spending**: 2019 to 2024. Each edition covers
+  three consecutive years, and successive editions step forward by one,
+  so the four together span the range with no gap.
 
 - universe:
 
@@ -37,8 +39,8 @@ x 2 report editions) and 5 columns:
 
 - report_edition:
 
-  Integer year of the **report** that published the weight: 2025
-  or 2026. See Two keys, not one.
+  Integer year of the **report** that published the weight: 2023, 2024,
+  2025 or 2026. See Two keys, not one.
 
 ## Source
 
@@ -56,7 +58,8 @@ Nine values are corrected against the 2026 edition.
 Donors Delivering for SRHR Report 2025, same table, pages 104-105.
 <https://donorsdelivering.report/wp-content/uploads/2025/06/DDSRHR2025.pdf>
 
-The sector table is identical in both editions, so
+The sector table is identical in all four editions apart from nine
+misprints, so
 [sector_weights](https://meltemod.github.io/rmnchfunding/reference/sector_weights.md)
 carries no edition key; only the multilateral weights were revised.
 
@@ -86,6 +89,27 @@ weights produces a figure that reproduces neither report. The editions
 also use different price bases — 2022 constant prices in 2025, 2023
 constant prices in 2026 — which is a second reason not to mix them
 without deflating.
+
+## A suspected transposition in the 2023 edition
+
+The 2023 edition prints World Food Programme 2020 as RMNCH 1.03%, SRHR
+3.75%. The 2024 edition prints the same spending year as RMNCH 3.75%,
+SRHR 1.03% — the two swapped. WFP's RMNCH weight is 3.70–3.96% in every
+other published year and its SRHR weight 0.94–1.03%, so the 2024
+ordering is the one that fits and the 2023 edition looks transposed.
+
+It is recorded here **as printed and not corrected**. Unlike the nine
+sector misprints in
+[sector_weights](https://meltemod.github.io/rmnchfunding/reference/sector_weights.md),
+this one has not been tested against the 2023 edition's own published
+donor totals, and an untested correction would be a guess. Anyone
+reproducing 2023-edition figures should know about it.
+
+More generally, the agency weights have not had the treatment the sector
+weights received: no independent reconstruction from published totals
+has been attempted for them. That a misprint was found in one half of
+the source table is reason to treat the other half as unverified rather
+than as confirmed.
 
 The two editions between them cover four spending years, 2021 to 2024,
 which is the window `muskoka()` targets and the range over which

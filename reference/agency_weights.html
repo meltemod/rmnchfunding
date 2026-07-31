@@ -57,12 +57,14 @@ bilateral half.</p>
 
     <div class="section level2">
     <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
-    <p>A data frame with 198 rows (11 agencies x 3 spending years x 3
-universes x 2 report editions) and 5 columns:</p><dl><dt>agency</dt>
+    <p>A data frame with 396 rows (11 agencies x 3 spending years x 3
+universes x 4 report editions) and 5 columns:</p><dl><dt>agency</dt>
 <dd><p>Multilateral agency or initiative, by display name.</p></dd>
 
 <dt>data_year</dt>
-<dd><p>Integer year of the <strong>spending</strong>: 2021 to 2024.</p></dd>
+<dd><p>Integer year of the <strong>spending</strong>: 2019 to 2024. Each
+edition covers three consecutive years, and successive editions step
+forward by one, so the four together span the range with no gap.</p></dd>
 
 <dt>universe</dt>
 <dd><p>Factor with levels <code>"rmnch"</code>, <code>"srhr"</code>, <code>"fp"</code>.</p></dd>
@@ -73,7 +75,7 @@ proportion in <code>[0, 1]</code> — not a percentage.</p></dd>
 
 <dt>report_edition</dt>
 <dd><p>Integer year of the <strong>report</strong> that published the
-weight: 2025 or 2026. See Two keys, not one.</p></dd>
+weight: 2023, 2024, 2025 or 2026. See Two keys, not one.</p></dd>
 
 
 </dl></div>
@@ -90,7 +92,8 @@ Nine values are corrected against the 2026 edition.
 <a href="https://donorsdelivering.report/wp-content/uploads/2023/06/DD_Report2023_v6_spreads.pdf" class="external-link">https://donorsdelivering.report/wp-content/uploads/2023/06/DD_Report2023_v6_spreads.pdf</a></p>
 <p>Donors Delivering for SRHR Report 2025, same table, pages 104-105.
 <a href="https://donorsdelivering.report/wp-content/uploads/2025/06/DDSRHR2025.pdf" class="external-link">https://donorsdelivering.report/wp-content/uploads/2025/06/DDSRHR2025.pdf</a></p>
-<p>The sector table is identical in both editions, so <a href="sector_weights.html">sector_weights</a>
+<p>The sector table is identical in all four editions apart from nine
+misprints, so <a href="sector_weights.html">sector_weights</a>
 carries no edition key; only the multilateral weights were revised.</p>
     </div>
     <div class="section level2">
@@ -116,6 +119,26 @@ weights produces a figure that reproduces neither report. The editions also
 use different price bases — 2022 constant prices in 2025, 2023 constant
 prices in 2026 — which is a second reason not to mix them without
 deflating.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="a-suspected-transposition-in-the-edition">A suspected transposition in the 2023 edition<a class="anchor" aria-label="anchor" href="#a-suspected-transposition-in-the-edition"></a></h2>
+
+
+<p>The 2023 edition prints World Food Programme 2020 as RMNCH 1.03%, SRHR
+3.75%. The 2024 edition prints the same spending year as RMNCH 3.75%, SRHR
+1.03% — the two swapped. WFP's RMNCH weight is 3.70–3.96% in every other
+published year and its SRHR weight 0.94–1.03%, so the 2024 ordering is the
+one that fits and the 2023 edition looks transposed.</p>
+<p>It is recorded here <strong>as printed and not corrected</strong>. Unlike the nine
+sector misprints in <a href="sector_weights.html">sector_weights</a>, this one has not been tested against
+the 2023 edition's own published donor totals, and an untested correction
+would be a guess. Anyone reproducing 2023-edition figures should know about
+it.</p>
+<p>More generally, the agency weights have not had the treatment the sector
+weights received: no independent reconstruction from published totals has
+been attempted for them. That a misprint was found in one half of the
+source table is reason to treat the other half as unverified rather than
+as confirmed.</p>
 <p>The two editions between them cover four spending years, 2021 to 2024,
 which is the window <code>muskoka()</code> targets and the range over which
 <a href="rmnch_recipient_weights.html">rmnch_recipient_weights</a> is built.</p>

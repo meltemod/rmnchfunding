@@ -56,15 +56,24 @@ Bilateral flows are weighted by CRS purpose code:
 ``` r
 
 head(sector_weights[sector_weights$universe == "rmnch", ], 8)
-#>   purpose_code                                purpose_name universe weight
-#> 1        11230                Basic life skills for adults    rmnch    0.0
-#> 2        11231                 Basic life skills for youth    rmnch    0.0
-#> 3        12110 Health policy and administrative management    rmnch    0.4
-#> 4        12181                  Medical education/training    rmnch    0.4
-#> 5        12182                            Medical research    rmnch    0.0
-#> 6        12191                            Medical services    rmnch    0.4
-#> 7        12220                           Basic health care    rmnch    0.4
-#> 8        12230                 Basic health infrastructure    rmnch    0.4
+#>   purpose_code                                purpose_name universe
+#> 1        11230                Basic life skills for adults    rmnch
+#> 2        11231                 Basic life skills for youth    rmnch
+#> 3        12110 Health policy and administrative management    rmnch
+#> 4        12181                  Medical education/training    rmnch
+#> 5        12182                            Medical research    rmnch
+#> 6        12191                            Medical services    rmnch
+#> 7        12220                           Basic health care    rmnch
+#> 8        12230                 Basic health infrastructure    rmnch
+#>   report_edition weight weight_printed is_misprint
+#> 1           2023    0.0            0.0       FALSE
+#> 2           2023    0.0            0.0       FALSE
+#> 3           2023    0.4            0.4       FALSE
+#> 4           2023    0.4            0.4       FALSE
+#> 5           2023    0.0            0.0       FALSE
+#> 6           2023    0.4            0.4       FALSE
+#> 7           2023    0.4            0.4       FALSE
+#> 8           2023    0.4            0.4       FALSE
 ```
 
 Multilateral spending is weighted by agency, and needs two keys rather
@@ -76,12 +85,18 @@ agency_weights[
   agency_weights$agency == "Global Fund" & agency_weights$universe == "rmnch",
 ]
 #>          agency data_year universe weight report_edition
-#> 10  Global Fund      2021    rmnch 0.4378           2025
-#> 11  Global Fund      2022    rmnch 0.4270           2025
-#> 12  Global Fund      2023    rmnch 0.4268           2025
-#> 109 Global Fund      2022    rmnch 0.4342           2026
-#> 110 Global Fund      2023    rmnch 0.4411           2026
-#> 111 Global Fund      2024    rmnch 0.4491           2026
+#> 10  Global Fund      2019    rmnch 0.4092           2023
+#> 11  Global Fund      2020    rmnch 0.4287           2023
+#> 12  Global Fund      2021    rmnch 0.4385           2023
+#> 109 Global Fund      2020    rmnch 0.4293           2024
+#> 110 Global Fund      2021    rmnch 0.4385           2024
+#> 111 Global Fund      2022    rmnch 0.4277           2024
+#> 208 Global Fund      2021    rmnch 0.4378           2025
+#> 209 Global Fund      2022    rmnch 0.4270           2025
+#> 210 Global Fund      2023    rmnch 0.4268           2025
+#> 307 Global Fund      2022    rmnch 0.4342           2026
+#> 308 Global Fund      2023    rmnch 0.4411           2026
+#> 309 Global Fund      2024    rmnch 0.4491           2026
 ```
 
 `data_year` is the year of the *spending*: each weight is the proportion
@@ -102,10 +117,11 @@ adb <- agency_weights[
 ]
 adb[order(adb$data_year, adb$report_edition), ]
 #>                     agency data_year universe weight report_edition
-#> 5   Asian Development Bank      2022    rmnch 0.0324           2025
-#> 103 Asian Development Bank      2022    rmnch 0.0719           2026
-#> 6   Asian Development Bank      2023    rmnch 0.0518           2025
-#> 104 Asian Development Bank      2023    rmnch 0.1342           2026
+#> 105 Asian Development Bank      2022    rmnch 0.0324           2024
+#> 203 Asian Development Bank      2022    rmnch 0.0324           2025
+#> 301 Asian Development Bank      2022    rmnch 0.0719           2026
+#> 204 Asian Development Bank      2023    rmnch 0.0518           2025
+#> 302 Asian Development Bank      2023    rmnch 0.1342           2026
 ```
 
 The 2023 weight is 5.18% as first published and 13.42% a year later. So
@@ -128,7 +144,7 @@ na_cells <- sector_weights[is.na(sector_weights$weight), ]
 table(na_cells$universe)
 #> 
 #> rmnch  srhr    fp 
-#>     4     0     0
+#>    16     0     0
 ```
 
 All four are RMNCH weights — malaria control, tuberculosis control, STD

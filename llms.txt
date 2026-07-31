@@ -363,6 +363,8 @@ weighted by purpose code, plus core contributions weighted by agency.
 
 - [`muskoka2()`](https://meltemod.github.io/rmnchfunding/reference/muskoka2.md)
   : Estimate a provider's RMNCH, SRHR or family-planning funding
+- [`muskoka_weights()`](https://meltemod.github.io/rmnchfunding/reference/muskoka_weights.md)
+  : Look up the coefficients a report edition applies
 
 ## Fetching OECD data
 

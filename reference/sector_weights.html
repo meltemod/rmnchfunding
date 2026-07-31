@@ -54,8 +54,8 @@ the other.</p>
 
     <div class="section level2">
     <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
-    <p>A data frame with 99 rows (33 purpose codes x 3 universes) and 4
-columns:</p><dl><dt>purpose_code</dt>
+    <p>A data frame with 396 rows (33 purpose codes x 3 universes x 4
+report editions) and 7 columns:</p><dl><dt>purpose_code</dt>
 <dd><p>CRS five-digit purpose code, as character. Held as
 text so codes are never treated as numbers and never lose a leading
 digit when joined against a CRS extract.</p></dd>
@@ -66,13 +66,30 @@ digit when joined against a CRS extract.</p></dd>
 <dt>universe</dt>
 <dd><p>Factor with levels <code>"rmnch"</code>, <code>"srhr"</code>, <code>"fp"</code>.</p></dd>
 
+<dt>report_edition</dt>
+<dd><p>Which Donors Delivering edition the row describes:
+2023, 2024, 2025 or 2026.</p></dd>
+
 <dt>weight</dt>
 <dd><p>Share of the disbursement attributed to the universe, as a
-proportion in <code>[0, 1]</code> — not a percentage. <code>NA</code> where no weight has
-been agreed; see Unresolved weights.</p></dd>
+proportion in <code>[0, 1]</code> — not a percentage. This is the figure to
+compute with, and is the same in every edition. <code>NA</code> for the four
+RMNCH cells the source gives as <code>varies*</code>.</p></dd>
+
+<dt>weight_printed</dt>
+<dd><p>What that edition's own table prints. Identical to
+<code>weight</code> except for the nine misprinted values.</p></dd>
+
+<dt>is_misprint</dt>
+<dd><p><code>TRUE</code> where <code>weight</code> and <code>weight_printed</code> differ.</p></dd>
 
 
-</dl></div>
+</dl><p>Editions before 2023 are excluded. They publish SRHR as three components
+(RH + MNH + SRR) on a different basis — 15170 is 17.0% in the 2022 edition
+against 7.6% in 2023 — and split their purpose codes differently. That is a
+methodology revision rather than an erratum, and mixing the two bases would
+give weights comparable to neither.</p>
+    </div>
     <div class="section level2">
     <h2 id="source">Source<a class="anchor" aria-label="anchor" href="#source"></a></h2>
     <p>Donors Delivering for SRHR Report 2026, "Selected percentages per
@@ -121,13 +138,14 @@ and <code>data-raw/gbd/README.md</code> for the Global Burden of Disease extract
 depend on.</p>
     </div>
     <div class="section level2">
-    <h2 id="nine-values-are-corrected-against-the-edition">Nine values are corrected against the 2026 edition<a class="anchor" aria-label="anchor" href="#nine-values-are-corrected-against-the-edition"></a></h2>
+    <h2 id="nine-values-the-and-editions-misprint">Nine values the 2025 and 2026 editions misprint<a class="anchor" aria-label="anchor" href="#nine-values-the-and-editions-misprint"></a></h2>
 
 
-<p>Eight SRHR weights and one RMNCH weight are taken from the 2023 and 2024
-editions rather than the 2026, because the 2026 table misprints them. The
-two earlier editions agree with each other, and their values — not the
-2026 table's — reproduce the 2026 edition's own published donor totals.</p><table class="table table"><tr><td>code</td><td>name</td><td>this package</td><td>2026 table</td></tr><tr><td>15170</td><td>Women's equality organisations</td><td>7.6%</td><td>4.4%</td></tr><tr><td>15180</td><td>Ending violence against women and girls</td><td>41.5%</td><td>9.4%</td></tr><tr><td>16064</td><td>Social mitigation of HIV and AIDS</td><td>50.0%</td><td>15.4%</td></tr><tr><td>51010</td><td>General budget support-related aid</td><td>0.0%</td><td>16.1%</td></tr><tr><td>72010</td><td>Material relief assistance and services</td><td>2.3%</td><td>0.0%</td></tr><tr><td>72040</td><td>Emergency food aid</td><td>0.1%</td><td>17.5%</td></tr><tr><td>72050</td><td>Relief coordination, protection and support</td><td>0.7%</td><td>10.0%</td></tr><tr><td>73010</td><td>Reconstruction relief and rehabilitation</td><td>0.6%</td><td>13.6%</td></tr><tr><td>12191</td><td>Medical services (RMNCH, not SRHR)</td><td>40%</td><td>100%</td></tr></table><p>The first eight are consecutive rows of the SRHR column, and the 2026
+<p>The four editions agree on every cell but nine. For those, <code>weight</code> follows
+the 2023 and 2024 editions, which are identical to each other and whose
+values — not the later tables' — reproduce the 2025 and 2026 editions' own
+published donor totals. They are errata rather than revisions, which is why
+<code>weight</code> is the same in all four editions and only <code>weight_printed</code> differs.</p><table class="table table"><tr><td>code</td><td>name</td><td><code>weight</code></td><td><code>weight_printed</code> (2025, 2026)</td></tr><tr><td>15170</td><td>Women's equality organisations</td><td>7.6%</td><td>4.4%</td></tr><tr><td>15180</td><td>Ending violence against women and girls</td><td>41.5%</td><td>9.4%</td></tr><tr><td>16064</td><td>Social mitigation of HIV and AIDS</td><td>50.0%</td><td>15.4%</td></tr><tr><td>51010</td><td>General budget support-related aid</td><td>0.0%</td><td>16.1%</td></tr><tr><td>72010</td><td>Material relief assistance and services</td><td>2.3%</td><td>0.0%</td></tr><tr><td>72040</td><td>Emergency food aid</td><td>0.1%</td><td>17.5%</td></tr><tr><td>72050</td><td>Relief coordination, protection and support</td><td>0.7%</td><td>10.0%</td></tr><tr><td>73010</td><td>Reconstruction relief and rehabilitation</td><td>0.6%</td><td>13.6%</td></tr><tr><td>12191</td><td>Medical services (RMNCH, not SRHR)</td><td>40%</td><td>100%</td></tr></table><p>The first eight are consecutive rows of the SRHR column, and the 2026
 table gives them that column's own first eight values in order — 4.4, 9.4,
 15.4, 16.1, 0.0, 17.5, 10.0, 13.6 — which is what a spreadsheet fill
 produces.</p>
@@ -143,7 +161,8 @@ would need −3,411 million — and a weighted sum of non-negative
 contributions cannot be negative. Under the corrected values, 1 of 99 does.</p>
 <p><code><a href="../articles/rmnchfunding.html">vignette("rmnchfunding")</a></code> gives the full derivation, including how the
 eight were identified from the published totals alone, before the 2023 and
-2024 editions were consulted.</p>
+2024 editions were consulted. <code><a href="muskoka_weights.html">muskoka_weights()</a></code> shows both columns
+side by side for any edition.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
