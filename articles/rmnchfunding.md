@@ -62,7 +62,7 @@ head(sector_weights[sector_weights$universe == "rmnch", ], 8)
 #> 3        12110 Health policy and administrative management    rmnch    0.4
 #> 4        12181                  Medical education/training    rmnch    0.4
 #> 5        12182                            Medical research    rmnch    0.0
-#> 6        12191                            Medical services    rmnch    1.0
+#> 6        12191                            Medical services    rmnch    0.4
 #> 7        12220                           Basic health care    rmnch    0.4
 #> 8        12230                 Basic health infrastructure    rmnch    0.4
 ```
@@ -518,6 +518,126 @@ Variant B is documented rather than implemented. The two lines above are
 all it takes for a sensitivity analysis, and keeping it out of the
 package interface avoids offering a switch that would quietly break
 comparability with the published series.
+
+## Nine weights are corrected against the 2026 report
+
+Nine values in `sector_weights` do not match the 2026 edition that the
+table is otherwise taken from. They follow the 2023 and 2024 editions
+instead. This section records why, because it is a deliberate departure
+from the stated source and anyone checking the package against that
+source will notice.
+
+### What the 2026 table prints
+
+Eight consecutive rows of the SRHR column repeat the column’s own first
+eight values, exactly and in order:
+
+| position | code  | value |     | position | code  | value |
+|----------|-------|-------|-----|----------|-------|-------|
+| 1        | 11230 | 4.4   |     | 25       | 15170 | 4.4   |
+| 2        | 11231 | 9.4   |     | 26       | 15180 | 9.4   |
+| 3        | 12110 | 15.4  |     | 27       | 16064 | 15.4  |
+| 4        | 12181 | 16.1  |     | 28       | 51010 | 16.1  |
+| 5        | 12182 | 0.0   |     | 29       | 72010 | 0.0   |
+| 6        | 12191 | 17.5  |     | 30       | 72040 | 17.5  |
+| 7        | 12220 | 10.0  |     | 31       | 72050 | 10.0  |
+| 8        | 12230 | 13.6  |     | 32       | 73010 | 13.6  |
+
+Eight adjacent cells carrying the top of their own column is what a
+spreadsheet fill produces.
+
+### How the true values were recovered
+
+The pattern alone proves nothing, so the weights were solved for from
+the report’s own published totals, without reference to any other
+edition.
+
+Annex 3 of the 2026 report publishes SRHR, RMNCH and FP totals for 33
+providers across 2022-2024. For SRHR, whose weights are global
+constants, each provider-year is a linear equation:
+
+``` math
+\text{SRHR}_{iy} = \sum_j x_j \cdot \text{sector}_{ijy} + \text{multilateral}_{iy}
+```
+
+That is 99 equations in 33 unknowns — overdetermined threefold — so the
+$`x_j`$ can be estimated by least squares subject to
+$`0 \le x_j \le 1`$.
+
+The method was validated before being trusted. Family planning’s weights
+are known correct, since they reproduce the published FP totals exactly.
+Running the identical solver on FP recovers them to within 0.3 points on
+every well-funded code. A solver that can recover known-correct weights
+from this design matrix can be believed about unknown ones.
+
+Applied to SRHR it returns the printed value for 25 of 33 codes and
+disagrees on exactly the eight above.
+
+### Why this is not a fitting artifact
+
+Three checks, none of which the least-squares objective optimises for.
+
+**The disagreement is arithmetically forced.** A multilateral half is a
+sum of non-negative contributions times weights in `[0, 1]`, so it
+cannot be negative and cannot exceed total core contributions. Under the
+printed weights, **27 of 99 provider-years need a negative multilateral
+half** to reach their published total. EU Institutions 2023 needs −3,411
+million against a published total of 266.74. No agency weights of any
+kind can produce that. Under the corrected weights, 1 of 99 does. This
+argument does not depend on the regression at all.
+
+**The estimates are stable.** 51010 solves to 0.000 pooled, in each year
+separately, in all 33 leave-one-donor-out refits, and across 200
+bootstrap resamples. Dropping the United States — a third of all SRHR
+spending — moves nothing.
+
+**The 2023 and 2024 editions agree.** Consulted only after the above,
+they print exactly the values the solver recovered, and agree with each
+other:
+
+| code  | 2023 & 2024 | solved | 2026 |
+|-------|-------------|--------|------|
+| 15170 | 7.6         | 7.3    | 4.4  |
+| 15180 | 41.5        | 41.5   | 9.4  |
+| 16064 | 50.0        | 49.9   | 15.4 |
+| 51010 | 0.0         | 0.0    | 16.1 |
+| 72010 | 2.3         | 2.3    | 0.0  |
+| 72040 | 0.1         | 0.1    | 17.5 |
+| 72050 | 0.7         | 0.7    | 10.0 |
+| 73010 | 0.6         | 0.4    | 13.6 |
+
+Mean absolute difference between solved and published-2024: **0.08
+percentage points** across the eight, 0.19 across all 33.
+
+### The ninth value
+
+Separately, 12191 medical services carries an RMNCH weight of 40% in the
+2023 and 2024 editions and 100% in the 2026. It is not part of the fill
+— it sits in the source block, not the overwritten one — and its cause
+is unknown. 40% is right on the evidence: against the 2026 edition’s own
+RMNCH totals it gives a median error of 0.20% (83 of 99 provider-years
+within 2%), against 2.79% at 100% (42 of 99).
+
+### Effect on estimates
+
+| universe            | printed 2026 weights | corrected   |
+|---------------------|----------------------|-------------|
+| SRHR, median error  | 11.43%               | **0.01%**   |
+| SRHR, within 1%     | 8 / 99               | **93 / 99** |
+| RMNCH, median error | 2.79%                | **0.20%**   |
+
+The All-DAC 2022 SRHR total reproduces at 15,467.3 against a published
+15,467.3.
+
+### What this does and does not establish
+
+It establishes that the 2026 table is inconsistent with the totals
+published alongside it, and that the 2023/2024 values are consistent
+with them. That a spreadsheet fill is the mechanism is a strong
+inference from the shape of the error, not something observed — the
+source workbook is not public. The DD team’s underlying calculation
+appears unchanged and correct throughout; only the printed table
+differs.
 
 ## What this vignette is not
 

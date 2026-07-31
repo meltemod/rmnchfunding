@@ -47,6 +47,12 @@ DAC codes (as under the Muskoka 2, the Donors Delivering for SRHR, and
 the FP methodology)", pages 110-111.
 <https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf>
 
+Nine values instead follow the 2023 and 2024 editions, which agree with
+each other and which the 2026 edition's own donor totals bear out; see
+Nine values are corrected against the 2026 edition.
+<https://donorsdelivering.report/wp-content/uploads/2024/05/DD_Report2024_FINALspreads.pdf>
+<https://donorsdelivering.report/wp-content/uploads/2023/06/DD_Report2023_v6_spreads.pdf>
+
 Donors Delivering for SRHR Report 2025, same table, pages 104-105.
 <https://donorsdelivering.report/wp-content/uploads/2025/06/DDSRHR2025.pdf>
 

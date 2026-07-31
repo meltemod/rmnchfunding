@@ -6,12 +6,18 @@ health and rights (SRHR) and family planning from OECD Creditor
 Reporting System (CRS) flows and OECD providers’ total use of the
 multilateral system, using the revised Muskoka method.
 
-> **Status: working, under refinement.**
+> **Status: working.**
 > [`muskoka2()`](https://meltemod.github.io/rmnchfunding/reference/muskoka2.md)
 > produces estimates for all three universes. Against the published
-> Donors Delivering 2026 totals for the United States it reproduces
-> family planning **exactly** and RMNCH within 1%; SRHR is 7-17% high
-> for some providers and under investigation.
+> Donors Delivering 2026 totals it reproduces family planning
+> **exactly**, SRHR to **0.01%** median across all 33 providers, and
+> RMNCH to 0.20%.
+>
+> Reaching that required correcting **nine weights the 2026 report
+> misprints** — eight SRHR values that repeat their column’s own first
+> eight entries, plus 12191’s RMNCH weight. The package follows the
+> 2023/2024 editions on those. See
+> [`vignette("rmnchfunding")`](https://meltemod.github.io/rmnchfunding/articles/rmnchfunding.md).
 
 ------------------------------------------------------------------------
 

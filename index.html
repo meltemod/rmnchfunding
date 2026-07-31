@@ -54,7 +54,8 @@
 
 <p>Calculates bilateral and multilateral funding for reproductive, maternal, newborn and child health (RMNCH), sexual and reproductive health and rights (SRHR) and family planning from OECD Creditor Reporting System (CRS) flows and OECD providers’ total use of the multilateral system, using the revised Muskoka method.</p>
 <blockquote>
-<p><strong>Status: working, under refinement.</strong> <code><a href="reference/muskoka2.html">muskoka2()</a></code> produces estimates for all three universes. Against the published Donors Delivering 2026 totals for the United States it reproduces family planning <strong>exactly</strong> and RMNCH within 1%; SRHR is 7-17% high for some providers and under investigation.</p>
+<p><strong>Status: working.</strong> <code><a href="reference/muskoka2.html">muskoka2()</a></code> produces estimates for all three universes. Against the published Donors Delivering 2026 totals it reproduces family planning <strong>exactly</strong>, SRHR to <strong>0.01%</strong> median across all 33 providers, and RMNCH to 0.20%.</p>
+<p>Reaching that required correcting <strong>nine weights the 2026 report misprints</strong> — eight SRHR values that repeat their column’s own first eight entries, plus 12191’s RMNCH weight. The package follows the 2023/2024 editions on those. See <code><a href="articles/rmnchfunding.html">vignette("rmnchfunding")</a></code>.</p>
 </blockquote>
 <hr>
 <div class="section level2">
