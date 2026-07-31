@@ -433,9 +433,18 @@ and population series.</p>
 <p>Not every OECD recipient appears in those sources. Small territories
 such as Wallis and Futuna, and OECD programmes such as the Mekong Delta,
 have no disease burden or expenditure data of their own. Rather than
-leave them without a weight, the mean of their geographic group is
+leave them without a weight, their geographic group’s figure is
 substituted, trying the narrowest group first: subregion, then region,
 then continent.</p>
+<p>That figure is a <strong>burden-weighted</strong> mean of the group’s
+members — weighted by all-age case counts for the disease codes, and by
+population for general budget support. This is not a stylistic choice: a
+ratio of summed cases across a group is identically a mean of member
+ratios weighted by their denominators, so weighting this way makes a
+substituted value equal what an aggregate of the source data over that
+group would report. An unweighted mean would let a country with almost
+no tuberculosis count as heavily as one carrying most of the region’s
+cases; for the Caribbean the two differ by 38%.</p>
 <p>Every weight records how it was obtained, so a substituted value is
 never mistaken for an observed one:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -456,9 +465,9 @@ exactly. For a recipient with no data of its own:</p>
 <span><span class="va">wlf</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"purpose_code"</span>, <span class="st">"rh"</span>, <span class="st">"mnh"</span>, <span class="st">"ch"</span>, <span class="st">"weight"</span>, <span class="st">"source"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;      purpose_code         rh  mnh          ch     weight            source</span></span>
 <span><span class="co">#&gt; 703         12262 0.00000000 0.15 0.000000000 0.15000000 regional (region)</span></span>
-<span><span class="co">#&gt; 1431        12263 0.00000000 0.00 0.040951660 0.04095166 regional (region)</span></span>
-<span><span class="co">#&gt; 2159        13040 0.39611070 0.00 0.005064168 0.40117487 regional (region)</span></span>
-<span><span class="co">#&gt; 2887        51010 0.02957626 0.00 0.015537007 0.04511327 regional (region)</span></span></code></pre></div>
+<span><span class="co">#&gt; 1431        12263 0.00000000 0.00 0.057125922 0.05712592 regional (region)</span></span>
+<span><span class="co">#&gt; 2159        13040 0.42589402 0.00 0.002456776 0.42835079 regional (region)</span></span>
+<span><span class="co">#&gt; 2887        51010 0.02799938 0.00 0.015598318 0.04359770 regional (region)</span></span></code></pre></div>
 <p>Note the malaria row: <code>mnh</code> keeps its fixed 0.15 while
 <code>ch</code> is 0, because Polynesia is malaria-free. Averaging all
 three components rather than assuming <code>mnh</code> is zero is what
@@ -541,6 +550,134 @@ recipients: the DAC hierarchy is ragged, and Europe is the one continent
 it does not subdivide. The geography throughout is OECD DAC, not UN M49
 and not the World Bank’s regions — they disagree about Turkiye, Egypt
 and Central Asia, among others.</p>
+</div>
+<div class="section level2">
+<h2 id="why-the-malaria-constant-is-unconditional">Why the malaria constant is unconditional<a class="anchor" aria-label="anchor" href="#why-the-malaria-constant-is-unconditional"></a>
+</h2>
+<p>Malaria’s weight is <code>0.15 + CH</code>, where <code>CH</code> is
+the under-5 share of malaria cases and <code>0.15</code> is a fixed
+allowance for malaria in pregnancy taken from the Countdown method. The
+constant applies to <strong>every</strong> country and year: all 1,232
+malaria MNH cells in the published reference are exactly 0.15, with no
+regional or endemicity condition.</p>
+<p>That has a consequence worth stating plainly. GBD 2023 reports
+<strong>no malaria at all</strong> in 118 of its 204 locations, so for
+those recipients <code>CH = 0</code> and the entire weight is the
+constant. A malaria-control disbursement to a malaria-free country is
+still credited 15% to maternal and newborn health.</p>
+<p>It is reasonable to ask whether the constant should instead be zero
+where there is no burden. That variant is easy to construct from the
+shipped weights, since a zero <code>ch</code> identifies exactly those
+recipient-years:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">w</span> <span class="op">&lt;-</span> <span class="va">rmnch_recipient_weights</span><span class="op">[</span><span class="va">rmnch_recipient_weights</span><span class="op">$</span><span class="va">purpose_code</span> <span class="op">==</span> <span class="st">"12262"</span>, <span class="op">]</span></span>
+<span></span>
+<span><span class="co"># variant B: drop the MNH constant where no malaria burden is recorded</span></span>
+<span><span class="va">w</span><span class="op">$</span><span class="va">weight_variant_b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">w</span><span class="op">$</span><span class="va">ch</span> <span class="op">==</span> <span class="fl">0</span>, <span class="fl">0</span>, <span class="va">w</span><span class="op">$</span><span class="va">weight</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span></span>
+<span>  `MNH applied` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">w</span><span class="op">$</span><span class="va">ch</span> <span class="op">==</span> <span class="fl">0</span>, <span class="st">"no burden recorded"</span>, <span class="st">"burden recorded"</span><span class="op">)</span>,</span>
+<span>  `variant B weight` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">w</span><span class="op">$</span><span class="va">weight_variant_b</span> <span class="op">==</span> <span class="fl">0</span>, <span class="st">"0"</span>, <span class="st">"0.15 + CH"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt;                     variant B weight</span></span>
+<span><span class="co">#&gt; MNH applied            0 0.15 + CH</span></span>
+<span><span class="co">#&gt;   burden recorded      0       402</span></span>
+<span><span class="co">#&gt;   no burden recorded 326         0</span></span></code></pre></div>
+<p>Tested against the published reference over 2005-2017, that variant
+is <strong>worse</strong>, not better. <code>ratio</code> is the median
+of computed over reference; the remaining columns are the share of
+recipient-years within that distance:</p>
+<table class="table">
+<colgroup>
+<col width="11%">
+<col width="14%">
+<col width="14%">
+<col width="14%">
+<col width="14%">
+<col width="14%">
+<col width="14%">
+</colgroup>
+<thead><tr class="header">
+<th>variant</th>
+<th align="right">n</th>
+<th align="right">ratio</th>
+<th align="right">median abs. diff</th>
+<th align="right">&lt;0.01</th>
+<th align="right">&lt;0.05</th>
+<th align="right">&lt;0.10</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>
+<strong>A.</strong> all countries, MNH = 0.15 everywhere <em>(this
+package)</em>
+</td>
+<td align="right">1872</td>
+<td align="right">0.964</td>
+<td align="right">0.0245</td>
+<td align="right">35.4%</td>
+<td align="right">68.2%</td>
+<td align="right">83.2%</td>
+</tr>
+<tr class="even">
+<td>
+<strong>B.</strong> all countries, MNH = 0 where no burden</td>
+<td align="right">1872</td>
+<td align="right">0.961</td>
+<td align="right">0.0285</td>
+<td align="right">34.8%</td>
+<td align="right">56.1%</td>
+<td align="right">59.1%</td>
+</tr>
+<tr class="odd">
+<td>
+<strong>C.</strong> burden countries only, MNH = 0.15</td>
+<td align="right">1159</td>
+<td align="right">1.000</td>
+<td align="right">0.0072</td>
+<td align="right">56.3%</td>
+<td align="right">90.7%</td>
+<td align="right">95.5%</td>
+</tr>
+</tbody>
+</table>
+<p>Agreement within 0.10 falls from 83.2% to 59.1%: zeroing the constant
+moves a quarter of all malaria comparisons out of even loose agreement.
+The reason is visible in the zero-burden rows alone:</p>
+<table class="table"><tbody>
+<tr class="odd">
+<td>reference median weight, zero-burden rows</td>
+<td align="right">0.2267</td>
+</tr>
+<tr class="even">
+<td>variant A, median absolute difference</td>
+<td align="right">0.0767</td>
+</tr>
+<tr class="odd">
+<td>variant B, median absolute difference</td>
+<td align="right">0.2267</td>
+</tr>
+<tr class="even">
+<td>reference weights falling <strong>below</strong> 0.15</td>
+<td align="right"><strong>0.0%</strong></td>
+</tr>
+</tbody></table>
+<p>Not one of those 713 reference values is below 0.15. The published
+method never assigns a malaria weight under the constant, even where its
+own data shows little or no burden — so 0.15 is already <em>below</em>
+the reference there, and setting it to zero opens a larger gap in the
+opposite direction rather than closing one.</p>
+<p>Variant A is therefore the package default, on the grounds that it is
+what Muskoka2 does and departing would make these figures non-comparable
+with published ones. There is also a substantive reading:
+malaria-control spending in a malaria-free country is typically
+elimination maintenance, surveillance or outbreak preparedness, and
+protecting pregnant women is a genuine part of that. The constant is not
+obviously wrong there, merely unverifiable.</p>
+<p>Variant B is documented rather than implemented. The two lines above
+are all it takes for a sensitivity analysis, and keeping it out of the
+package interface avoids offering a switch that would quietly break
+comparability with the published series.</p>
 </div>
 <div class="section level2">
 <h2 id="what-this-vignette-is-not">What this vignette is not<a class="anchor" aria-label="anchor" href="#what-this-vignette-is-not"></a>

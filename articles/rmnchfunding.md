@@ -308,9 +308,19 @@ and population series.
 Not every OECD recipient appears in those sources. Small territories
 such as Wallis and Futuna, and OECD programmes such as the Mekong Delta,
 have no disease burden or expenditure data of their own. Rather than
-leave them without a weight, the mean of their geographic group is
+leave them without a weight, their geographic group’s figure is
 substituted, trying the narrowest group first: subregion, then region,
 then continent.
+
+That figure is a **burden-weighted** mean of the group’s members —
+weighted by all-age case counts for the disease codes, and by population
+for general budget support. This is not a stylistic choice: a ratio of
+summed cases across a group is identically a mean of member ratios
+weighted by their denominators, so weighting this way makes a
+substituted value equal what an aggregate of the source data over that
+group would report. An unweighted mean would let a country with almost
+no tuberculosis count as heavily as one carrying most of the region’s
+cases; for the Caribbean the two differ by 38%.
 
 Every weight records how it was obtained, so a substituted value is
 never mistaken for an observed one:
@@ -338,9 +348,9 @@ wlf <- rmnch_recipient_weights[
 wlf[c("purpose_code", "rh", "mnh", "ch", "weight", "source")]
 #>      purpose_code         rh  mnh          ch     weight            source
 #> 703         12262 0.00000000 0.15 0.000000000 0.15000000 regional (region)
-#> 1431        12263 0.00000000 0.00 0.040951660 0.04095166 regional (region)
-#> 2159        13040 0.39611070 0.00 0.005064168 0.40117487 regional (region)
-#> 2887        51010 0.02957626 0.00 0.015537007 0.04511327 regional (region)
+#> 1431        12263 0.00000000 0.00 0.057125922 0.05712592 regional (region)
+#> 2159        13040 0.42589402 0.00 0.002456776 0.42835079 regional (region)
+#> 2887        51010 0.02799938 0.00 0.015598318 0.04359770 regional (region)
 ```
 
 Note the malaria row: `mnh` keeps its fixed 0.15 while `ch` is 0,
@@ -419,6 +429,83 @@ ragged, and Europe is the one continent it does not subdivide. The
 geography throughout is OECD DAC, not UN M49 and not the World Bank’s
 regions — they disagree about Turkiye, Egypt and Central Asia, among
 others.
+
+## Why the malaria constant is unconditional
+
+Malaria’s weight is `0.15 + CH`, where `CH` is the under-5 share of
+malaria cases and `0.15` is a fixed allowance for malaria in pregnancy
+taken from the Countdown method. The constant applies to **every**
+country and year: all 1,232 malaria MNH cells in the published reference
+are exactly 0.15, with no regional or endemicity condition.
+
+That has a consequence worth stating plainly. GBD 2023 reports **no
+malaria at all** in 118 of its 204 locations, so for those recipients
+`CH = 0` and the entire weight is the constant. A malaria-control
+disbursement to a malaria-free country is still credited 15% to maternal
+and newborn health.
+
+It is reasonable to ask whether the constant should instead be zero
+where there is no burden. That variant is easy to construct from the
+shipped weights, since a zero `ch` identifies exactly those
+recipient-years:
+
+``` r
+
+w <- rmnch_recipient_weights[rmnch_recipient_weights$purpose_code == "12262", ]
+
+# variant B: drop the MNH constant where no malaria burden is recorded
+w$weight_variant_b <- ifelse(w$ch == 0, 0, w$weight)
+
+table(
+  `MNH applied` = ifelse(w$ch == 0, "no burden recorded", "burden recorded"),
+  `variant B weight` = ifelse(w$weight_variant_b == 0, "0", "0.15 + CH")
+)
+#>                     variant B weight
+#> MNH applied            0 0.15 + CH
+#>   burden recorded      0       402
+#>   no burden recorded 326         0
+```
+
+Tested against the published reference over 2005-2017, that variant is
+**worse**, not better. `ratio` is the median of computed over reference;
+the remaining columns are the share of recipient-years within that
+distance:
+
+| variant | n | ratio | median abs. diff | \<0.01 | \<0.05 | \<0.10 |
+|----|---:|---:|---:|---:|---:|---:|
+| **A.** all countries, MNH = 0.15 everywhere *(this package)* | 1872 | 0.964 | 0.0245 | 35.4% | 68.2% | 83.2% |
+| **B.** all countries, MNH = 0 where no burden | 1872 | 0.961 | 0.0285 | 34.8% | 56.1% | 59.1% |
+| **C.** burden countries only, MNH = 0.15 | 1159 | 1.000 | 0.0072 | 56.3% | 90.7% | 95.5% |
+
+Agreement within 0.10 falls from 83.2% to 59.1%: zeroing the constant
+moves a quarter of all malaria comparisons out of even loose agreement.
+The reason is visible in the zero-burden rows alone:
+
+|                                           |          |
+|-------------------------------------------|---------:|
+| reference median weight, zero-burden rows |   0.2267 |
+| variant A, median absolute difference     |   0.0767 |
+| variant B, median absolute difference     |   0.2267 |
+| reference weights falling **below** 0.15  | **0.0%** |
+
+Not one of those 713 reference values is below 0.15. The published
+method never assigns a malaria weight under the constant, even where its
+own data shows little or no burden — so 0.15 is already *below* the
+reference there, and setting it to zero opens a larger gap in the
+opposite direction rather than closing one.
+
+Variant A is therefore the package default, on the grounds that it is
+what Muskoka2 does and departing would make these figures non-comparable
+with published ones. There is also a substantive reading:
+malaria-control spending in a malaria-free country is typically
+elimination maintenance, surveillance or outbreak preparedness, and
+protecting pregnant women is a genuine part of that. The constant is not
+obviously wrong there, merely unverifiable.
+
+Variant B is documented rather than implemented. The two lines above are
+all it takes for a sensitivity analysis, and keeping it out of the
+package interface avoids offering a switch that would quietly break
+comparability with the published series.
 
 ## What this vignette is not
 

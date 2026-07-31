@@ -140,40 +140,96 @@ coverage effectively stops in 2023 — 203 economies report 2023 against 7 for
 beyond which the weight is <code>NA</code> rather than a guess.</p>
 <p><code>source</code> is <code>"own"</code> where the recipient has its own data, or
 <code>"regional (subregion)"</code>, <code>"regional (region)"</code> or <code>"regional (continent)"</code>
-where it does not and the mean of its geographic group was substituted. The
-narrowest available group is used. Substitution affects recipients the World
-Bank has no record for — small territories such as Niue and Tokelau, and
-OECD programmes such as the Mekong Delta — listed with reasons in
+where it does not and its geographic group's figure was substituted. The
+narrowest available group is used. Substitution affects recipients the
+sources have no record for — small territories such as Niue and Tokelau,
+and OECD programmes such as the Mekong Delta — listed with reasons in
 <a href="recipient_crosswalk.html">recipient_crosswalk</a>.</p>
-<p>The mean is unweighted deliberately: the recipients needing a fallback are
-small, and a population-weighted mean would let a group's largest member
-stand in for a territory of a few thousand people.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="how-a-substituted-weight-is-computed">How a substituted weight is computed<a class="anchor" aria-label="anchor" href="#how-a-substituted-weight-is-computed"></a></h2>
+
+
+<p>The group figure is a <strong>burden-weighted</strong> mean of its members, weighted by
+the denominator each member's ratio was taken over: all-age case counts for
+the three disease codes, total population for general budget support.</p>
+<p>That is not an arbitrary choice. A ratio of summed cases across a group is
+identically a mean of member ratios weighted by their denominators:</p>
+<p>$$rac{\sum u5_i}{\sum all_i} = rac{\sum (all_i 	imes CH_i)}{\sum all_i}$$</p>
+<p>so weighting this way makes a substituted value equal what an aggregate of
+the source data over that group would report — which is what the published
+method's regional rows appear to contain. An unweighted mean would let a
+country with almost no malaria pull a regional child share as hard as one
+carrying tens of millions of cases. For tuberculosis in the Caribbean the
+two differ by 38%.</p>
+<p>Weighting is applied to each component separately, so <code>rh + mnh + ch</code> still
+equals <code>weight</code> exactly.</p>
+<p>Where every member of a group has zero burden the weights are all zero and a
+weighted mean is undefined, but the answer is not: no cases anywhere means a
+zero child share, and a fixed component keeps its constant. Europe is
+entirely malaria-free, which is how Gibraltar and Kosovo get a malaria
+weight of exactly 0.15, the MNH constant alone.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-malaria-constant-is-unconditional">The malaria constant is unconditional<a class="anchor" aria-label="anchor" href="#the-malaria-constant-is-unconditional"></a></h2>
+
+
+<p>Malaria's MNH component is 0.15 for every country and year, with no
+endemicity condition — all 1,232 malaria MNH cells in the published
+reference carry it. So a recipient with no recorded malaria has a weight of
+exactly 0.15, the constant alone.</p>
+<p>Zeroing the constant where there is no burden was tested against the
+reference and is <strong>worse</strong>: agreement within 0.10 falls from 83.2% to 59.1%,
+because not one of the 713 zero-burden reference values falls below 0.15.
+The published method never assigns a malaria weight under the constant, so
+0.15 is already below the reference there rather than above it.</p>
+<p><code><a href="../articles/rmnchfunding.html">vignette("rmnchfunding")</a></code> gives the full comparison and the two lines
+needed to construct the variant for a sensitivity analysis. It is documented
+rather than implemented, to avoid offering a switch that would quietly break
+comparability with the published series.</p>
     </div>
     <div class="section level2">
     <h2 id="validation-against-the-published-method">Validation against the published method<a class="anchor" aria-label="anchor" href="#validation-against-the-published-method"></a></h2>
 
 
-<p>The equations were re-run over the years the published Muskoka2 reference
-covers and compared with it. Exact agreement is not expected: the reference
-was built from the GBD 2017 round and World Bank data as it stood in 2018,
-while these weights use GBD 2023 and current World Bank series. The check is
-whether the logic reproduces the reference's structure and magnitudes.</p><table class="table table"><tr><td>Code</td><td>n</td><td>corr</td><td>median abs. diff.</td><td>within 0.02</td></tr><tr><td>51010 general budget support</td><td>2195</td><td>0.80</td><td>0.0023</td><td>94.2%</td></tr><tr><td>12263 tuberculosis</td><td>1008</td><td>0.81</td><td>0.0045</td><td>80.5%</td></tr><tr><td>12262 malaria</td><td>1008</td><td>0.86</td><td>0.0249</td><td>42.0%</td></tr><tr><td>13040 HIV/AIDS</td><td>1008</td><td>0.59</td><td>0.0856</td><td>16.2%</td></tr></table><p>General budget support and tuberculosis reproduce the reference closely.
-Malaria is moderate. <strong>HIV agrees least well, and the divergence sits
-entirely in its RH component</strong> — the reproductive-health share, which is the
-only component of any code that is itself derived from a sex-and-age
-ratio rather than being zero or a fixed constant.</p>
-<p>That was tested rather than assumed. All three plausible readings of the RH
-formula were computed on identical rows: female 15-49 over both-sexes all
-ages (the documented method, correlation 0.567), female all ages over
-both-sexes all ages (0.536), and female 15-49 over both-sexes 15-49 (0.543).
-The alternatives bring the overall scale closer to the reference but make
-both correlation and proximity worse, so no choice of formula reconciles
-them. The documented formula is retained.</p>
-<p>The most likely explanation is the GBD round: HIV prevalence by age and sex
-was substantially revised between GBD 2017 and GBD 2023. Malaria and
-tuberculosis pass through exactly the same code path and validate far
-better, so the machinery is not in question. Treat HIV weights as the least
-certain of the four, and re-check them if a future round moves again.</p>
+<p>The equations were re-run over 2005-2017, the overlap between the GBD
+extract and the published Muskoka2 reference, and compared recipient by
+recipient. Exact agreement is not expected: the reference was built from the
+GBD 2017 round and World Bank data as it stood in 2018, while these weights
+use GBD 2023 and current World Bank series. The check is whether the logic
+reproduces the reference, with the residual attributable to the inputs.</p>
+<p><code>ratio</code> is the median of ours over the reference, so 1.000 means the two
+agree in level; the columns after it are the share of recipient-years
+falling within that absolute distance.</p><table class="table table"><tr><td>code</td><td>n</td><td>ratio</td><td>median abs. diff</td><td>&lt;0.01</td><td>&lt;0.05</td><td>&lt;0.10</td></tr><tr><td>51010 general budget support</td><td>1789</td><td>1.002</td><td>0.0024</td><td>83.1%</td><td>99.7%</td><td>99.9%</td></tr><tr><td>12263 tuberculosis</td><td>1872</td><td>0.985</td><td>0.0043</td><td>68.2%</td><td>96.0%</td><td>100.0%</td></tr><tr><td>12262 malaria, all</td><td>1872</td><td>0.964</td><td>0.0245</td><td>35.4%</td><td>68.2%</td><td>83.2%</td></tr><tr><td>12262 malaria, burden present</td><td>1159</td><td>1.000</td><td>0.0072</td><td>56.3%</td><td>90.7%</td><td>95.5%</td></tr><tr><td>13040 STD incl. HIV/AIDS</td><td>1872</td><td>1.031</td><td>0.0306</td><td>15.3%</td><td>69.2%</td><td>96.4%</td></tr></table><p>Budget support and tuberculosis reproduce the reference closely, both within
+1.5% in level and essentially all recipient-years within 0.05.</p>
+<p>Malaria reads worse than it is. Split by whether GBD 2023 records any
+malaria at all, the 1,159 country-years with burden match the reference in
+level <strong>exactly</strong> — median ratio 1.000, median difference 0.0072. The
+remaining 713 are country-years where the 2023 round reports no malaria but
+the 2017 round still did: elimination and re-estimated history, not a
+disagreement about the method. There this package returns the MNH constant
+alone, 0.15, against a reference median of 0.227.</p>
+<p>STD including HIV/AIDS is the loosest of the four and should be treated as
+the least certain. It is nonetheless much improved: computed from GBD's
+narrow <code>HIV/AIDS</code> cause rather than the combined
+<code>HIV/AIDS and sexually transmitted infections</code>, it sat at a ratio near 0.75
+with 16.2% within 0.02, and the error ran one way in almost every case. It
+is now 1.031, roughly symmetric — above the reference in 60% of cases,
+below in 40% — with 96.4% inside 0.10 and a worst case of 0.184. That shape,
+a broad symmetric cluster with a short tail, is what revised inputs produce
+rather than a formula error.</p>
+<p>A plausible reason it is the loosest: 13040 is the only code whose weight is
+dominated by a <strong>sex-and-age</strong> ratio, the share of cases in women aged
+15-49. Malaria and tuberculosis depend only on an age ratio, and GBD's
+tuberculosis age structure barely moved between rounds. HIV and STI
+estimates by sex and age are among the most heavily modelled quantities GBD
+produces.</p>
+<p>What this does <strong>not</strong> validate is the regional substitution: recipients
+that need it are largely absent from the reference's country sheets, and the
+ten that do appear draw on a "Recipients &amp; regions" mapping that is not in
+the published extract. A definitive separation of method from vintage would
+need a GBD 2017-round extract to run this code against the reference's own
+inputs.</p>
     </div>
     <div class="section level2">
     <h2 id="coverage">Coverage<a class="anchor" aria-label="anchor" href="#coverage"></a></h2>
