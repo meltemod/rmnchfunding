@@ -35,3 +35,10 @@ renv/staging/
 # ---- OS / editor --------------------------------------------------------
 .DS_Store
 .vscode/
+
+# ---- third-party reference workbooks -------------------------------------
+# The full Muskoka2 workbook is 187 MB, over GitHub's 100 MB per-file limit,
+# and is CC BY-NC 3.0 rather than this package's MIT. It is not redistributed.
+# Download it when needed from the LSHTM Data Compass record cited in
+# data-raw/reference/README.md; nothing in the build depends on it.
+data-raw/reference/*.xlsb

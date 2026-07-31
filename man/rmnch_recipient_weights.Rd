@@ -114,6 +114,38 @@ two differ by 38\%.
 
 Weighting is applied to each component separately, so \code{rh + mnh + ch} still
 equals \code{weight} exactly.
+}
+
+\section{The substitution group is OECD, deliberately}{
+
+The group a borrowed weight is drawn from is always an \strong{OECD DAC} grouping
+— the same hierarchy \code{\link[=crs_classify]{crs_classify()}} uses and the same one CRS disbursements
+are organised by. It is never a GBD or World Bank region, even though the
+weights themselves are computed from GBD and World Bank data.
+
+This is a deliberate departure from the published method, which does the
+opposite. Muskoka2's own working sheet assigns recipients that GBD does not
+cover separately to a GBD \emph{region} — Anguilla to "Caribbean", Cook Islands to
+"Oceania" — and takes that region's aggregate ratio. Since a regional
+aggregate is a ratio of summed cases, their substituted value is
+burden-weighted, which is why this package weights the same way.
+
+Where it differs is the group's membership. A GBD region contains every
+country in it, ODA recipient or not: GBD's "Caribbean" includes Puerto Rico.
+An OECD group contains only recipients, so a substituted weight is an
+average over the same universe the disbursements come from.
+
+Two further reasons for keeping the grouping OECD throughout. It avoids
+carrying two different regional taxonomies inside one package, where a
+recipient could sit in one region for classification and another for
+imputation. And the published mapping contains at least two assignments that
+contradict its own region column — Wallis and Futuna, a Pacific territory,
+assigned to the Caribbean, and Mayotte, off the African coast, assigned to
+Oceania — which would be inherited wholesale by adopting it.
+
+The cost is that substituted weights for those recipients will not reproduce
+the published figures exactly. That affects 26 of 182 recipients, all small,
+and \code{source} marks every one of them.
 
 Where every member of a group has zero burden the weights are all zero and a
 weighted mean is undefined, but the answer is not: no cases anywhere means a

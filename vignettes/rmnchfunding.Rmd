@@ -270,9 +270,20 @@ disease burden or expenditure data of their own. Rather than leave them
 without a weight, their geographic group's figure is substituted, trying the
 narrowest group first: subregion, then region, then continent.
 
+The group is always an **OECD DAC** grouping, never a GBD or World Bank
+region, even though the weights themselves come from GBD and World Bank data.
+That is deliberate: it keeps one regional taxonomy in the package, and it
+averages over the same universe the disbursements come from. The published
+method does the opposite — it assigns such recipients to a GBD region and uses
+that region's aggregate — so substituted weights here will not reproduce the
+published figures exactly. This affects 26 of 182 recipients, all small, and
+`source` marks every one.
+
 That figure is a **burden-weighted** mean of the group's members — weighted by
 all-age case counts for the disease codes, and by population for general
-budget support. This is not a stylistic choice: a ratio of summed cases across
+budget support. The weighting follows the published method even though the
+grouping does not: because a GBD regional aggregate is a ratio of summed
+cases, Muskoka2's substituted values are burden-weighted by construction. This is not a stylistic choice: a ratio of summed cases across
 a group is identically a mean of member ratios weighted by their denominators,
 so weighting this way makes a substituted value equal what an aggregate of the
 source data over that group would report. An unweighted mean would let a
