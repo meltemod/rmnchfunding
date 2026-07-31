@@ -177,3 +177,61 @@ test_that("regional substitutes keep components summing to their total", {
   submal <- sub[sub$purpose_code == "12262", ]
   if (nrow(submal) > 0L) expect_true(all(abs(submal$mnh - 0.15) < 1e-9))
 })
+
+# ---- the exported crosswalk CSV -------------------------------------------
+
+test_that("the crosswalk CSV ships and matches the dataset", {
+  path <- system.file("extdata", "recipient_crosswalk.csv",
+                      package = "rmnchfunding")
+  expect_true(nzchar(path))
+  csv <- utils::read.csv(path, stringsAsFactors = FALSE)
+
+  # Same recipients as the dataset it documents; a CSV that drifted from the
+  # data would be worse than no CSV, since it is the artefact a reader checks
+  # the method against.
+  expect_setequal(csv$recipient_code, recipient_crosswalk$recipient_code)
+  expect_equal(nrow(csv), nrow(recipient_crosswalk))
+
+  # One source column per purpose code, and every value accounted for.
+  srccols <- grep("^source_", names(csv), value = TRUE)
+  expect_setequal(sub("^source_", "", srccols),
+                  unique(rmnch_recipient_weights$purpose_code))
+  vals <- unlist(csv[srccols], use.names = FALSE)
+  expect_false(anyNA(vals))
+  expect_true(all(vals %in% c("own", "regional (subregion)",
+                              "regional (region)", "regional (continent)")))
+})
+
+test_that("the CSV's imputation flags agree with the weights", {
+  csv <- utils::read.csv(
+    system.file("extdata", "recipient_crosswalk.csv",
+                package = "rmnchfunding"), stringsAsFactors = FALSE)
+  w <- rmnch_recipient_weights
+  for (pc in unique(w$purpose_code)) {
+    # as.vector(), not unname(): tapply returns a 1-d array, and the dim
+    # attribute survives unname() and fails the comparison on structure even
+    # when every value agrees.
+    from_data <- tapply(w$source[w$purpose_code == pc],
+                        w$recipient_code[w$purpose_code == pc],
+                        function(x) unique(x)[1])
+    from_csv <- stats::setNames(csv[[paste0("source_", pc)]],
+                                csv$recipient_code)
+    expect_equal(as.vector(from_csv[names(from_data)]), as.vector(from_data),
+                 label = paste("source column for", pc))
+  }
+})
+
+test_that("all three naming systems are recorded", {
+  cw <- recipient_crosswalk
+  expect_true(all(c("recipient_name", "wb_name", "gbd_location_name")
+                  %in% names(cw)))
+  # The case that motivated keeping all three: no two of these spellings are
+  # equal, so no pair-wise string match would find it.
+  civ <- cw[cw$recipient_code == "CIV", ]
+  expect_equal(nrow(civ), 1L)
+  expect_false(civ$recipient_name == civ$wb_name)
+  expect_false(civ$recipient_name == civ$gbd_location_name)
+  expect_false(civ$wb_name == civ$gbd_location_name)
+  # And it must actually be resolved, not left NA.
+  expect_false(is.na(civ$gbd_location_name))
+})

@@ -144,15 +144,85 @@ universe$iso3[!universe$iso3 %in% wb$iso3] <- NA_character_
 universe$wb_name <- wb$wb_name[match(universe$iso3, wb$iso3)]
 universe$no_data_reason <- unname(no_wb_data[universe$recipient_code])
 
+# ---- GBD location names ---------------------------------------------------
+# The third identity system. GBD keys by location NAME, so it needs its own
+# column rather than being matched at use time — a name join done inside the
+# weights script would put half the identity mapping there and half here, and
+# a spelling change would fail in a different place from the one that
+# documents it.
+#
+# Most GBD names match an OECD or World Bank name outright. These do not, and
+# are enumerated rather than fuzzy-matched.
+#
+# Cote d'Ivoire is the sharpest case: three sources, three spellings.
+#   OECD        Cote d\u2019Ivoire   circumflex, curly apostrophe
+#   World Bank  Cote d\u0027Ivoire   no circumflex, ASCII apostrophe
+#   GBD         C\u00f4te d\u0027Ivoire   circumflex, ASCII apostrophe
+# None of the three is reachable from another by a plain string match, which
+# is why the GBD spelling is written here as an escape rather than pasted:
+# pasting it invites an editor or locale to normalise it back to something
+# that no longer matches.
+gbd_name_to_code <- c(
+  "Bolivia (Plurinational State of)"      = "BOL",
+  "C\u00f4te d'Ivoire"                     = "CIV",
+  "Democratic People's Republic of Korea" = "PRK",
+  "Iran (Islamic Republic of)"            = "IRN",
+  "Lao People's Democratic Republic"      = "LAO",
+  "Micronesia (Federated States of)"      = "FSM",
+  "Palestine"                             = "PSE",
+  "Republic of Korea"                     = "KOR",
+  "Republic of Moldova"                   = "MDA",
+  "Taiwan"                                = "TWN",
+  "United Republic of Tanzania"           = "TZA",
+  "Venezuela (Bolivarian Republic of)"    = "VEN"
+)
+
+gbd_names <- character(0)
+gbd_files <- list.files("data-raw/gbd", pattern = "[.]zip$", full.names = TRUE)
+if (length(gbd_files) > 0L) {
+  for (z in gbd_files) {
+    inner <- utils::unzip(z, list = TRUE)$Name
+    for (f in inner[grepl("[.]csv$", inner)]) {
+      d <- utils::read.csv(unz(z, f), stringsAsFactors = FALSE)
+      gbd_names <- union(gbd_names, d$location_name)
+    }
+  }
+}
+# Resolve each recipient to the GBD spelling: try its own name, then the World
+# Bank name, then the explicit variants.
+resolve_gbd <- function(code, oecd, wb) {
+  if (!is.na(oecd) && oecd %in% gbd_names) return(oecd)
+  if (!is.na(wb) && wb %in% gbd_names) return(wb)
+  hit <- names(gbd_name_to_code)[gbd_name_to_code == code]
+  hit <- hit[hit %in% gbd_names]
+  if (length(hit) > 0L) return(hit[1])
+  NA_character_
+}
+universe$gbd_location_name <- mapply(
+  resolve_gbd, universe$recipient_code, universe$recipient_name,
+  universe$wb_name, USE.NAMES = FALSE
+)
+
+# Readable geography, so the exported crosswalk is legible without a second
+# lookup: the hierarchy codes alone (F6, A5, S4_S7) mean nothing to a reader.
+nm <- stats::setNames(recips$recipient_name, recips$recipient_code)
+universe$continent_name <- unname(nm[universe$continent])
+universe$region_name    <- unname(nm[universe$region])
+universe$subregion_name <- unname(nm[universe$subregion])
+
 recipient_crosswalk <- tibble::tibble(
-  recipient_code = universe$recipient_code,
-  recipient_name = universe$recipient_name,
-  iso3           = universe$iso3,
-  wb_name        = universe$wb_name,
-  continent      = universe$continent,
-  region         = universe$region,
-  subregion      = universe$subregion,
-  no_data_reason = universe$no_data_reason
+  recipient_code    = universe$recipient_code,
+  recipient_name    = universe$recipient_name,
+  iso3              = universe$iso3,
+  wb_name           = universe$wb_name,
+  gbd_location_name = universe$gbd_location_name,
+  continent         = universe$continent,
+  continent_name    = universe$continent_name,
+  region            = universe$region,
+  region_name       = universe$region_name,
+  subregion         = universe$subregion,
+  subregion_name    = universe$subregion_name,
+  no_data_reason    = universe$no_data_reason
 )
 recipient_crosswalk <- recipient_crosswalk[
   order(recipient_crosswalk$recipient_code),

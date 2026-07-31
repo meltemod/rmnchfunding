@@ -111,6 +111,16 @@
   for 118 of 204 locations, so this is the common case rather than an edge one.
   It is deliberately not a regional substitute: taking a malarious neighbour's
   child share would invent burden that is not there.
+* `recipient_crosswalk` gains `gbd_location_name` and readable
+  `continent_name`, `region_name` and `subregion_name`. All three of the
+  method's naming systems now live in one table: Cote d'Ivoire is spelled
+  differently by OECD, the World Bank and GBD, and no two are reachable from
+  each other by string match, so identity mapping belongs in one documented
+  place rather than at each point of use.
+* Exported `inst/extdata/recipient_crosswalk.csv`, a flat copy of the
+  crosswalk with the imputation source for each purpose code, for readers
+  checking the method without running R. 26 of 182 recipients have a borrowed
+  weight for at least one code.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the RMNCH weights for the three

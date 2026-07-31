@@ -73,6 +73,19 @@ agency_weights                # multilateral agency -> share, per year and editi
 crs_recipients                # which recipient codes are aggregates
 crs_recipient_tree            # hierarchy edges, for cutting at a level
 agency_channels               # agency -> OECD channel code
+rmnch_recipient_weights       # the four weights that vary by recipient and year
+recipient_crosswalk           # OECD <-> World Bank <-> GBD names, and geography
+```
+
+Four RMNCH weights are computed per recipient and year rather than being global
+constants, from IHME Global Burden of Disease and World Bank data. Recipients
+absent from those sources take their geographic group's mean, narrowest first,
+and every weight records whether it is `"own"` or borrowed. The identity
+crosswalk and the imputation source for each purpose code ship as a CSV:
+
+```r
+read.csv(system.file("extdata", "recipient_crosswalk.csv",
+                     package = "rmnchfunding"))
 ```
 
 The planned entry point is a single function covering all three universes:

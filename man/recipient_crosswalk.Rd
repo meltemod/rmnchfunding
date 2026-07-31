@@ -5,14 +5,18 @@
 \alias{recipient_crosswalk}
 \title{OECD recipients mapped to World Bank codes and geographic groups}
 \format{
-A data frame with 182 rows and 8 columns:
+A data frame with 182 rows and 12 columns:
 \describe{
 \item{recipient_code}{OECD recipient code.}
 \item{recipient_name}{OECD recipient name.}
 \item{iso3}{World Bank ISO3 code, or \code{NA} where there is no record.}
 \item{wb_name}{World Bank economy name, for checking the match by eye.}
-\item{continent, region, subregion}{Geographic ancestors, from the same
-frontier logic \code{\link[=crs_classify]{crs_classify()}} uses.}
+\item{gbd_location_name}{IHME GBD location name. GBD keys by name rather
+than code, so the spelling is resolved here rather than at use time.}
+\item{continent, region, subregion}{Geographic ancestor codes, from the
+same frontier logic \code{\link[=crs_classify]{crs_classify()}} uses.}
+\item{continent_name, region_name, subregion_name}{The same, as names —
+\code{F6} and \code{S4_S7} are not legible on their own.}
 \item{no_data_reason}{Why a recipient has no World Bank match, or \code{NA}.}
 }
 }
@@ -52,6 +56,35 @@ Only leaves under \code{DPGC} are here. That drops aggregates, the \verb{_X}
 unallocated buckets — which are not places and have no population to compute
 a weight from — and the multilateral organisations that also live in OECD's
 \code{CL_AREA_ORG} codelist, which covers areas \emph{and} organisations.
+}
+
+\section{Three naming systems}{
+
+Each source names countries differently, and none of the three is reachable
+from another by plain string matching. Cote d'Ivoire is the sharpest case,
+where the three spellings differ in both the accent and the apostrophe:
+
+\describe{
+\item{OECD}{"Cote" with a circumflex, and a curly (typographic)
+apostrophe}
+\item{World Bank}{"Cote" with no circumflex, and an ASCII apostrophe}
+\item{GBD}{"Cote" with a circumflex, and an ASCII apostrophe}
+}
+
+This is why all three spellings are columns of one table rather than being
+matched where they are used: a rename in any source then fails in the place
+that documents the mapping, not somewhere downstream.
+}
+
+\section{Exported as a CSV}{
+
+A flat copy, with the imputation source for each purpose code added, ships
+at \code{inst/extdata/recipient_crosswalk.csv} for readers checking the method
+without running R:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{read.csv(system.file("extdata", "recipient_crosswalk.csv",
+                     package = "rmnchfunding"))
+}\if{html}{\out{</div>}}
 }
 
 \seealso{

@@ -24,7 +24,7 @@ request **one extract** with:
 | GBD round | Latest available. **Record which**, in `VINTAGE.txt` below |
 | Measure | **Incidence** *and* **Prevalence** |
 | Metric | **Number** — case counts, not rates or percentages |
-| Cause | **Malaria**, **HIV/AIDS**, **Tuberculosis** |
+| Cause | **Malaria**, **HIV/AIDS and sexually transmitted infections**, **Tuberculosis** — see below |
 | Location | **All locations** (countries and territories) |
 | Age | **<5 years**, **15-49 years**, **All ages** |
 | Sex | **Both** and **Female** |
@@ -53,9 +53,36 @@ by cause — offers neither measure, so picking one would leave the Measure
 dropdown without Incidence or Prevalence in it at all. That is the quickest
 way to tell you have chosen wrongly.
 
-Measure by code: malaria uses **Incidence**; HIV/AIDS and tuberculosis use
-**Prevalence**. Requesting both measures in one extract is simpler than two
-downloads and the build script selects the right one per cause.
+### Why the combined STI cause, not "HIV/AIDS"
+
+CRS 13040 is **"STD control including HIV/AIDS"** — sexually transmitted
+diseases *including* HIV, not HIV alone. The matching GBD cause is therefore
+**"HIV/AIDS and sexually transmitted infections"**, the combined parent, and
+selecting "HIV/AIDS" gives materially wrong weights.
+
+The published reference for Afghanistan in 2017 is RH 0.5409, CH 0.000033:
+
+| GBD cause | RH | CH | total |
+|---|---:|---:|---:|
+| HIV/AIDS alone | 0.2548 | 0.0182 | 0.2729 |
+| HIV/AIDS and sexually transmitted infections | 0.5911 | 0.0015 | 0.5926 |
+
+Both components give it away. HIV alone roughly halves RH, because HIV is far
+less concentrated in women aged 15-49 than STIs are; and it inflates CH about
+tenfold, because paediatric HIV from mother-to-child transmission is
+substantial whereas under-5 STI cases are almost nil.
+
+Across all recipients and years the reference RH is tight and high (IQR 0.098,
+floor 0.31) — the signature of an STI-dominated ratio — while HIV alone ranges
+from 0.04 to 0.58 with the shape of each country's epidemic.
+
+The build script refuses to run if the combined cause is absent, rather than
+falling back to HIV alone.
+
+Measure by code: malaria uses **Incidence**; the STD/HIV cause and
+tuberculosis use **Prevalence**. Requesting both measures in one extract is
+simpler than two downloads and the build script selects the right one per
+cause.
 
 Source: [GBD Results Tool User Guide (2023)](https://www.healthdata.org/sites/default/files/2025-10/GBD_Results_Tool_User_Guide_2023.pdf),
 "To view Cause of death or injury results" and Appendix B.

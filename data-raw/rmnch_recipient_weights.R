@@ -133,9 +133,34 @@ message("  general budget support: ", nrow(gbs), " economy-years computed, ",
 # the exact query.
 #
 #   12262 malaria, Incidence:      RH = 0;   MNH = 0.15;  CH = <5 / all ages
-#   13040 HIV/AIDS, Prevalence:    RH = female 15-49 / all ages; MNH = 0;
+#   13040 STD incl. HIV/AIDS, Prevalence:
+#                                  RH = female 15-49 / all ages; MNH = 0;
 #                                  CH = <5 / all ages
 #   12263 tuberculosis, Prevalence: RH = 0;  MNH = 0;     CH = <5 / all ages
+#
+# ---- the GBD cause for 13040 ---------------------------------------------
+#
+# CRS 13040 is "STD control INCLUDING HIV/AIDS", so the matching GBD cause is
+# the combined "HIV/AIDS and sexually transmitted infections", NOT "HIV/AIDS"
+# alone. This was got wrong at first and the difference is large, because STI
+# cases outnumber HIV cases by orders of magnitude and have a completely
+# different demography.
+#
+# Afghanistan 2017, prevalence, against the published reference of
+# RH 0.5409 / CH 0.000033:
+#
+#   HIV/AIDS alone      RH 0.2548   CH 0.0182    total 0.2729
+#   HIV/AIDS + STIs     RH 0.5911   CH 0.0015    total 0.5926
+#
+# Both components identify the error. HIV alone halves RH, because HIV is not
+# as concentrated in women 15-49 as STIs are; and it inflates CH roughly
+# tenfold, because paediatric HIV from mother-to-child transmission is real
+# whereas under-5 STI cases are almost nil.
+#
+# The distributions confirm it across all recipients and years: the reference
+# RH is tight and high (IQR 0.098, floor 0.31), which is what an STI-dominated
+# ratio looks like, while HIV alone swings from 0.04 to 0.58 with the shape of
+# each country's epidemic.
 #
 # All ratios use "Both" sexes except the HIV RH numerator, which is female.
 # MNH = 0.15 for malaria is a fixed constant from the Countdown method, not
@@ -205,24 +230,12 @@ read_gbd <- function() {
 
 gbd <- read_gbd()
 
-# GBD keys by location NAME. Most match an OECD or World Bank name outright;
-# these are the ones that do not. Enumerated rather than fuzzy-matched, so a
-# new GBD spelling fails the coverage check below instead of being absorbed.
-# Note the apostrophes: OECD writes U+2019, GBD writes ASCII.
-gbd_name_to_code <- c(
-  "Bolivia (Plurinational State of)"      = "BOL",
-  "Côte d'Ivoire"                         = "CIV",
-  "Democratic People's Republic of Korea" = "PRK",
-  "Iran (Islamic Republic of)"            = "IRN",
-  "Lao People's Democratic Republic"      = "LAO",
-  "Micronesia (Federated States of)"      = "FSM",
-  "Palestine"                             = "PSE",
-  "Republic of Korea"                     = "KOR",
-  "Republic of Moldova"                   = "MDA",
-  "Taiwan"                                = "TWN",
-  "United Republic of Tanzania"           = "TZA",
-  "Venezuela (Bolivarian Republic of)"    = "VEN"
-)
+# GBD keys by location NAME, and `recipient_crosswalk` carries the resolved
+# spelling for each recipient. Identity mapping lives there and only there, so
+# a GBD rename is fixed in one place rather than two.
+gbd_code_of <- stats::setNames(crosswalk$recipient_code,
+                               crosswalk$gbd_location_name)
+gbd_code_of <- gbd_code_of[!is.na(names(gbd_code_of))]
 
 disease_weights <- NULL
 if (is.null(gbd)) {
@@ -261,13 +274,26 @@ if (is.null(gbd)) {
     stats::setNames(out, common)
   }
 
+  # See the note above: 13040 needs the combined cause, not HIV alone.
+  STD_CAUSE <- "HIV/AIDS and sexually transmitted infections"
+  if (!STD_CAUSE %in% gbd$cause_name) {
+    stop(
+      "The GBD extract has no cause \"", STD_CAUSE, "\".\n",
+      "  CRS 13040 is \"STD control including HIV/AIDS\", so it needs the ",
+      "combined GBD cause, not \"HIV/AIDS\" alone.\n",
+      "  Causes present: ", paste(sort(unique(gbd$cause_name)), collapse = ", "),
+      "\n  Re-download with that cause selected; see data-raw/gbd/README.md.",
+      call. = FALSE
+    )
+  }
+
   mal_den <- key("Malaria", "Incidence", "Both", "All ages")
-  hiv_den <- key("HIV/AIDS", "Prevalence", "Both", "All ages")
+  hiv_den <- key(STD_CAUSE, "Prevalence", "Both", "All ages")
   tb_den  <- key("Tuberculosis", "Prevalence", "Both", "All ages")
 
   mal_ch <- ratio(key("Malaria", "Incidence", "Both", "<5 years"), mal_den)
-  hiv_ch <- ratio(key("HIV/AIDS", "Prevalence", "Both", "<5 years"), hiv_den)
-  hiv_rh <- ratio(key("HIV/AIDS", "Prevalence", "Female", "15-49 years"),
+  hiv_ch <- ratio(key(STD_CAUSE, "Prevalence", "Both", "<5 years"), hiv_den)
+  hiv_rh <- ratio(key(STD_CAUSE, "Prevalence", "Female", "15-49 years"),
                   hiv_den)
   tb_ch  <- ratio(key("Tuberculosis", "Prevalence", "Both", "<5 years"), tb_den)
 
@@ -293,15 +319,9 @@ if (is.null(gbd)) {
   disease_weights$weight <-
     disease_weights$rh + disease_weights$mnh + disease_weights$ch
 
-  # Map GBD location names onto OECD recipient codes.
-  cwn <- stats::setNames(crosswalk$recipient_code, crosswalk$recipient_name)
-  cwb <- stats::setNames(crosswalk$recipient_code, crosswalk$wb_name)
-  code <- unname(cwn[disease_weights$location_name])
-  gap <- is.na(code)
-  code[gap] <- unname(cwb[disease_weights$location_name[gap]])
-  gap <- is.na(code)
-  code[gap] <- unname(gbd_name_to_code[disease_weights$location_name[gap]])
-  disease_weights$recipient_code <- code
+  # Map GBD location names onto OECD recipient codes, via the crosswalk.
+  disease_weights$recipient_code <-
+    unname(gbd_code_of[disease_weights$location_name])
 
   # Locations with no OECD recipient are dropped deliberately: GBD covers 204
   # countries including donors and high-income territories that are not ODA
