@@ -16,6 +16,13 @@ reference:
       - oecd_crs
       - oecd_multi
 
+  - title: Inspecting the method
+    desc: >
+      How OECD recipients map to the World Bank and IHME source data, and which
+      of them take a borrowed weight rather than one of their own.
+    contents:
+      - recipient_map
+
   - title: Classifying recipients
     desc: >
       OECD classifies recipients geographically, by DAC List income tier and by

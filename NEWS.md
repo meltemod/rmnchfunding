@@ -131,6 +131,13 @@
   Africa nests three deep, Europe not at all — so fifteen European recipients
   have no region level, and labelling them with their own name read as a bug.
   The code columns are unchanged, since they are what the cascade groups on.
+* Added `recipient_map()`, which returns the crosswalk the package uses: each
+  OECD recipient with its World Bank and GBD identifiers, its place in the DAC
+  geographic hierarchy, and whether each of the four varying weights is its own
+  or borrowed. `recipient_map("12262", imputed_only = TRUE)` answers "which
+  recipients borrow a malaria weight, and from which level". This joins two
+  things that were otherwise separate: the crosswalk had the identifiers but no
+  provenance, the weights had the provenance but one row per recipient-year.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the RMNCH weights for the three

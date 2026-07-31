@@ -304,21 +304,36 @@ another by plain string matching:
 | World Bank | `Cote d'Ivoire` (no circumflex, ASCII apostrophe) |
 | GBD | `Côte d'Ivoire` (circumflex, ASCII apostrophe) |
 
-`recipient_crosswalk` holds all three spellings, plus each recipient's
-geographic ancestors. A flat copy with the imputation source for each purpose
-code ships as a CSV, for checking the method without running R:
+`recipient_map()` returns all three spellings together with each recipient's
+geographic ancestors and, for each of the four varying purpose codes, whether
+its weight is its own or borrowed:
 
 ```{r}
-csv <- read.csv(system.file("extdata", "recipient_crosswalk.csv",
-                            package = "rmnchfunding"))
-str(csv, vec.len = 1, give.attr = FALSE)
+m <- recipient_map()
+m[m$recipient_code == "CIV",
+  c("recipient_name", "wb_name", "gbd_location_name")]
 ```
 
+Ask it directly which recipients borrow a weight, and from which level:
+
 ```{r}
-# recipients whose weight is borrowed for at least one purpose code
-src <- csv[grep("^source_", names(csv))]
-csv$recipient_name[apply(src, 1, function(r) any(r != "own"))]
+recipient_map("12262", imputed_only = TRUE)[
+  c("recipient_name", "continent_name", "source")
+]
 ```
+
+The same content ships as a plain file, for checking the method without
+running R:
+
+```{r, eval = FALSE}
+read.csv(system.file("extdata", "recipient_crosswalk.csv",
+                     package = "rmnchfunding"))
+```
+
+Note `region_name` is `NA` for European recipients: the DAC hierarchy is
+ragged, and Europe is the one continent it does not subdivide. The geography
+throughout is OECD DAC, not UN M49 and not the World Bank's regions — they
+disagree about Turkiye, Egypt and Central Asia, among others.
 
 ## What this vignette is not
 
