@@ -2,6 +2,7 @@
 
 export(crs_classify)
 export(muskoka2)
+export(muskoka_weights)
 export(oecd_crs)
 export(oecd_multi)
 export(recipient_map)

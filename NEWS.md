@@ -186,7 +186,33 @@
   vignette and `data-raw/reference/README.md` all point at the DOI for anyone
   wanting to inspect the method at source, and note that the binary `.xlsb`
   needs Python's `pyxlsb` rather than `readxl`.
-* **`sector_weights` now departs from the 2026 report on nine values**, which
+* **The weight tables now cover four report editions**, 2023 through 2026.
+  `sector_weights` gains `report_edition`, `weight_printed` and `is_misprint`
+  (396 rows); `agency_weights` gains the 2023 and 2024 editions, extending
+  spending-year coverage to 2019-2024 (396 rows). `muskoka2(report_edition=)`
+  now selects both halves, so an estimate never mixes a sector table from one
+  edition with agency weights from another.
+
+* **Added `muskoka_weights()`**, which returns the coefficients a given
+  edition applies — both halves in one table, with the printed and corrected
+  values side by side. Use it to see what an estimate is built from, or to
+  compare a coefficient across editions.
+
+* Editions before 2023 are deliberately excluded. They publish SRHR as three
+  components (RH + MNH + SRR) on a different basis — 15170 is 17.0% in the
+  2022 edition against 7.6% in 2023, 16064 is 9.0% against 50.0% — and split
+  their purpose codes differently. That is a methodology revision, not an
+  erratum, and mixing the bases would give weights comparable to neither.
+
+* Recorded a **suspected transposition in the 2023 edition's agency table**:
+  World Food Programme 2020 is printed RMNCH 1.03% / SRHR 3.75%, where the
+  2024 edition gives the same year as 3.75% / 1.03%. WFP's RMNCH weight is
+  3.70-3.96% in every other published year, so the 2024 ordering is the one
+  that fits. It is stored **as printed and not corrected** — unlike the nine
+  sector misprints it has not been tested against that edition's own totals,
+  and an untested correction would be a guess.
+
+* **`sector_weights` departs from the 2025 and 2026 reports on nine values**, which
   that edition misprints. Eight are SRHR weights (15170, 15180, 16064, 51010,
   72010, 72040, 72050, 73010) whose printed values repeat the SRHR column's
   own first eight in order — a spreadsheet fill — and one is 12191's RMNCH

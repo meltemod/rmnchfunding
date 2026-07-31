@@ -28,12 +28,17 @@
 #' report them separately.
 #'
 #' @section Choosing an edition and a price base:
-#' `report_edition` selects which vintage of the multilateral weights to use.
-#' Each edition recomputes the weights for every year it covers, and the
+#' `report_edition` selects the coefficient vintage for both halves. Each
+#' edition recomputes its agency weights for every year it covers, and the
 #' revisions are large: the Asian Development Bank's 2023 RMNCH weight is 5.18%
 #' in the 2025 edition and 13.42% in the 2026 edition. Reproducing a published
 #' figure means matching its edition, and matching its price base too — 2022
 #' constant prices for the 2025 edition, 2023 for the 2026.
+#'
+#' Sector weights barely move between editions; the nine values the 2025 and
+#' 2026 editions misprint are corrected here in every edition, because they
+#' are errata rather than revisions and each edition's own published totals
+#' are reproduced by the corrected figure. See [sector_weights].
 #'
 #' @param donor OECD donor code, e.g. `"USA"`. One or more.
 #' @param years Integer vector of years.
@@ -41,8 +46,10 @@
 #' @param prices `"constant"` (needs `base`) or `"current"`. Passed to both
 #'   fetchers, so the two halves are always on the same basis.
 #' @param base Base year for `prices = "constant"`.
-#' @param report_edition Which edition's multilateral weights to apply: `2025`
-#'   or `2026`. Defaults to the most recent.
+#' @param report_edition Which edition's coefficients to apply: `2023`,
+#'   `2024`, `2025` or `2026`. Selects both halves — sector weights and agency
+#'   weights — so an estimate never mixes editions. Defaults to the most
+#'   recent. [muskoka_weights()] shows what a given edition applies.
 #' @param ida Only meaningful for `universe = "fp"`. `0` (default) applies the
 #'   published Donors Delivering treatment, which does not count IDA
 #'   contributions to family planning; `1` applies the revised Muskoka 1%
@@ -68,8 +75,9 @@
 #' contribution with the weight applied to it, its `weight_source`, and the
 #' weighted value.
 #'
-#' @seealso [oecd_crs()] and [oecd_multi()] for the inputs, [sector_weights],
-#'   [rmnch_recipient_weights] and [agency_weights] for the coefficients.
+#' @seealso [oecd_crs()] and [oecd_multi()] for the inputs, [muskoka_weights()]
+#'   to read the coefficients an edition applies, [sector_weights],
+#'   [rmnch_recipient_weights] and [agency_weights] for the tables themselves.
 #'
 #' @examplesIf interactive()
 #' # United States RMNCH, on the 2026 edition's basis
@@ -94,7 +102,10 @@ muskoka2 <- function(donor,
   universe <- match.arg(universe)
   pb <- check_prices(prices, base)
 
-  editions <- sort(unique(rmnchfunding::agency_weights$report_edition))
+  editions <- intersect(
+    sort(unique(rmnchfunding::agency_weights$report_edition)),
+    sort(unique(rmnchfunding::sector_weights$report_edition))
+  )
   report_edition <- suppressWarnings(as.integer(report_edition))
   if (length(report_edition) != 1L || is.na(report_edition) ||
         !report_edition %in% editions) {
@@ -119,7 +130,9 @@ muskoka2 <- function(donor,
   bil <- tibble::tibble()
   if (nrow(crs) > 0L) {
     sw <- rmnchfunding::sector_weights
-    sw <- sw[as.character(sw$universe) == universe, c("purpose_code", "weight")]
+    sw <- sw[as.character(sw$universe) == universe &
+               sw$report_edition == report_edition,
+             c("purpose_code", "weight")]
     crs$weight <- sw$weight[match(crs$purpose_code, sw$purpose_code)]
     crs$weight_source <- "sector_weights"
 

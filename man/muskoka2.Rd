@@ -28,8 +28,10 @@ fetchers, so the two halves are always on the same basis.}
 
 \item{base}{Base year for \code{prices = "constant"}.}
 
-\item{report_edition}{Which edition's multilateral weights to apply: \code{2025}
-or \code{2026}. Defaults to the most recent.}
+\item{report_edition}{Which edition's coefficients to apply: \code{2023},
+\code{2024}, \code{2025} or \code{2026}. Selects both halves — sector weights and agency
+weights — so an estimate never mixes editions. Defaults to the most
+recent. \code{\link[=muskoka_weights]{muskoka_weights()}} shows what a given edition applies.}
 
 \item{ida}{Only meaningful for \code{universe = "fp"}. \code{0} (default) applies the
 published Donors Delivering treatment, which does not count IDA
@@ -91,12 +93,17 @@ report them separately.
 
 \section{Choosing an edition and a price base}{
 
-\code{report_edition} selects which vintage of the multilateral weights to use.
-Each edition recomputes the weights for every year it covers, and the
+\code{report_edition} selects the coefficient vintage for both halves. Each
+edition recomputes its agency weights for every year it covers, and the
 revisions are large: the Asian Development Bank's 2023 RMNCH weight is 5.18\%
 in the 2025 edition and 13.42\% in the 2026 edition. Reproducing a published
 figure means matching its edition, and matching its price base too — 2022
 constant prices for the 2025 edition, 2023 for the 2026.
+
+Sector weights barely move between editions; the nine values the 2025 and
+2026 editions misprint are corrected here in every edition, because they
+are errata rather than revisions and each edition's own published totals
+are reproduced by the corrected figure. See \link{sector_weights}.
 }
 
 \examples{
@@ -112,6 +119,7 @@ muskoka2("USA", years = 2022, prices = "current", detail = TRUE)
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=oecd_crs]{oecd_crs()}} and \code{\link[=oecd_multi]{oecd_multi()}} for the inputs, \link{sector_weights},
-\link{rmnch_recipient_weights} and \link{agency_weights} for the coefficients.
+\code{\link[=oecd_crs]{oecd_crs()}} and \code{\link[=oecd_multi]{oecd_multi()}} for the inputs, \code{\link[=muskoka_weights]{muskoka_weights()}}
+to read the coefficients an edition applies, \link{sector_weights},
+\link{rmnch_recipient_weights} and \link{agency_weights} for the tables themselves.
 }

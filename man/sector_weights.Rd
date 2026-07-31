@@ -5,18 +5,30 @@
 \alias{sector_weights}
 \title{Sector weights for the revised Muskoka method}
 \format{
-A data frame with 99 rows (33 purpose codes x 3 universes) and 4
-columns:
+A data frame with 396 rows (33 purpose codes x 3 universes x 4
+report editions) and 7 columns:
 \describe{
 \item{purpose_code}{CRS five-digit purpose code, as character. Held as
 text so codes are never treated as numbers and never lose a leading
 digit when joined against a CRS extract.}
 \item{purpose_name}{Purpose code description.}
 \item{universe}{Factor with levels \code{"rmnch"}, \code{"srhr"}, \code{"fp"}.}
+\item{report_edition}{Which Donors Delivering edition the row describes:
+2023, 2024, 2025 or 2026.}
 \item{weight}{Share of the disbursement attributed to the universe, as a
-proportion in \verb{[0, 1]} — not a percentage. \code{NA} where no weight has
-been agreed; see Unresolved weights.}
+proportion in \verb{[0, 1]} — not a percentage. This is the figure to
+compute with, and is the same in every edition. \code{NA} for the four
+RMNCH cells the source gives as \verb{varies*}.}
+\item{weight_printed}{What that edition's own table prints. Identical to
+\code{weight} except for the nine misprinted values.}
+\item{is_misprint}{\code{TRUE} where \code{weight} and \code{weight_printed} differ.}
 }
+
+Editions before 2023 are excluded. They publish SRHR as three components
+(RH + MNH + SRR) on a different basis — 15170 is 17.0\% in the 2022 edition
+against 7.6\% in 2023 — and split their purpose codes differently. That is a
+methodology revision rather than an erratum, and mixing the two bases would
+give weights comparable to neither.
 }
 \source{
 Donors Delivering for SRHR Report 2026, "Selected percentages per
@@ -70,13 +82,14 @@ and \code{data-raw/gbd/README.md} for the Global Burden of Disease extract they
 depend on.
 }
 
-\section{Nine values are corrected against the 2026 edition}{
+\section{Nine values the 2025 and 2026 editions misprint}{
 
-Eight SRHR weights and one RMNCH weight are taken from the 2023 and 2024
-editions rather than the 2026, because the 2026 table misprints them. The
-two earlier editions agree with each other, and their values — not the
-2026 table's — reproduce the 2026 edition's own published donor totals.\tabular{llll}{
-   code \tab name \tab this package \tab 2026 table \cr
+The four editions agree on every cell but nine. For those, \code{weight} follows
+the 2023 and 2024 editions, which are identical to each other and whose
+values — not the later tables' — reproduce the 2025 and 2026 editions' own
+published donor totals. They are errata rather than revisions, which is why
+\code{weight} is the same in all four editions and only \code{weight_printed} differs.\tabular{llll}{
+   code \tab name \tab \code{weight} \tab \code{weight_printed} (2025, 2026) \cr
    15170 \tab Women's equality organisations \tab 7.6\% \tab 4.4\% \cr
    15180 \tab Ending violence against women and girls \tab 41.5\% \tab 9.4\% \cr
    16064 \tab Social mitigation of HIV and AIDS \tab 50.0\% \tab 15.4\% \cr
@@ -108,7 +121,8 @@ contributions cannot be negative. Under the corrected values, 1 of 99 does.
 
 \code{vignette("rmnchfunding")} gives the full derivation, including how the
 eight were identified from the published totals alone, before the 2023 and
-2024 editions were consulted.
+2024 editions were consulted. \code{\link[=muskoka_weights]{muskoka_weights()}} shows both columns
+side by side for any edition.
 }
 
 \seealso{

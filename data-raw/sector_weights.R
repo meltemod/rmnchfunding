@@ -3,12 +3,21 @@
 #
 #   Rscript data-raw/sector_weights.R
 #
-## Sources: Donors Delivering for SRHR Report 2026, pp. 110-111, EXCEPT for
-## nine misprinted values taken from the 2023 and 2024 editions instead.
-## See "nine values are NOT taken from the 2026 edition" below.
+## Sources: Donors Delivering for SRHR Reports 2023, 2024, 2025 and 2026.
+## The four editions agree on every value except nine; see "the nine
+## misprinted values" below. Full citations under "Provenance".
 
 library(tibble)
 
+# ---- one table, four editions --------------------------------------------
+#
+# The 2023, 2024, 2025 and 2026 editions publish the same 33 codes and agree
+# on every cell except nine. `base` holds the values that are correct in all
+# four -- which are the 2023 and 2024 editions' as printed -- and `misprints`
+# below records what the 2025 and 2026 editions print instead for those nine.
+# Storing the exception separately keeps this table diffable against any
+# edition and makes the erratum structural rather than a buried comment.
+#
 # Weights are entered here as PERCENTAGES, exactly as they appear in the
 # source table, so that this script can be diffed against it by eye. They are
 # converted to proportions at the bottom, because every downstream use is a
@@ -21,7 +30,7 @@ library(tibble)
 # touches an affected sector, so `muskoka()` must refuse to run rather than
 # treat NA as 0. The two reasons a cell is NA are recorded per row below.
 
-raw <- tribble(
+base <- tribble(
   ~purpose_code, ~purpose_name,                                                 ~rmnch, ~srhr,  ~fp,
   "11230",       "Basic life skills for adults",                                     0,   4.4,    0,
   "11231",       "Basic life skills for youth",                                      0,   9.4,    0,
@@ -58,6 +67,26 @@ raw <- tribble(
   "74020",       "Multi-hazard response preparedness",                             1.5,   0.3,    0
 )
 
+EDITIONS <- c(2023L, 2024L, 2025L, 2026L)
+
+# What the 2025 and 2026 editions print for these nine, in place of the
+# values in `base`. Both editions print the same wrong figures. Retained so
+# that a reader checking this package against either report can see exactly
+# where and how it departs, and so `muskoka_weights()` can show both.
+misprints <- tribble(
+  ~purpose_code, ~universe, ~printed,
+  "12191",       "rmnch",     100.0,   # base  40.0
+  "15170",       "srhr",        4.4,   # base   7.6
+  "15180",       "srhr",        9.4,   # base  41.5
+  "16064",       "srhr",       15.4,   # base  50.0
+  "51010",       "srhr",       16.1,   # base   0.0
+  "72010",       "srhr",        0.0,   # base   2.3
+  "72040",       "srhr",       17.5,   # base   0.1
+  "72050",       "srhr",       10.0,   # base   0.7
+  "73010",       "srhr",       13.6    # base   0.6
+)
+MISPRINT_EDITIONS <- c(2025L, 2026L)
+
 # ---- why the NAs are NA --------------------------------------------------
 #
 # "varies*" — The source gives no single RMNCH figure for 12262 (malaria),
@@ -81,10 +110,12 @@ raw <- tribble(
 #   refuse to compute: three of the four are large CRS sectors and a silent
 #   zero would understate every result.
 
-# ---- nine values are NOT taken from the 2026 edition ----------------------
-# Eight SRHR values and one RMNCH value in the 2026 table are misprints. The
-# values above are the 2023 and 2024 editions', which are identical to each
-# other and which reproduce the 2026 edition's own published donor totals.
+# ---- the nine misprinted values ------------------------------------------
+# Eight SRHR values and one RMNCH value are misprinted in the 2025 and 2026
+# editions. `base` carries the 2023 and 2024 editions' figures, which are
+# identical to each other and which reproduce the 2025 and 2026 editions'
+# OWN published donor totals. `weight` uses them for every edition;
+# `weight_printed` preserves what each edition actually prints.
 #
 # THE SRHR FILL. In the 2026 table the SRHR column for 15170, 15180, 16064,
 # 51010, 72010, 72040, 72050 and 73010 repeats the column's first eight
@@ -122,13 +153,28 @@ raw <- tribble(
 # provider-years within 2%), against 2.79% at 100% (42 of 99). This one is
 # not part of the fill and has its own cause, unknown.
 #
-# Full analysis: vignettes/errata.Rmd.
+# Full analysis: vignette("rmnchfunding").
 
 # ---- provenance ----------------------------------------------------------
-# Donors Delivering for SRHR Report 2026, "Selected percentages per OECD DAC
-# codes (as under the Muskoka 2, the Donors Delivering for SRHR, and the FP
-# methodology)", pages 110-111. Retrieved 2026-07-29 from
-# https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf
+# Donors Delivering for SRHR, "Selected percentages per OECD DAC codes (as
+# under the Muskoka 2, the Donors Delivering for SRHR, and the FP
+# methodology)". Retrieved 2026-07-31 from
+#   2026, pp. 110-111
+#     .../uploads/2026/06/DD_Report2026_Update.pdf
+#   2025, pp. 104-105
+#     .../uploads/2026/05/DD_Report2025_Final.pdf
+#   2024
+#     .../uploads/2024/05/DD_Report2024_FINALspreads.pdf
+#   2023
+#     .../uploads/2023/06/DD_Report2023_v6_spreads.pdf
+# all under https://donorsdelivering.report/wp-content
+#
+# Editions before 2023 are deliberately excluded. They publish SRHR as three
+# components (RH + MNH + SRR) on a different basis -- 15170 is 17.0% in the
+# 2022 edition against 7.6% in 2023, 16064 is 9.0% against 50.0% -- and split
+# their purpose codes differently. That is a methodology revision, not an
+# erratum, and mixing the two bases would produce weights comparable to
+# neither.
 #
 # RMNCH follows Muskoka 2 (London School of Hygiene and Tropical Medicine);
 # FP follows the revised Muskoka method agreed at the 2012 London Summit;
@@ -136,50 +182,75 @@ raw <- tribble(
 # construction, so their totals must never be added together.
 
 stopifnot(
-  !anyDuplicated(raw$purpose_code),
+  !anyDuplicated(base$purpose_code),
   # CRS purpose codes are five digits. Held as character, not integer, so
   # that codes are never arithmetic and never lose a leading digit in a join
   # against a CRS extract that stores them as text.
-  all(grepl("^[0-9]{5}$", raw$purpose_code))
+  all(grepl("^[0-9]{5}$", base$purpose_code)),
+  # Every misprint must name a real code and universe, or the correction
+  # would silently apply to nothing.
+  all(misprints$purpose_code %in% base$purpose_code),
+  all(misprints$universe %in% c("rmnch", "srhr", "fp")),
+  !anyDuplicated(paste(misprints$purpose_code, misprints$universe))
 )
 
-# Long format: one row per (purpose_code, universe). `muskoka()` takes a
-# single universe and joins on purpose_code, which a wide table would make
-# awkward — it would have to select a column by name at runtime.
-sector_weights <- do.call(rbind, lapply(
-  c("rmnch", "srhr", "fp"),
-  function(u) {
+# Long format: one row per (edition, purpose_code, universe). `muskoka2()`
+# takes a single universe and edition and joins on purpose_code, which a wide
+# table would make awkward -- it would have to select a column by name at
+# runtime.
+#
+# `weight` is what to compute with, and is the same in every edition: the
+# nine misprints are corrections, not revisions, so an edition's own totals
+# are reproduced by the corrected value rather than by what it printed.
+# `weight_printed` is the edition's table as published.
+sector_weights <- do.call(rbind, lapply(EDITIONS, function(ed) {
+  do.call(rbind, lapply(c("rmnch", "srhr", "fp"), function(u) {
+    w <- base[[u]] / 100
+    printed <- w
+    if (ed %in% MISPRINT_EDITIONS) {
+      m <- misprints[misprints$universe == u, ]
+      k <- match(base$purpose_code, m$purpose_code)
+      hit <- !is.na(k)
+      printed[hit] <- m$printed[k[hit]] / 100
+    }
     tibble(
-      purpose_code = raw$purpose_code,
-      purpose_name = raw$purpose_name,
-      universe     = factor(u, levels = c("rmnch", "srhr", "fp")),
-      weight       = raw[[u]] / 100
+      purpose_code   = base$purpose_code,
+      purpose_name   = base$purpose_name,
+      universe       = factor(u, levels = c("rmnch", "srhr", "fp")),
+      report_edition = ed,
+      weight         = w,
+      weight_printed = printed,
+      is_misprint    = !is.na(w) & !is.na(printed) & w != printed
     )
-  }
-))
+  }))
+}))
 sector_weights <- sector_weights[
-  order(sector_weights$universe, sector_weights$purpose_code),
+  order(sector_weights$report_edition, sector_weights$universe,
+        sector_weights$purpose_code),
 ]
 rownames(sector_weights) <- NULL
 
 stopifnot(
-  nrow(sector_weights) == nrow(raw) * 3L,
+  nrow(sector_weights) == nrow(base) * 3L * length(EDITIONS),
   # A weight is a share of a disbursement; outside [0, 1] it is a data entry
   # error, not an unusual case.
-  all(sector_weights$weight >= 0 & sector_weights$weight <= 1, na.rm = TRUE)
+  all(sector_weights$weight >= 0 & sector_weights$weight <= 1, na.rm = TRUE),
+  all(sector_weights$weight_printed >= 0 & sector_weights$weight_printed <= 1,
+      na.rm = TRUE),
+  # Exactly the nine, in exactly the two editions that print them.
+  sum(sector_weights$is_misprint) == nrow(misprints) * length(MISPRINT_EDITIONS),
+  all(sector_weights$report_edition[sector_weights$is_misprint] %in%
+        MISPRINT_EDITIONS),
+  # The 2023 and 2024 editions must come through untouched.
+  !any(sector_weights$is_misprint[
+    sector_weights$report_edition %in% c(2023L, 2024L)])
 )
 
 message(
-  "sector_weights: ", nrow(sector_weights), " rows, ",
-  sum(is.na(sector_weights$weight)), " unresolved weights (",
-  paste(
-    vapply(
-      split(sector_weights, sector_weights$universe),
-      function(d) paste0(as.character(d$universe[1]), ": ", sum(is.na(d$weight))),
-      character(1)
-    ),
-    collapse = ", "
-  ), ")"
+  "sector_weights: ", nrow(sector_weights), " rows across ",
+  length(EDITIONS), " editions (", paste(EDITIONS, collapse = ", "), "), ",
+  sum(sector_weights$is_misprint), " values where the printed table differs, ",
+  sum(is.na(sector_weights$weight)), " unresolved (varies*) weights."
 )
 
 usethis::use_data(sector_weights, overwrite = TRUE, compress = "xz")

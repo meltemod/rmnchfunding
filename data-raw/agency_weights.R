@@ -4,8 +4,8 @@
 #
 #   Rscript data-raw/agency_weights.R
 #
-## Source: Donors Delivering for SRHR Reports 2025 (pp. 104-105) and 2026
-## (pp. 110-111). Full citation under "Provenance" below.
+## Source: Donors Delivering for SRHR Reports 2023, 2024, 2025 (pp. 104-105)
+## and 2026 (pp. 110-111). Full citations under "Provenance" below.
 
 library(tibble)
 
@@ -109,6 +109,92 @@ ed2026 <- tribble(
   "African Development Fund",        2024,   0.63,   0.24,  0.00
 )
 
+ed2023 <- tribble(
+  ~agency,                     ~data_year, ~rmnch,  ~srhr,   ~fp,
+  "GAVI",                      2019,  91.00,   8.76,  0.00,
+  "GAVI",                      2020,  91.00,   6.12,  0.00,
+  "GAVI",                      2021,  91.00,   8.52,  0.00,
+  "Global Fund",               2019,  40.92,  36.21,  5.00,
+  "Global Fund",               2020,  42.87,  55.50,  5.00,
+  "Global Fund",               2021,  43.85,  58.49,  5.00,
+  "IDA",                       2019,   4.76,   2.27,  0.00,
+  "IDA",                       2020,   5.86,   2.76,  0.00,
+  "IDA",                       2021,   6.04,   2.69,  0.00,
+  "UNFPA",                     2019,  49.00,  84.46, 20.00,
+  "UNFPA",                     2020,  49.00,  85.71, 20.00,
+  "UNFPA",                     2021,  49.00,  81.33, 20.00,
+  "UNICEF",                    2019,  15.00,   6.61,  0.00,
+  "UNICEF",                    2020,  15.00,   6.21,  0.00,
+  "UNICEF",                    2021,  15.00,   6.15,  0.00,
+  "UNAIDS",                    2019,   5.03,  55.37,  0.00,
+  "UNAIDS",                    2020,   0.00,  50.00,  0.00,
+  "UNAIDS",                    2021,   0.00,  50.00,  0.00,
+  "UNRWA",                     2019,   6.06,   1.61,  0.00,
+  "UNRWA",                     2020,   6.26,   1.64,  0.00,
+  "UNRWA",                     2021,   6.49,   1.70,  0.00,
+  "World Food Programme",      2019,   2.21,   0.47,  0.00,
+  "World Food Programme",      2020,   1.03,   3.75,  0.00,
+  "World Food Programme",      2021,   3.96,   1.02,  0.00,
+  "World Health Organisation", 2019,  31.25,  17.27,  5.00,
+  "World Health Organisation", 2020,  29.72,  14.78,  5.00,
+  "World Health Organisation", 2021,  26.55,   9.92,  5.00,
+  "Asian Development Bank",    2019,   1.85,   0.36,  0.00,
+  "Asian Development Bank",    2020,   6.37,   6.96,  0.00,
+  "Asian Development Bank",    2021,   2.40,   0.39,  0.00,
+  "African Development Fund",  2019,   0.43,   0.13,  0.00,
+  "African Development Fund",  2020,   1.18,   0.31,  0.00,
+  "African Development Fund",  2021,   1.21,   0.13,  0.00
+)
+
+ed2024 <- tribble(
+  ~agency,                     ~data_year, ~rmnch,  ~srhr,   ~fp,
+  "GAVI",                      2020,  91.00,   6.12,  0.00,
+  "GAVI",                      2021,  91.00,   8.52,  0.00,
+  "GAVI",                      2022,  91.00,   2.00,  0.00,
+  "Global Fund",               2020,  42.93,  55.50,  5.00,
+  "Global Fund",               2021,  43.85,  58.49,  5.00,
+  "Global Fund",               2022,  42.77,  53.49,  5.00,
+  "IDA",                       2020,   5.86,   2.76,  0.00,
+  "IDA",                       2021,   6.04,   2.69,  0.00,
+  "IDA",                       2022,   6.82,   2.69,  0.00,
+  "UNFPA",                     2020,  49.00,  85.71, 20.00,
+  "UNFPA",                     2021,  49.00,  81.34, 20.00,
+  "UNFPA",                     2022,  49.00,  39.70, 20.00,
+  "UNICEF",                    2020,  15.00,   6.56,  0.00,
+  "UNICEF",                    2021,  15.00,   6.44,  0.00,
+  "UNICEF",                    2022,  15.00,   5.82,  0.00,
+  "UNAIDS",                    2020,   0.00,  50.00,  0.00,
+  "UNAIDS",                    2021,   0.00,  50.00,  0.00,
+  "UNAIDS",                    2022,   0.00,  50.00,  0.00,
+  "UNRWA",                     2020,   6.26,   1.64,  0.00,
+  "UNRWA",                     2021,   6.49,   1.70,  0.00,
+  "UNRWA",                     2022,   6.68,   1.74,  0.00,
+  "World Food Programme",      2020,   3.75,   1.03,  0.00,
+  "World Food Programme",      2021,   3.96,   1.02,  0.00,
+  "World Food Programme",      2022,   3.70,   0.94,  0.00,
+  "World Health Organisation", 2020,  29.73,  14.78,  5.00,
+  "World Health Organisation", 2021,  26.55,   9.92,  5.00,
+  "World Health Organisation", 2022,  29.48,  11.08,  5.00,
+  "Asian Development Bank",    2020,   6.39,   6.96,  0.00,
+  "Asian Development Bank",    2021,   2.40,   0.39,  0.00,
+  "Asian Development Bank",    2022,   3.24,   0.60,  0.00,
+  "African Development Fund",  2020,   1.18,   0.31,  0.00,
+  "African Development Fund",  2021,   1.21,   0.13,  0.00,
+  "African Development Fund",  2022,   0.98,   0.34,  0.00
+)
+
+# ---- a suspected transposition in the 2023 edition ------------------------
+# The 2023 edition prints World Food Programme 2020 as RMNCH 1.03%, SRHR
+# 3.75%. The 2024 edition prints the same spending year as RMNCH 3.75%, SRHR
+# 1.03% -- the two swapped. WFP's RMNCH weight is 3.70-3.96% in every other
+# published year and its SRHR weight 0.94-1.03%, so the 2024 ordering is the
+# one that fits and the 2023 edition looks transposed.
+#
+# It is recorded here AS PRINTED and not corrected. Unlike the nine sector
+# misprints, this one has not been tested against the 2023 edition's own
+# published donor totals, and an untested correction is a guess. Anyone
+# reproducing 2023-edition figures should be aware of it.
+
 # ---- IDA and family planning ---------------------------------------------
 #
 # The 2026 edition gives IDA's FP weight as "0.00%*" in every year, where
@@ -151,13 +237,15 @@ ed2026 <- tribble(
 # weights were revised. Verified by diffing the two extracted tables.
 
 raw <- rbind(
+  cbind(ed2023, report_edition = 2023L),
+  cbind(ed2024, report_edition = 2024L),
   cbind(ed2025, report_edition = 2025L),
   cbind(ed2026, report_edition = 2026L)
 )
 
 stopifnot(
   !anyDuplicated(raw[c("agency", "data_year", "report_edition")]),
-  all(raw$data_year %in% 2021:2024),
+  all(raw$data_year %in% 2019:2024),
   # Each edition covers exactly three consecutive spending years.
   all(vapply(
     split(raw$data_year, raw$report_edition),

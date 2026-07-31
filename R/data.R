@@ -5,18 +5,30 @@
 #' bilateral flows, are one half of a Muskoka estimate; [agency_weights] is
 #' the other.
 #'
-#' @format A data frame with 99 rows (33 purpose codes x 3 universes) and 4
-#'   columns:
+#' @format A data frame with 396 rows (33 purpose codes x 3 universes x 4
+#'   report editions) and 7 columns:
 #' \describe{
 #'   \item{purpose_code}{CRS five-digit purpose code, as character. Held as
 #'     text so codes are never treated as numbers and never lose a leading
 #'     digit when joined against a CRS extract.}
 #'   \item{purpose_name}{Purpose code description.}
 #'   \item{universe}{Factor with levels `"rmnch"`, `"srhr"`, `"fp"`.}
+#'   \item{report_edition}{Which Donors Delivering edition the row describes:
+#'     2023, 2024, 2025 or 2026.}
 #'   \item{weight}{Share of the disbursement attributed to the universe, as a
-#'     proportion in `[0, 1]` — not a percentage. `NA` where no weight has
-#'     been agreed; see Unresolved weights.}
+#'     proportion in `[0, 1]` — not a percentage. This is the figure to
+#'     compute with, and is the same in every edition. `NA` for the four
+#'     RMNCH cells the source gives as `varies*`.}
+#'   \item{weight_printed}{What that edition's own table prints. Identical to
+#'     `weight` except for the nine misprinted values.}
+#'   \item{is_misprint}{`TRUE` where `weight` and `weight_printed` differ.}
 #' }
+#'
+#' Editions before 2023 are excluded. They publish SRHR as three components
+#' (RH + MNH + SRR) on a different basis — 15170 is 17.0% in the 2022 edition
+#' against 7.6% in 2023 — and split their purpose codes differently. That is a
+#' methodology revision rather than an erratum, and mixing the two bases would
+#' give weights comparable to neither.
 #'
 #' @section Weights that vary by recipient and year:
 #' Four of the 99 weights are `NA`, all in the RMNCH universe. The source
@@ -41,13 +53,14 @@
 #' and `data-raw/gbd/README.md` for the Global Burden of Disease extract they
 #' depend on.
 #'
-#' @section Nine values are corrected against the 2026 edition:
-#' Eight SRHR weights and one RMNCH weight are taken from the 2023 and 2024
-#' editions rather than the 2026, because the 2026 table misprints them. The
-#' two earlier editions agree with each other, and their values — not the
-#' 2026 table's — reproduce the 2026 edition's own published donor totals.
+#' @section Nine values the 2025 and 2026 editions misprint:
+#' The four editions agree on every cell but nine. For those, `weight` follows
+#' the 2023 and 2024 editions, which are identical to each other and whose
+#' values — not the later tables' — reproduce the 2025 and 2026 editions' own
+#' published donor totals. They are errata rather than revisions, which is why
+#' `weight` is the same in all four editions and only `weight_printed` differs.
 #'
-#' | code | name | this package | 2026 table |
+#' | code | name | `weight` | `weight_printed` (2025, 2026) |
 #' | --- | --- | --- | --- |
 #' | 15170 | Women's equality organisations | 7.6% | 4.4% |
 #' | 15180 | Ending violence against women and girls | 41.5% | 9.4% |
@@ -78,7 +91,8 @@
 #'
 #' `vignette("rmnchfunding")` gives the full derivation, including how the
 #' eight were identified from the published totals alone, before the 2023 and
-#' 2024 editions were consulted.
+#' 2024 editions were consulted. [muskoka_weights()] shows both columns
+#' side by side for any edition.
 #'
 #' @source Donors Delivering for SRHR Report 2026, "Selected percentages per
 #'   OECD DAC codes (as under the Muskoka 2, the Donors Delivering for SRHR,
@@ -109,16 +123,18 @@
 #' multilateral half of a Muskoka estimate; [sector_weights] gives the
 #' bilateral half.
 #'
-#' @format A data frame with 198 rows (11 agencies x 3 spending years x 3
-#'   universes x 2 report editions) and 5 columns:
+#' @format A data frame with 396 rows (11 agencies x 3 spending years x 3
+#'   universes x 4 report editions) and 5 columns:
 #' \describe{
 #'   \item{agency}{Multilateral agency or initiative, by display name.}
-#'   \item{data_year}{Integer year of the **spending**: 2021 to 2024.}
+#'   \item{data_year}{Integer year of the **spending**: 2019 to 2024. Each
+#'     edition covers three consecutive years, and successive editions step
+#'     forward by one, so the four together span the range with no gap.}
 #'   \item{universe}{Factor with levels `"rmnch"`, `"srhr"`, `"fp"`.}
 #'   \item{weight}{Share of agency spending attributed to the universe, as a
 #'     proportion in `[0, 1]` — not a percentage.}
 #'   \item{report_edition}{Integer year of the **report** that published the
-#'     weight: 2025 or 2026. See Two keys, not one.}
+#'     weight: 2023, 2024, 2025 or 2026. See Two keys, not one.}
 #' }
 #'
 #' @section Two keys, not one:
@@ -144,6 +160,25 @@
 #' use different price bases — 2022 constant prices in 2025, 2023 constant
 #' prices in 2026 — which is a second reason not to mix them without
 #' deflating.
+#'
+#' @section A suspected transposition in the 2023 edition:
+#' The 2023 edition prints World Food Programme 2020 as RMNCH 1.03%, SRHR
+#' 3.75%. The 2024 edition prints the same spending year as RMNCH 3.75%, SRHR
+#' 1.03% — the two swapped. WFP's RMNCH weight is 3.70–3.96% in every other
+#' published year and its SRHR weight 0.94–1.03%, so the 2024 ordering is the
+#' one that fits and the 2023 edition looks transposed.
+#'
+#' It is recorded here **as printed and not corrected**. Unlike the nine
+#' sector misprints in [sector_weights], this one has not been tested against
+#' the 2023 edition's own published donor totals, and an untested correction
+#' would be a guess. Anyone reproducing 2023-edition figures should know about
+#' it.
+#'
+#' More generally, the agency weights have not had the treatment the sector
+#' weights received: no independent reconstruction from published totals has
+#' been attempted for them. That a misprint was found in one half of the
+#' source table is reason to treat the other half as unverified rather than
+#' as confirmed.
 #'
 #' The two editions between them cover four spending years, 2021 to 2024,
 #' which is the window `muskoka()` targets and the range over which
@@ -184,7 +219,8 @@
 #'   Donors Delivering for SRHR Report 2025, same table, pages 104-105.
 #'   \url{https://donorsdelivering.report/wp-content/uploads/2025/06/DDSRHR2025.pdf}
 #'
-#'   The sector table is identical in both editions, so [sector_weights]
+#'   The sector table is identical in all four editions apart from nine
+#'   misprints, so [sector_weights]
 #'   carries no edition key; only the multilateral weights were revised.
 #'
 #' @seealso [sector_weights] for the bilateral half of the estimate.
