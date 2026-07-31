@@ -349,10 +349,10 @@ never mistaken for an observed one:
 
 table(rmnch_recipient_weights$source)
 #> 
-#>                  own regional (continent)    regional (region) 
-#>                 2580                   36                  136 
-#> regional (subregion) 
-#>                  160
+#>               global                  own regional (continent) 
+#>                   16                 2580                  132 
+#>    regional (region) regional (subregion) 
+#>                  328                  256
 ```
 
 The substitution applies to each component separately, not just the
@@ -367,10 +367,10 @@ wlf <- rmnch_recipient_weights[
 ]
 wlf[c("purpose_code", "rh", "mnh", "ch", "weight", "source")]
 #>      purpose_code         rh  mnh          ch     weight            source
-#> 703         12262 0.00000000 0.15 0.000000000 0.15000000 regional (region)
-#> 1431        12263 0.00000000 0.00 0.057125922 0.05712592 regional (region)
-#> 2159        13040 0.42589402 0.00 0.002456776 0.42835079 regional (region)
-#> 2887        51010 0.02799938 0.00 0.015598318 0.04359770 regional (region)
+#> 803         12262 0.00000000 0.15 0.000000000 0.15000000 regional (region)
+#> 1631        12263 0.00000000 0.00 0.057125922 0.05712592 regional (region)
+#> 2459        13040 0.42589402 0.00 0.002456776 0.42835079 regional (region)
+#> 3287        51010 0.02799938 0.00 0.015598318 0.04359770 regional (region)
 ```
 
 Note the malaria row: `mnh` keeps its fixed 0.15 while `ch` is 0,
@@ -411,28 +411,20 @@ Ask it directly which recipients borrow a weight, and from which level:
 recipient_map("12262", imputed_only = TRUE)[
   c("recipient_name", "continent_name", "source")
 ]
-#> # A tibble: 19 × 3
-#>    recipient_name           continent_name source              
-#>    <chr>                    <chr>          <chr>               
-#>  1 Anguilla                 America        regional (subregion)
-#>  2 Aruba                    America        regional (subregion)
-#>  3 British Virgin Islands   America        regional (subregion)
-#>  4 Cayman Islands           America        regional (subregion)
-#>  5 East African Community   Africa         regional (subregion)
-#>  6 French Polynesia         Oceania        regional (region)   
-#>  7 Gibraltar                Europe         regional (continent)
-#>  8 Hong Kong (China)        Asia           regional (region)   
-#>  9 Indus Basin              Asia           regional (region)   
-#> 10 Kosovo                   Europe         regional (continent)
-#> 11 Macau (China)            Asia           regional (region)   
-#> 12 Mayotte                  Africa         regional (subregion)
-#> 13 Mekong Delta             Asia           regional (region)   
-#> 14 Montserrat               America        regional (subregion)
-#> 15 New Caledonia            Oceania        regional (region)   
-#> 16 Saint Helena             Africa         regional (subregion)
-#> 17 Sint Maarten             America        regional (subregion)
-#> 18 Turks and Caicos Islands America        regional (subregion)
-#> 19 Wallis and Futuna        Oceania        regional (region)
+#> # A tibble: 44 × 3
+#>    recipient_name                                continent_name source          
+#>    <chr>                                         <chr>          <chr>           
+#>  1 Africa unspecified                            Africa         regional (conti…
+#>  2 America unspecified                           America        regional (conti…
+#>  3 Anguilla                                      America        regional (subre…
+#>  4 Aruba                                         America        regional (subre…
+#>  5 Asia unspecified                              Asia           regional (conti…
+#>  6 British Virgin Islands                        America        regional (subre…
+#>  7 Caribbean unspecified                         America        regional (subre…
+#>  8 Cayman Islands                                America        regional (subre…
+#>  9 Central America and the Caribbean unspecified America        regional (regio…
+#> 10 Central America unspecified                   America        regional (subre…
+#> # ℹ 34 more rows
 ```
 
 The same content ships as a plain file, for checking the method without
@@ -482,8 +474,8 @@ table(
 )
 #>                     variant B weight
 #> MNH applied            0 0.15 + CH
-#>   burden recorded      0       402
-#>   no burden recorded 326         0
+#>   burden recorded      0       482
+#>   no burden recorded 346         0
 ```
 
 Tested against the published reference over 2005-2017, that variant is

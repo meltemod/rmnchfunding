@@ -6,14 +6,12 @@ health and rights (SRHR) and family planning from OECD Creditor
 Reporting System (CRS) flows and OECD providers’ total use of the
 multilateral system, using the revised Muskoka method.
 
-> **Status: under construction.** The coefficient tables and both OECD
-> fetchers are in place. `muskoka()` itself is not written yet, and the
-> four per-donor RMNCH weights are not yet derived, so the package does
-> not produce a Muskoka estimate — but
-> [`oecd_crs()`](https://meltemod.github.io/rmnchfunding/reference/oecd_crs.md)
-> and
-> [`oecd_multi()`](https://meltemod.github.io/rmnchfunding/reference/oecd_multi.md)
-> are usable on their own.
+> **Status: working, under refinement.**
+> [`muskoka2()`](https://meltemod.github.io/rmnchfunding/reference/muskoka2.md)
+> produces estimates for all three universes. Against the published
+> Donors Delivering 2026 totals for the United States it reproduces
+> family planning **exactly** and RMNCH within 1%; SRHR is 7-17% high
+> for some providers and under investigation.
 
 ------------------------------------------------------------------------
 
@@ -109,13 +107,13 @@ The geography is the **OECD DAC** hierarchy — not UN M49, not World Bank
 regions. They disagree about Türkiye, Egypt and Central Asia, which
 changes which recipients are grouped for imputation.
 
-The planned entry point is a single function covering all three
-universes:
+The entry point is a single function covering all three universes:
 
 ``` r
 
-muskoka(universe = "rmnch")           # or "srhr", or "fp"
-muskoka(universe = "fp", ida = 1)     # revised Muskoka 1% for IDA
+muskoka2("USA", years = 2022:2024, prices = "constant", base = 2023)
+muskoka2("USA", years = 2022, universe = "fp", prices = "current", ida = 1)
+muskoka2("USA", years = 2022, prices = "current", detail = TRUE)  # row by row
 ```
 
 Both tables are transcribed from the Donors Delivering for SRHR Report,
@@ -185,7 +183,7 @@ row, then a subsection below it if the choice needs more than a line.
 
 | \# | Decision | Rationale in brief |
 |----|----|----|
-| 1 | One `muskoka(universe=)` rather than `muskoka1()`/`muskoka2()`/`revised_fp()` | The three universes share a method and differ only in coefficients. Three functions would triplicate the pipeline to vary a lookup. |
+| 1 | One `muskoka(universe=)` rather than `muskoka1()`/[`muskoka2()`](https://meltemod.github.io/rmnchfunding/reference/muskoka2.md)/`revised_fp()` | The three universes share a method and differ only in coefficients. Three functions would triplicate the pipeline to vary a lookup. |
 | 2 | Coefficients stored as proportions, entered as percentages | Every use is a multiplication against a disbursement; a stray factor of 100 there is invisible in a total. `data-raw/` keeps percentages so it stays diffable against the source table. |
 | 3 | Unknown coefficients are `NA`, never `0` | A zero asserts the sector contributes nothing. Conflating the two understates totals silently. |
 | 4 | Weight tables held in long format | `muskoka()` takes one universe and joins on code; a wide table would need runtime column selection by name. |
@@ -351,6 +349,14 @@ oversights.
   the workflow builds the site successfully but nothing is served.
 
 # Package index
+
+## Estimating funding
+
+The revised Muskoka method applied end to end: bilateral disbursements
+weighted by purpose code, plus core contributions weighted by agency.
+
+- [`muskoka2()`](https://meltemod.github.io/rmnchfunding/reference/muskoka2.md)
+  : Estimate a provider's RMNCH, SRHR or family-planning funding
 
 ## Fetching OECD data
 

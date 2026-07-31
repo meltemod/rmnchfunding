@@ -54,7 +54,7 @@
 
 <p>Calculates bilateral and multilateral funding for reproductive, maternal, newborn and child health (RMNCH), sexual and reproductive health and rights (SRHR) and family planning from OECD Creditor Reporting System (CRS) flows and OECD providers’ total use of the multilateral system, using the revised Muskoka method.</p>
 <blockquote>
-<p><strong>Status: under construction.</strong> The coefficient tables and both OECD fetchers are in place. <code>muskoka()</code> itself is not written yet, and the four per-donor RMNCH weights are not yet derived, so the package does not produce a Muskoka estimate — but <code><a href="reference/oecd_crs.html">oecd_crs()</a></code> and <code><a href="reference/oecd_multi.html">oecd_multi()</a></code> are usable on their own.</p>
+<p><strong>Status: working, under refinement.</strong> <code><a href="reference/muskoka2.html">muskoka2()</a></code> produces estimates for all three universes. Against the published Donors Delivering 2026 totals for the United States it reproduces family planning <strong>exactly</strong> and RMNCH within 1%; SRHR is 7-17% high for some providers and under investigation.</p>
 </blockquote>
 <hr>
 <div class="section level2">
@@ -135,10 +135,11 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"recipient_crosswalk.csv"</span>,</span>
 <span>                     package <span class="op">=</span> <span class="st">"rmnchfunding"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>The geography is the <strong>OECD DAC</strong> hierarchy — not UN M49, not World Bank regions. They disagree about Türkiye, Egypt and Central Asia, which changes which recipients are grouped for imputation.</p>
-<p>The planned entry point is a single function covering all three universes:</p>
+<p>The entry point is a single function covering all three universes:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">muskoka</span><span class="op">(</span>universe <span class="op">=</span> <span class="st">"rmnch"</span><span class="op">)</span>           <span class="co"># or "srhr", or "fp"</span></span>
-<span><span class="fu">muskoka</span><span class="op">(</span>universe <span class="op">=</span> <span class="st">"fp"</span>, ida <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>     <span class="co"># revised Muskoka 1% for IDA</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/muskoka2.html">muskoka2</a></span><span class="op">(</span><span class="st">"USA"</span>, years <span class="op">=</span> <span class="fl">2022</span><span class="op">:</span><span class="fl">2024</span>, prices <span class="op">=</span> <span class="st">"constant"</span>, base <span class="op">=</span> <span class="fl">2023</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/muskoka2.html">muskoka2</a></span><span class="op">(</span><span class="st">"USA"</span>, years <span class="op">=</span> <span class="fl">2022</span>, universe <span class="op">=</span> <span class="st">"fp"</span>, prices <span class="op">=</span> <span class="st">"current"</span>, ida <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/muskoka2.html">muskoka2</a></span><span class="op">(</span><span class="st">"USA"</span>, years <span class="op">=</span> <span class="fl">2022</span>, prices <span class="op">=</span> <span class="st">"current"</span>, detail <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>  <span class="co"># row by row</span></span></code></pre></div>
 <p>Both tables are transcribed from the Donors Delivering for SRHR Report, <a href="https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf" class="external-link">2026 edition</a> pages 110–111 and <a href="https://donorsdelivering.report/wp-content/uploads/2025/06/DDSRHR2025.pdf" class="external-link">2025 edition</a> pages 104–105. The sector table is identical in both; the multilateral weights were revised, so <code>agency_weights</code> carries them per edition. The three universes overlap by construction, so their totals must never be added together.</p>
 <p>Full reference: <a href="https://meltemod.github.io/rmnchfunding/" class="uri">https://meltemod.github.io/rmnchfunding/</a></p>
 </div>
@@ -200,7 +201,7 @@
 <tbody>
 <tr>
 <td>1</td>
-<td>One <code>muskoka(universe=)</code> rather than <code>muskoka1()</code>/<code>muskoka2()</code>/<code>revised_fp()</code>
+<td>One <code>muskoka(universe=)</code> rather than <code>muskoka1()</code>/<code><a href="reference/muskoka2.html">muskoka2()</a></code>/<code>revised_fp()</code>
 </td>
 <td>The three universes share a method and differ only in coefficients. Three functions would triplicate the pipeline to vary a lookup.</td>
 </tr>

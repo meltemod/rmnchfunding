@@ -1,5 +1,13 @@
 # Package index
 
+## Estimating funding
+
+The revised Muskoka method applied end to end: bilateral disbursements
+weighted by purpose code, plus core contributions weighted by agency.
+
+- [`muskoka2()`](https://meltemod.github.io/rmnchfunding/reference/muskoka2.md)
+  : Estimate a provider's RMNCH, SRHR or family-planning funding
+
 ## Fetching OECD data
 
 Retrieve the two sources the Muskoka method applies coefficients to.

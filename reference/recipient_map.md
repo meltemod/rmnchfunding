@@ -116,20 +116,20 @@ for the underlying data.
 ``` r
 # the whole crosswalk
 recipient_map()
-#> # A tibble: 182 × 18
+#> # A tibble: 207 × 18
 #>    recipient_code recipient_name      iso3  wb_name  gbd_location_name continent
 #>    <chr>          <chr>               <chr> <chr>    <chr>             <chr>    
 #>  1 AFG            Afghanistan         AFG   Afghani… Afghanistan       S        
-#>  2 ALB            Albania             ALB   Albania  Albania           E        
-#>  3 DZA            Algeria             DZA   Algeria  Algeria           F        
-#>  4 AGO            Angola              AGO   Angola   Angola            F        
-#>  5 AIA            Anguilla            NA    NA       NA                A        
-#>  6 ATG            Antigua and Barbuda ATG   Antigua… Antigua and Barb… A        
-#>  7 ARG            Argentina           ARG   Argenti… Argentina         A        
-#>  8 ARM            Armenia             ARM   Armenia  Armenia           S        
-#>  9 ABW            Aruba               ABW   Aruba    NA                A        
-#> 10 AZE            Azerbaijan          AZE   Azerbai… Azerbaijan        S        
-#> # ℹ 172 more rows
+#>  2 F_X            Africa unspecified  NA    NA       NA                F        
+#>  3 ALB            Albania             ALB   Albania  Albania           E        
+#>  4 DZA            Algeria             DZA   Algeria  Algeria           F        
+#>  5 A_X            America unspecified NA    NA       NA                A        
+#>  6 AGO            Angola              AGO   Angola   Angola            F        
+#>  7 AIA            Anguilla            NA    NA       NA                A        
+#>  8 ATG            Antigua and Barbuda ATG   Antigua… Antigua and Barb… A        
+#>  9 ARG            Argentina           ARG   Argenti… Argentina         A        
+#> 10 ARM            Armenia             ARM   Armenia  Armenia           S        
+#> # ℹ 197 more rows
 #> # ℹ 12 more variables: continent_name <chr>, region <chr>, region_name <chr>,
 #> #   subregion <chr>, subregion_name <chr>, no_data_reason <chr>,
 #> #   has_worldbank_data <lgl>, has_gbd_data <lgl>, source_12262 <chr>,
@@ -139,28 +139,20 @@ recipient_map()
 recipient_map("12262", imputed_only = TRUE)[
   c("recipient_name", "continent_name", "source")
 ]
-#> # A tibble: 19 × 3
-#>    recipient_name           continent_name source              
-#>    <chr>                    <chr>          <chr>               
-#>  1 Anguilla                 America        regional (subregion)
-#>  2 Aruba                    America        regional (subregion)
-#>  3 British Virgin Islands   America        regional (subregion)
-#>  4 Cayman Islands           America        regional (subregion)
-#>  5 East African Community   Africa         regional (subregion)
-#>  6 French Polynesia         Oceania        regional (region)   
-#>  7 Gibraltar                Europe         regional (continent)
-#>  8 Hong Kong (China)        Asia           regional (region)   
-#>  9 Indus Basin              Asia           regional (region)   
-#> 10 Kosovo                   Europe         regional (continent)
-#> 11 Macau (China)            Asia           regional (region)   
-#> 12 Mayotte                  Africa         regional (subregion)
-#> 13 Mekong Delta             Asia           regional (region)   
-#> 14 Montserrat               America        regional (subregion)
-#> 15 New Caledonia            Oceania        regional (region)   
-#> 16 Saint Helena             Africa         regional (subregion)
-#> 17 Sint Maarten             America        regional (subregion)
-#> 18 Turks and Caicos Islands America        regional (subregion)
-#> 19 Wallis and Futuna        Oceania        regional (region)   
+#> # A tibble: 44 × 3
+#>    recipient_name                                continent_name source          
+#>    <chr>                                         <chr>          <chr>           
+#>  1 Africa unspecified                            Africa         regional (conti…
+#>  2 America unspecified                           America        regional (conti…
+#>  3 Anguilla                                      America        regional (subre…
+#>  4 Aruba                                         America        regional (subre…
+#>  5 Asia unspecified                              Asia           regional (conti…
+#>  6 British Virgin Islands                        America        regional (subre…
+#>  7 Caribbean unspecified                         America        regional (subre…
+#>  8 Cayman Islands                                America        regional (subre…
+#>  9 Central America and the Caribbean unspecified America        regional (regio…
+#> 10 Central America unspecified                   America        regional (subre…
+#> # ℹ 34 more rows
 
 # look up how one recipient is identified across the three sources
 m <- recipient_map()

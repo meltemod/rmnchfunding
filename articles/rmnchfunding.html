@@ -469,10 +469,10 @@ never mistaken for an observed one:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">rmnch_recipient_weights</span><span class="op">$</span><span class="va">source</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;                  own regional (continent)    regional (region) </span></span>
-<span><span class="co">#&gt;                 2580                   36                  136 </span></span>
-<span><span class="co">#&gt; regional (subregion) </span></span>
-<span><span class="co">#&gt;                  160</span></span></code></pre></div>
+<span><span class="co">#&gt;               global                  own regional (continent) </span></span>
+<span><span class="co">#&gt;                   16                 2580                  132 </span></span>
+<span><span class="co">#&gt;    regional (region) regional (subregion) </span></span>
+<span><span class="co">#&gt;                  328                  256</span></span></code></pre></div>
 <p>The substitution applies to each component separately, not just the
 total, so <code>rh + mnh + ch</code> still equals <code>weight</code>
 exactly. For a recipient with no data of its own:</p>
@@ -483,10 +483,10 @@ exactly. For a recipient with no data of its own:</p>
 <span><span class="op">]</span></span>
 <span><span class="va">wlf</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"purpose_code"</span>, <span class="st">"rh"</span>, <span class="st">"mnh"</span>, <span class="st">"ch"</span>, <span class="st">"weight"</span>, <span class="st">"source"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;      purpose_code         rh  mnh          ch     weight            source</span></span>
-<span><span class="co">#&gt; 703         12262 0.00000000 0.15 0.000000000 0.15000000 regional (region)</span></span>
-<span><span class="co">#&gt; 1431        12263 0.00000000 0.00 0.057125922 0.05712592 regional (region)</span></span>
-<span><span class="co">#&gt; 2159        13040 0.42589402 0.00 0.002456776 0.42835079 regional (region)</span></span>
-<span><span class="co">#&gt; 2887        51010 0.02799938 0.00 0.015598318 0.04359770 regional (region)</span></span></code></pre></div>
+<span><span class="co">#&gt; 803         12262 0.00000000 0.15 0.000000000 0.15000000 regional (region)</span></span>
+<span><span class="co">#&gt; 1631        12263 0.00000000 0.00 0.057125922 0.05712592 regional (region)</span></span>
+<span><span class="co">#&gt; 2459        13040 0.42589402 0.00 0.002456776 0.42835079 regional (region)</span></span>
+<span><span class="co">#&gt; 3287        51010 0.02799938 0.00 0.015598318 0.04359770 regional (region)</span></span></code></pre></div>
 <p>Note the malaria row: <code>mnh</code> keeps its fixed 0.15 while
 <code>ch</code> is 0, because Polynesia is malaria-free. Averaging all
 three components rather than assuming <code>mnh</code> is zero is what
@@ -537,28 +537,20 @@ level:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/recipient_map.html">recipient_map</a></span><span class="op">(</span><span class="st">"12262"</span>, imputed_only <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"recipient_name"</span>, <span class="st">"continent_name"</span>, <span class="st">"source"</span><span class="op">)</span></span>
 <span><span class="op">]</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 19 × 3</span></span></span>
-<span><span class="co">#&gt;    recipient_name           continent_name source              </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Anguilla                 America        regional (subregion)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Aruba                    America        regional (subregion)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> British Virgin Islands   America        regional (subregion)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Cayman Islands           America        regional (subregion)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> East African Community   Africa         regional (subregion)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> French Polynesia         Oceania        regional (region)   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Gibraltar                Europe         regional (continent)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Hong Kong (China)        Asia           regional (region)   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Indus Basin              Asia           regional (region)   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Kosovo                   Europe         regional (continent)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> Macau (China)            Asia           regional (region)   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> Mayotte                  Africa         regional (subregion)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> Mekong Delta             Asia           regional (region)   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> Montserrat               America        regional (subregion)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> New Caledonia            Oceania        regional (region)   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> Saint Helena             Africa         regional (subregion)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> Sint Maarten             America        regional (subregion)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> Turks and Caicos Islands America        regional (subregion)</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> Wallis and Futuna        Oceania        regional (region)</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 44 × 3</span></span></span>
+<span><span class="co">#&gt;    recipient_name                                continent_name source          </span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Africa unspecified                            Africa         regional (conti…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> America unspecified                           America        regional (conti…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Anguilla                                      America        regional (subre…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Aruba                                         America        regional (subre…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Asia unspecified                              Asia           regional (conti…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> British Virgin Islands                        America        regional (subre…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Caribbean unspecified                         America        regional (subre…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Cayman Islands                                America        regional (subre…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Central America and the Caribbean unspecified America        regional (regio…</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Central America unspecified                   America        regional (subre…</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 34 more rows</span></span></span></code></pre></div>
 <p>The same content ships as a plain file, for checking the method
 without running R:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
@@ -600,8 +592,8 @@ recipient-years:</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt;                     variant B weight</span></span>
 <span><span class="co">#&gt; MNH applied            0 0.15 + CH</span></span>
-<span><span class="co">#&gt;   burden recorded      0       402</span></span>
-<span><span class="co">#&gt;   no burden recorded 326         0</span></span></code></pre></div>
+<span><span class="co">#&gt;   burden recorded      0       482</span></span>
+<span><span class="co">#&gt;   no burden recorded 346         0</span></span></code></pre></div>
 <p>Tested against the published reference over 2005-2017, that variant
 is <strong>worse</strong>, not better. <code>ratio</code> is the median
 of computed over reference; the remaining columns are the share of
