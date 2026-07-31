@@ -210,6 +210,23 @@ universe$continent_name <- unname(nm[universe$continent])
 universe$region_name    <- unname(nm[universe$region])
 universe$subregion_name <- unname(nm[universe$subregion])
 
+# ---- where a level does not exist ----------------------------------------
+#
+# The OECD hierarchy is RAGGED. Africa runs three deep — F to F6 (Sub-Saharan)
+# to F3 (Eastern) — while Europe holds its fifteen recipients directly, with
+# no regional layer at all. The frontier rule that builds these columns makes
+# a branch that has already ended stand in for itself, which is right for the
+# imputation cascade but renders as "Turkiye's region is Turkiye": it reads
+# like a mistake rather than "OECD does not subdivide Europe".
+#
+# The CODE columns keep the frontier value, since that is what the cascade
+# groups on. The NAME columns are blanked where the group is just the
+# recipient, so a reader sees an absent level as absent.
+self_region <- universe$region == universe$recipient_code
+self_subreg <- universe$subregion == universe$recipient_code
+universe$region_name[self_region] <- NA_character_
+universe$subregion_name[self_subreg] <- NA_character_
+
 recipient_crosswalk <- tibble::tibble(
   recipient_code    = universe$recipient_code,
   recipient_name    = universe$recipient_name,

@@ -76,6 +76,47 @@ matched where they are used: a rename in any source then fails in the place
 that documents the mapping, not somewhere downstream.
 }
 
+\section{The geography is OECD DAC, not M49}{
+
+\code{continent}, \code{region} and \code{subregion} come from OECD's \code{HCL_DACRECIPIENTS}
+hierarchy, which is the DAC's own recipient taxonomy. It is \strong{not} the UN
+M49 standard and not the World Bank's regions, and it differs from both in
+ways that change which recipients are grouped together:
+
+\itemize{
+\item M49 places Turkiye in Western Asia; DAC places it in Europe.
+\item M49 subdivides Europe into Northern, Southern, Eastern and Western;
+DAC does not subdivide Europe at all.
+\item The World Bank groups Egypt with the Middle East; DAC places it in
+Africa. Kazakhstan and Uzbekistan are Europe & Central Asia to the World
+Bank, Asia to the DAC.
+}
+
+DAC is used because the weights attach to OECD recipient codes and are
+joined to CRS disbursements by OECD recipient. Grouping in any other
+taxonomy would impute across a boundary the disbursement data does not
+recognise.
+
+Note also that the World Bank and GBD data are read \strong{only at country
+level}. Their own regional aggregates are never used: a GBD regional figure
+is a ratio of summed cases, burden-weighted by construction, whereas an
+imputed value here is an unweighted mean of country ratios. The two are
+different quantities and are not mixed.
+}
+
+\section{The hierarchy is ragged}{
+
+Not every continent is subdivided to the same depth. Africa runs three
+levels — Africa, Sub-Saharan Africa, Eastern Africa — while Europe holds its
+fifteen recipients directly with no regional layer.
+
+The \code{region} and \code{subregion} \strong{code} columns therefore carry the recipient
+itself where a level does not exist, which is what the imputation cascade
+groups on. The corresponding \strong{name} columns are \code{NA} in that case, so an
+absent level reads as absent rather than as "Turkiye's region is Turkiye".
+Fifteen recipients have no region level, all of them European.
+}
+
 \section{Exported as a CSV}{
 
 A flat copy, with the imputation source for each purpose code added, ships

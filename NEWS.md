@@ -121,6 +121,16 @@
   crosswalk with the imputation source for each purpose code, for readers
   checking the method without running R. 26 of 182 recipients have a borrowed
   weight for at least one code.
+* Documented that the imputation geography is the **OECD DAC** recipient
+  hierarchy, not UN M49 and not World Bank regions. The three disagree in ways
+  that change which recipients are grouped: M49 puts Turkiye in Western Asia
+  and subdivides Europe, the DAC does neither; the World Bank groups Egypt with
+  the Middle East where the DAC places it in Africa.
+* `region_name` and `subregion_name` are now `NA` where that level does not
+  exist, rather than repeating the recipient. The DAC hierarchy is ragged —
+  Africa nests three deep, Europe not at all — so fifteen European recipients
+  have no region level, and labelling them with their own name read as a bug.
+  The code columns are unchanged, since they are what the cascade groups on.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the RMNCH weights for the three

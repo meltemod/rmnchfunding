@@ -235,3 +235,36 @@ test_that("all three naming systems are recorded", {
   # And it must actually be resolved, not left NA.
   expect_false(is.na(civ$gbd_location_name))
 })
+
+test_that("an absent geographic level reads as absent", {
+  # The OECD hierarchy is ragged: Africa nests three deep, Europe not at all.
+  # The code columns carry the recipient itself where a level is missing,
+  # because that is what the imputation cascade groups on; the name columns
+  # must not, or the CSV says "Turkiye's region is Turkiye" and reads as a bug.
+  cw <- recipient_crosswalk
+  self <- cw$region == cw$recipient_code
+  expect_true(any(self))
+  expect_true(all(is.na(cw$region_name[self])))
+  expect_false(any(is.na(cw$region_name[!self])))
+
+  # Every recipient without a region level is European, which is the only
+  # continent the DAC does not subdivide. If that ever changes, the assumption
+  # behind the cascade's middle step deserves rechecking.
+  expect_true(all(cw$continent[self] == "E"))
+
+  # The continent level always exists.
+  expect_false(anyNA(cw$continent))
+  expect_false(anyNA(cw$continent_name))
+})
+
+test_that("the geography is the DAC taxonomy, not M49 or World Bank", {
+  # Anchors that distinguish the three. Turkiye is European to the DAC and
+  # West Asian to M49; Egypt is African to the DAC and Middle Eastern to the
+  # World Bank. Getting these from a different source would silently regroup
+  # recipients and change which peers an imputed weight averages.
+  cw <- recipient_crosswalk
+  expect_equal(cw$continent_name[cw$recipient_code == "TUR"], "Europe")
+  expect_equal(cw$continent_name[cw$recipient_code == "EGY"], "Africa")
+  expect_equal(cw$continent_name[cw$recipient_code == "KAZ"], "Asia")
+  expect_equal(cw$continent_name[cw$recipient_code == "PNG"], "Oceania")
+})
