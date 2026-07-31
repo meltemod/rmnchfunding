@@ -423,6 +423,126 @@ list it as a child in the codelist, which cost exactly 7,766.8 million —
 cut to country level.</p>
 </div>
 <div class="section level2">
+<h2 id="which-countries-are-imputed-and-from-where">Which countries are imputed, and from where<a class="anchor" aria-label="anchor" href="#which-countries-are-imputed-and-from-where"></a>
+</h2>
+<p>Four RMNCH weights vary by recipient and year rather than being
+global constants (12262 malaria, 12263 tuberculosis, 13040 STD including
+HIV/AIDS, 51010 general budget support). They are computed from IHME
+Global Burden of Disease case counts and World Bank health-expenditure
+and population series.</p>
+<p>Not every OECD recipient appears in those sources. Small territories
+such as Wallis and Futuna, and OECD programmes such as the Mekong Delta,
+have no disease burden or expenditure data of their own. Rather than
+leave them without a weight, the mean of their geographic group is
+substituted, trying the narrowest group first: subregion, then region,
+then continent.</p>
+<p>Every weight records how it was obtained, so a substituted value is
+never mistaken for an observed one:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">rmnch_recipient_weights</span><span class="op">$</span><span class="va">source</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;                  own regional (continent)    regional (region) </span></span>
+<span><span class="co">#&gt;                 2580                   36                  136 </span></span>
+<span><span class="co">#&gt; regional (subregion) </span></span>
+<span><span class="co">#&gt;                  160</span></span></code></pre></div>
+<p>The substitution applies to each component separately, not just the
+total, so <code>rh + mnh + ch</code> still equals <code>weight</code>
+exactly. For a recipient with no data of its own:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">wlf</span> <span class="op">&lt;-</span> <span class="va">rmnch_recipient_weights</span><span class="op">[</span></span>
+<span>  <span class="va">rmnch_recipient_weights</span><span class="op">$</span><span class="va">recipient_code</span> <span class="op">==</span> <span class="st">"WLF"</span> <span class="op">&amp;</span></span>
+<span>    <span class="va">rmnch_recipient_weights</span><span class="op">$</span><span class="va">year</span> <span class="op">==</span> <span class="fl">2023</span>,</span>
+<span><span class="op">]</span></span>
+<span><span class="va">wlf</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"purpose_code"</span>, <span class="st">"rh"</span>, <span class="st">"mnh"</span>, <span class="st">"ch"</span>, <span class="st">"weight"</span>, <span class="st">"source"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;      purpose_code         rh  mnh          ch     weight            source</span></span>
+<span><span class="co">#&gt; 703         12262 0.00000000 0.15 0.000000000 0.15000000 regional (region)</span></span>
+<span><span class="co">#&gt; 1431        12263 0.00000000 0.00 0.040951660 0.04095166 regional (region)</span></span>
+<span><span class="co">#&gt; 2159        13040 0.39611070 0.00 0.005064168 0.40117487 regional (region)</span></span>
+<span><span class="co">#&gt; 2887        51010 0.02957626 0.00 0.015537007 0.04511327 regional (region)</span></span></code></pre></div>
+<p>Note the malaria row: <code>mnh</code> keeps its fixed 0.15 while
+<code>ch</code> is 0, because Polynesia is malaria-free. Averaging all
+three components rather than assuming <code>mnh</code> is zero is what
+keeps the identity intact.</p>
+</div>
+<div class="section level2">
+<h2 id="the-crosswalk-as-a-file">The crosswalk, as a file<a class="anchor" aria-label="anchor" href="#the-crosswalk-as-a-file"></a>
+</h2>
+<p>Three sources name countries three different ways, and none is
+reachable from another by plain string matching:</p>
+<table class="table">
+<thead><tr class="header">
+<th></th>
+<th>Cote d’Ivoire</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>OECD</td>
+<td>
+<code>Côte d’Ivoire</code> (circumflex, curly apostrophe)</td>
+</tr>
+<tr class="even">
+<td>World Bank</td>
+<td>
+<code>Cote d'Ivoire</code> (no circumflex, ASCII apostrophe)</td>
+</tr>
+<tr class="odd">
+<td>GBD</td>
+<td>
+<code>Côte d'Ivoire</code> (circumflex, ASCII apostrophe)</td>
+</tr>
+</tbody>
+</table>
+<p><code><a href="../reference/recipient_map.html">recipient_map()</a></code> returns all three spellings together
+with each recipient’s geographic ancestors and, for each of the four
+varying purpose codes, whether its weight is its own or borrowed:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/recipient_map.html">recipient_map</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">m</span><span class="op">[</span><span class="va">m</span><span class="op">$</span><span class="va">recipient_code</span> <span class="op">==</span> <span class="st">"CIV"</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"recipient_name"</span>, <span class="st">"wb_name"</span>, <span class="st">"gbd_location_name"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
+<span><span class="co">#&gt;   recipient_name wb_name       gbd_location_name</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Côte d’Ivoire  Cote d'Ivoire Côte d'Ivoire</span></span></code></pre></div>
+<p>Ask it directly which recipients borrow a weight, and from which
+level:</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/recipient_map.html">recipient_map</a></span><span class="op">(</span><span class="st">"12262"</span>, imputed_only <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"recipient_name"</span>, <span class="st">"continent_name"</span>, <span class="st">"source"</span><span class="op">)</span></span>
+<span><span class="op">]</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 19 × 3</span></span></span>
+<span><span class="co">#&gt;    recipient_name           continent_name source              </span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Anguilla                 America        regional (subregion)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Aruba                    America        regional (subregion)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> British Virgin Islands   America        regional (subregion)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Cayman Islands           America        regional (subregion)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> East African Community   Africa         regional (subregion)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> French Polynesia         Oceania        regional (region)   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Gibraltar                Europe         regional (continent)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Hong Kong (China)        Asia           regional (region)   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Indus Basin              Asia           regional (region)   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Kosovo                   Europe         regional (continent)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> Macau (China)            Asia           regional (region)   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> Mayotte                  Africa         regional (subregion)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> Mekong Delta             Asia           regional (region)   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> Montserrat               America        regional (subregion)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> New Caledonia            Oceania        regional (region)   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> Saint Helena             Africa         regional (subregion)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> Sint Maarten             America        regional (subregion)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> Turks and Caicos Islands America        regional (subregion)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> Wallis and Futuna        Oceania        regional (region)</span></span></code></pre></div>
+<p>The same content ships as a plain file, for checking the method
+without running R:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"recipient_crosswalk.csv"</span>,</span>
+<span>                     package <span class="op">=</span> <span class="st">"rmnchfunding"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Note <code>region_name</code> is <code>NA</code> for European
+recipients: the DAC hierarchy is ragged, and Europe is the one continent
+it does not subdivide. The geography throughout is OECD DAC, not UN M49
+and not the World Bank’s regions — they disagree about Turkiye, Egypt
+and Central Asia, among others.</p>
+</div>
+<div class="section level2">
 <h2 id="what-this-vignette-is-not">What this vignette is not<a class="anchor" aria-label="anchor" href="#what-this-vignette-is-not"></a>
 </h2>
 <p>Reference documentation. That is generated from the roxygen comments

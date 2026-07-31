@@ -115,11 +115,60 @@
   regional fallback. 170 of 182 recipients match directly; the 12 that
   do not each carry a reason, and the build fails on any recipient that
   is neither matched nor explained.
-- CRS codes 12262, 12263 and 13040 remain `NA`: they need an IHME Global
-  Burden of Disease extract, which cannot be fetched automatically
-  because GHDx has no unauthenticated API. See `data-raw/gbd/README.md`
-  for the exact query. `muskoka(universe = "rmnch")` therefore still
-  refuses to compute.
+- All four `varies*` codes are now built. Malaria (12262),
+  tuberculosis (12263) and STD control including HIV/AIDS (13040) come
+  from an IHME Global Burden of Disease 2023 extract covering 2011-2023,
+  committed under `data-raw/gbd/` because GHDx has no unauthenticated
+  API. 2,912 weights: 4 codes x 182 recipients x 4 years, none
+  unresolved.
+- Validated against the published Muskoka2 reference over the years it
+  covers. General budget support and tuberculosis reproduce it closely
+  (94.2% and 80.5% of observations within 0.02); malaria is moderate;
+  **HIV agrees least well**, and the divergence sits entirely in its RH
+  component. All three plausible readings of that formula were tested on
+  identical rows and none reconciles the two, so the documented formula
+  is retained and the difference is attributed to GBD revising HIV
+  estimates between rounds. HIV weights are the least certain of the
+  four; see
+  [`?rmnch_recipient_weights`](https://meltemod.github.io/rmnchfunding/reference/rmnch_recipient_weights.md).
+- Where a disease is absent from a country entirely, the child share is
+  0 and the weight reduces to the fixed component. GBD reports zero
+  malaria incidence for 118 of 204 locations, so this is the common case
+  rather than an edge one. It is deliberately not a regional substitute:
+  taking a malarious neighbour’s child share would invent burden that is
+  not there.
+- `recipient_crosswalk` gains `gbd_location_name` and readable
+  `continent_name`, `region_name` and `subregion_name`. All three of the
+  method’s naming systems now live in one table: Cote d’Ivoire is
+  spelled differently by OECD, the World Bank and GBD, and no two are
+  reachable from each other by string match, so identity mapping belongs
+  in one documented place rather than at each point of use.
+- Exported `inst/extdata/recipient_crosswalk.csv`, a flat copy of the
+  crosswalk with the imputation source for each purpose code, for
+  readers checking the method without running R. 26 of 182 recipients
+  have a borrowed weight for at least one code.
+- Documented that the imputation geography is the **OECD DAC** recipient
+  hierarchy, not UN M49 and not World Bank regions. The three disagree
+  in ways that change which recipients are grouped: M49 puts Turkiye in
+  Western Asia and subdivides Europe, the DAC does neither; the World
+  Bank groups Egypt with the Middle East where the DAC places it in
+  Africa.
+- `region_name` and `subregion_name` are now `NA` where that level does
+  not exist, rather than repeating the recipient. The DAC hierarchy is
+  ragged — Africa nests three deep, Europe not at all — so fifteen
+  European recipients have no region level, and labelling them with
+  their own name read as a bug. The code columns are unchanged, since
+  they are what the cascade groups on.
+- Added
+  [`recipient_map()`](https://meltemod.github.io/rmnchfunding/reference/recipient_map.md),
+  which returns the crosswalk the package uses: each OECD recipient with
+  its World Bank and GBD identifiers, its place in the DAC geographic
+  hierarchy, and whether each of the four varying weights is its own or
+  borrowed. `recipient_map("12262", imputed_only = TRUE)` answers “which
+  recipients borrow a malaria weight, and from which level”. This joins
+  two things that were otherwise separate: the crosswalk had the
+  identifiers but no provenance, the weights had the provenance but one
+  row per recipient-year.
 - Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the RMNCH weights for the

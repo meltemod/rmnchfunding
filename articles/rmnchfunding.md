@@ -297,6 +297,129 @@ the data but does not list it as a child in the codelist, which cost
 exactly 7,766.8 million — 32% of this donor’s total — the first time an
 income classification was cut to country level.
 
+## Which countries are imputed, and from where
+
+Four RMNCH weights vary by recipient and year rather than being global
+constants (12262 malaria, 12263 tuberculosis, 13040 STD including
+HIV/AIDS, 51010 general budget support). They are computed from IHME
+Global Burden of Disease case counts and World Bank health-expenditure
+and population series.
+
+Not every OECD recipient appears in those sources. Small territories
+such as Wallis and Futuna, and OECD programmes such as the Mekong Delta,
+have no disease burden or expenditure data of their own. Rather than
+leave them without a weight, the mean of their geographic group is
+substituted, trying the narrowest group first: subregion, then region,
+then continent.
+
+Every weight records how it was obtained, so a substituted value is
+never mistaken for an observed one:
+
+``` r
+
+table(rmnch_recipient_weights$source)
+#> 
+#>                  own regional (continent)    regional (region) 
+#>                 2580                   36                  136 
+#> regional (subregion) 
+#>                  160
+```
+
+The substitution applies to each component separately, not just the
+total, so `rh + mnh + ch` still equals `weight` exactly. For a recipient
+with no data of its own:
+
+``` r
+
+wlf <- rmnch_recipient_weights[
+  rmnch_recipient_weights$recipient_code == "WLF" &
+    rmnch_recipient_weights$year == 2023,
+]
+wlf[c("purpose_code", "rh", "mnh", "ch", "weight", "source")]
+#>      purpose_code         rh  mnh          ch     weight            source
+#> 703         12262 0.00000000 0.15 0.000000000 0.15000000 regional (region)
+#> 1431        12263 0.00000000 0.00 0.040951660 0.04095166 regional (region)
+#> 2159        13040 0.39611070 0.00 0.005064168 0.40117487 regional (region)
+#> 2887        51010 0.02957626 0.00 0.015537007 0.04511327 regional (region)
+```
+
+Note the malaria row: `mnh` keeps its fixed 0.15 while `ch` is 0,
+because Polynesia is malaria-free. Averaging all three components rather
+than assuming `mnh` is zero is what keeps the identity intact.
+
+## The crosswalk, as a file
+
+Three sources name countries three different ways, and none is reachable
+from another by plain string matching:
+
+|            | Cote d’Ivoire                                     |
+|------------|---------------------------------------------------|
+| OECD       | `Côte d’Ivoire` (circumflex, curly apostrophe)    |
+| World Bank | `Cote d'Ivoire` (no circumflex, ASCII apostrophe) |
+| GBD        | `Côte d'Ivoire` (circumflex, ASCII apostrophe)    |
+
+[`recipient_map()`](https://meltemod.github.io/rmnchfunding/reference/recipient_map.md)
+returns all three spellings together with each recipient’s geographic
+ancestors and, for each of the four varying purpose codes, whether its
+weight is its own or borrowed:
+
+``` r
+
+m <- recipient_map()
+m[m$recipient_code == "CIV",
+  c("recipient_name", "wb_name", "gbd_location_name")]
+#> # A tibble: 1 × 3
+#>   recipient_name wb_name       gbd_location_name
+#>   <chr>          <chr>         <chr>            
+#> 1 Côte d’Ivoire  Cote d'Ivoire Côte d'Ivoire
+```
+
+Ask it directly which recipients borrow a weight, and from which level:
+
+``` r
+
+recipient_map("12262", imputed_only = TRUE)[
+  c("recipient_name", "continent_name", "source")
+]
+#> # A tibble: 19 × 3
+#>    recipient_name           continent_name source              
+#>    <chr>                    <chr>          <chr>               
+#>  1 Anguilla                 America        regional (subregion)
+#>  2 Aruba                    America        regional (subregion)
+#>  3 British Virgin Islands   America        regional (subregion)
+#>  4 Cayman Islands           America        regional (subregion)
+#>  5 East African Community   Africa         regional (subregion)
+#>  6 French Polynesia         Oceania        regional (region)   
+#>  7 Gibraltar                Europe         regional (continent)
+#>  8 Hong Kong (China)        Asia           regional (region)   
+#>  9 Indus Basin              Asia           regional (region)   
+#> 10 Kosovo                   Europe         regional (continent)
+#> 11 Macau (China)            Asia           regional (region)   
+#> 12 Mayotte                  Africa         regional (subregion)
+#> 13 Mekong Delta             Asia           regional (region)   
+#> 14 Montserrat               America        regional (subregion)
+#> 15 New Caledonia            Oceania        regional (region)   
+#> 16 Saint Helena             Africa         regional (subregion)
+#> 17 Sint Maarten             America        regional (subregion)
+#> 18 Turks and Caicos Islands America        regional (subregion)
+#> 19 Wallis and Futuna        Oceania        regional (region)
+```
+
+The same content ships as a plain file, for checking the method without
+running R:
+
+``` r
+
+read.csv(system.file("extdata", "recipient_crosswalk.csv",
+                     package = "rmnchfunding"))
+```
+
+Note `region_name` is `NA` for European recipients: the DAC hierarchy is
+ragged, and Europe is the one continent it does not subdivide. The
+geography throughout is OECD DAC, not UN M49 and not the World Bank’s
+regions — they disagree about Turkiye, Egypt and Central Asia, among
+others.
+
 ## What this vignette is not
 
 Reference documentation. That is generated from the roxygen comments and

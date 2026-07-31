@@ -123,9 +123,20 @@
 <span><span class="va">agency_weights</span>                <span class="co"># multilateral agency -&gt; share, per year and edition</span></span>
 <span><span class="va">crs_recipients</span>                <span class="co"># which recipient codes are aggregates</span></span>
 <span><span class="va">crs_recipient_tree</span>            <span class="co"># hierarchy edges, for cutting at a level</span></span>
-<span><span class="va">agency_channels</span>               <span class="co"># agency -&gt; OECD channel code</span></span></code></pre></div>
-<p>The planned entry point is a single function covering all three universes:</p>
+<span><span class="va">agency_channels</span>               <span class="co"># agency -&gt; OECD channel code</span></span>
+<span><span class="va">rmnch_recipient_weights</span>       <span class="co"># the four weights that vary by recipient and year</span></span>
+<span><span class="va">recipient_crosswalk</span>           <span class="co"># OECD &lt;-&gt; World Bank &lt;-&gt; GBD names, and geography</span></span></code></pre></div>
+<p>Four RMNCH weights are computed per recipient and year rather than being global constants, from IHME Global Burden of Disease and World Bank data. Recipients absent from those sources take their geographic group’s mean, narrowest first, and every weight records whether it is <code>"own"</code> or borrowed. <code><a href="reference/recipient_map.html">recipient_map()</a></code> shows the whole relation:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/recipient_map.html">recipient_map</a></span><span class="op">(</span><span class="op">)</span>                                  <span class="co"># the full crosswalk</span></span>
+<span><span class="fu"><a href="reference/recipient_map.html">recipient_map</a></span><span class="op">(</span><span class="st">"12262"</span>, imputed_only <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>      <span class="co"># who borrows a malaria weight</span></span></code></pre></div>
+<p>The same content ships as a file for use outside R:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"recipient_crosswalk.csv"</span>,</span>
+<span>                     package <span class="op">=</span> <span class="st">"rmnchfunding"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>The geography is the <strong>OECD DAC</strong> hierarchy — not UN M49, not World Bank regions. They disagree about Türkiye, Egypt and Central Asia, which changes which recipients are grouped for imputation.</p>
+<p>The planned entry point is a single function covering all three universes:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">muskoka</span><span class="op">(</span>universe <span class="op">=</span> <span class="st">"rmnch"</span><span class="op">)</span>           <span class="co"># or "srhr", or "fp"</span></span>
 <span><span class="fu">muskoka</span><span class="op">(</span>universe <span class="op">=</span> <span class="st">"fp"</span>, ida <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>     <span class="co"># revised Muskoka 1% for IDA</span></span></code></pre></div>
 <p>Both tables are transcribed from the Donors Delivering for SRHR Report, <a href="https://donorsdelivering.report/wp-content/uploads/2026/06/DD_Report2026_Update.pdf" class="external-link">2026 edition</a> pages 110–111 and <a href="https://donorsdelivering.report/wp-content/uploads/2025/06/DDSRHR2025.pdf" class="external-link">2025 edition</a> pages 104–105. The sector table is identical in both; the multilateral weights were revised, so <code>agency_weights</code> carries them per edition. The three universes overlap by construction, so their totals must never be added together.</p>
@@ -134,9 +145,9 @@
 <div class="section level2">
 <h2 id="id_3-development">3. Development<a class="anchor" aria-label="anchor" href="#id_3-development"></a>
 </h2>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">Rscript</span> dev/00-setup.R        <span class="co"># installs dev tooling, documents</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">Rscript</span> dev/00-setup.R        <span class="co"># installs dev tooling, documents</span></span></code></pre></div>
 <p>Then, from an R session at the package root:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">load_all</span><span class="op">(</span><span class="op">)</span>          <span class="co"># attach the package as it stands, no install</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">document</span><span class="op">(</span><span class="op">)</span>          <span class="co"># regenerate man/ and NAMESPACE from roxygen</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">test</span><span class="op">(</span><span class="op">)</span>              <span class="co"># run tests/testthat/</span></span>

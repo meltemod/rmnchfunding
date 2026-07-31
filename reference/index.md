@@ -11,6 +11,15 @@ series with each release.
 - [`oecd_multi()`](https://meltemod.github.io/rmnchfunding/reference/oecd_multi.md)
   : Fetch a provider's core contributions to multilateral agencies
 
+## Inspecting the method
+
+How OECD recipients map to the World Bank and IHME source data, and
+which of them take a borrowed weight rather than one of their own.
+
+- [`recipient_map()`](https://meltemod.github.io/rmnchfunding/reference/recipient_map.md)
+  : How OECD recipients map to the source data, and where borrowed
+  weights come from
+
 ## Classifying recipients
 
 OECD classifies recipients geographically, by DAC List income tier and

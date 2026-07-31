@@ -79,7 +79,35 @@ agency_weights                # multilateral agency -> share, per year and editi
 crs_recipients                # which recipient codes are aggregates
 crs_recipient_tree            # hierarchy edges, for cutting at a level
 agency_channels               # agency -> OECD channel code
+rmnch_recipient_weights       # the four weights that vary by recipient and year
+recipient_crosswalk           # OECD <-> World Bank <-> GBD names, and geography
 ```
+
+Four RMNCH weights are computed per recipient and year rather than being
+global constants, from IHME Global Burden of Disease and World Bank
+data. Recipients absent from those sources take their geographic group’s
+mean, narrowest first, and every weight records whether it is `"own"` or
+borrowed.
+[`recipient_map()`](https://meltemod.github.io/rmnchfunding/reference/recipient_map.md)
+shows the whole relation:
+
+``` r
+
+recipient_map()                                  # the full crosswalk
+recipient_map("12262", imputed_only = TRUE)      # who borrows a malaria weight
+```
+
+The same content ships as a file for use outside R:
+
+``` r
+
+read.csv(system.file("extdata", "recipient_crosswalk.csv",
+                     package = "rmnchfunding"))
+```
+
+The geography is the **OECD DAC** hierarchy — not UN M49, not World Bank
+regions. They disagree about Türkiye, Egypt and Central Asia, which
+changes which recipients are grouped for imputation.
 
 The planned entry point is a single function covering all three
 universes:

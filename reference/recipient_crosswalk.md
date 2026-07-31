@@ -15,7 +15,7 @@ recipient_crosswalk
 
 ## Format
 
-A data frame with 182 rows and 8 columns:
+A data frame with 182 rows and 12 columns:
 
 - recipient_code:
 
@@ -33,11 +33,20 @@ A data frame with 182 rows and 8 columns:
 
   World Bank economy name, for checking the match by eye.
 
+- gbd_location_name:
+
+  IHME GBD location name. GBD keys by name rather than code, so the
+  spelling is resolved here rather than at use time.
+
 - continent, region, subregion:
 
-  Geographic ancestors, from the same frontier logic
+  Geographic ancestor codes, from the same frontier logic
   [`crs_classify()`](https://meltemod.github.io/rmnchfunding/reference/crs_classify.md)
   uses.
+
+- continent_name, region_name, subregion_name:
+
+  The same, as names — `F6` and `S4_S7` are not legible on their own.
 
 - no_data_reason:
 
@@ -76,6 +85,79 @@ unallocated buckets — which are not places and have no population to
 compute a weight from — and the multilateral organisations that also
 live in OECD's `CL_AREA_ORG` codelist, which covers areas *and*
 organisations.
+
+## Three naming systems
+
+Each source names countries differently, and none of the three is
+reachable from another by plain string matching. Cote d'Ivoire is the
+sharpest case, where the three spellings differ in both the accent and
+the apostrophe:
+
+- OECD:
+
+  "Cote" with a circumflex, and a curly (typographic) apostrophe
+
+- World Bank:
+
+  "Cote" with no circumflex, and an ASCII apostrophe
+
+- GBD:
+
+  "Cote" with a circumflex, and an ASCII apostrophe
+
+This is why all three spellings are columns of one table rather than
+being matched where they are used: a rename in any source then fails in
+the place that documents the mapping, not somewhere downstream.
+
+## The geography is OECD DAC, not M49
+
+`continent`, `region` and `subregion` come from OECD's
+`HCL_DACRECIPIENTS` hierarchy, which is the DAC's own recipient
+taxonomy. It is **not** the UN M49 standard and not the World Bank's
+regions, and it differs from both in ways that change which recipients
+are grouped together:
+
+- M49 places Turkiye in Western Asia; DAC places it in Europe.
+
+- M49 subdivides Europe into Northern, Southern, Eastern and Western;
+  DAC does not subdivide Europe at all.
+
+- The World Bank groups Egypt with the Middle East; DAC places it in
+  Africa. Kazakhstan and Uzbekistan are Europe & Central Asia to the
+  World Bank, Asia to the DAC.
+
+DAC is used because the weights attach to OECD recipient codes and are
+joined to CRS disbursements by OECD recipient. Grouping in any other
+taxonomy would impute across a boundary the disbursement data does not
+recognise.
+
+Note also that the World Bank and GBD data are read **only at country
+level**. Their own regional aggregates are never used: a GBD regional
+figure is a ratio of summed cases, burden-weighted by construction,
+whereas an imputed value here is an unweighted mean of country ratios.
+The two are different quantities and are not mixed.
+
+## The hierarchy is ragged
+
+Not every continent is subdivided to the same depth. Africa runs three
+levels — Africa, Sub-Saharan Africa, Eastern Africa — while Europe holds
+its fifteen recipients directly with no regional layer.
+
+The `region` and `subregion` **code** columns therefore carry the
+recipient itself where a level does not exist, which is what the
+imputation cascade groups on. The corresponding **name** columns are
+`NA` in that case, so an absent level reads as absent rather than as
+"Turkiye's region is Turkiye". Fifteen recipients have no region level,
+all of them European.
+
+## Exported as a CSV
+
+A flat copy, with the imputation source for each purpose code added,
+ships at `inst/extdata/recipient_crosswalk.csv` for readers checking the
+method without running R:
+
+    read.csv(system.file("extdata", "recipient_crosswalk.csv",
+                         package = "rmnchfunding"))
 
 ## See also
 

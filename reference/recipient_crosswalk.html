@@ -54,7 +54,7 @@ substitute a regional weight where a recipient has none.</p>
 
     <div class="section level2">
     <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
-    <p>A data frame with 182 rows and 8 columns:</p><dl><dt>recipient_code</dt>
+    <p>A data frame with 182 rows and 12 columns:</p><dl><dt>recipient_code</dt>
 <dd><p>OECD recipient code.</p></dd>
 
 <dt>recipient_name</dt>
@@ -66,9 +66,17 @@ substitute a regional weight where a recipient has none.</p>
 <dt>wb_name</dt>
 <dd><p>World Bank economy name, for checking the match by eye.</p></dd>
 
+<dt>gbd_location_name</dt>
+<dd><p>IHME GBD location name. GBD keys by name rather
+than code, so the spelling is resolved here rather than at use time.</p></dd>
+
 <dt>continent, region, subregion</dt>
-<dd><p>Geographic ancestors, from the same
-frontier logic <code><a href="crs_classify.html">crs_classify()</a></code> uses.</p></dd>
+<dd><p>Geographic ancestor codes, from the
+same frontier logic <code><a href="crs_classify.html">crs_classify()</a></code> uses.</p></dd>
+
+<dt>continent_name, region_name, subregion_name</dt>
+<dd><p>The same, as names —
+<code>F6</code> and <code>S4_S7</code> are not legible on their own.</p></dd>
 
 <dt>no_data_reason</dt>
 <dd><p>Why a recipient has no World Bank match, or <code>NA</code>.</p></dd>
@@ -104,6 +112,75 @@ accident.</p>
 unallocated buckets — which are not places and have no population to compute
 a weight from — and the multilateral organisations that also live in OECD's
 <code>CL_AREA_ORG</code> codelist, which covers areas <em>and</em> organisations.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="three-naming-systems">Three naming systems<a class="anchor" aria-label="anchor" href="#three-naming-systems"></a></h2>
+
+
+<p>Each source names countries differently, and none of the three is reachable
+from another by plain string matching. Cote d'Ivoire is the sharpest case,
+where the three spellings differ in both the accent and the apostrophe:</p>
+<dl><dt>OECD</dt>
+<dd><p>"Cote" with a circumflex, and a curly (typographic)
+apostrophe</p></dd>
+
+<dt>World Bank</dt>
+<dd><p>"Cote" with no circumflex, and an ASCII apostrophe</p></dd>
+
+<dt>GBD</dt>
+<dd><p>"Cote" with a circumflex, and an ASCII apostrophe</p></dd>
+
+
+</dl><p>This is why all three spellings are columns of one table rather than being
+matched where they are used: a rename in any source then fails in the place
+that documents the mapping, not somewhere downstream.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-geography-is-oecd-dac-not-m-">The geography is OECD DAC, not M49<a class="anchor" aria-label="anchor" href="#the-geography-is-oecd-dac-not-m-"></a></h2>
+
+
+<p><code>continent</code>, <code>region</code> and <code>subregion</code> come from OECD's <code>HCL_DACRECIPIENTS</code>
+hierarchy, which is the DAC's own recipient taxonomy. It is <strong>not</strong> the UN
+M49 standard and not the World Bank's regions, and it differs from both in
+ways that change which recipients are grouped together:</p>
+<ul><li><p>M49 places Turkiye in Western Asia; DAC places it in Europe.</p></li>
+<li><p>M49 subdivides Europe into Northern, Southern, Eastern and Western;
+DAC does not subdivide Europe at all.</p></li>
+<li><p>The World Bank groups Egypt with the Middle East; DAC places it in
+Africa. Kazakhstan and Uzbekistan are Europe &amp; Central Asia to the World
+Bank, Asia to the DAC.</p></li>
+</ul><p>DAC is used because the weights attach to OECD recipient codes and are
+joined to CRS disbursements by OECD recipient. Grouping in any other
+taxonomy would impute across a boundary the disbursement data does not
+recognise.</p>
+<p>Note also that the World Bank and GBD data are read <strong>only at country
+level</strong>. Their own regional aggregates are never used: a GBD regional figure
+is a ratio of summed cases, burden-weighted by construction, whereas an
+imputed value here is an unweighted mean of country ratios. The two are
+different quantities and are not mixed.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="the-hierarchy-is-ragged">The hierarchy is ragged<a class="anchor" aria-label="anchor" href="#the-hierarchy-is-ragged"></a></h2>
+
+
+<p>Not every continent is subdivided to the same depth. Africa runs three
+levels — Africa, Sub-Saharan Africa, Eastern Africa — while Europe holds its
+fifteen recipients directly with no regional layer.</p>
+<p>The <code>region</code> and <code>subregion</code> <strong>code</strong> columns therefore carry the recipient
+itself where a level does not exist, which is what the imputation cascade
+groups on. The corresponding <strong>name</strong> columns are <code>NA</code> in that case, so an
+absent level reads as absent rather than as "Turkiye's region is Turkiye".
+Fifteen recipients have no region level, all of them European.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="exported-as-a-csv">Exported as a CSV<a class="anchor" aria-label="anchor" href="#exported-as-a-csv"></a></h2>
+
+
+<p>A flat copy, with the imputation source for each purpose code added, ships
+at <code>inst/extdata/recipient_crosswalk.csv</code> for readers checking the method
+without running R:</p>
+<p></p><div class="sourceCode r"><pre><code><span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"recipient_crosswalk.csv"</span>,</span>
+<span>                     package <span class="op">=</span> <span class="st">"rmnchfunding"</span><span class="op">)</span><span class="op">)</span></span></code></pre><p></p></div>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
