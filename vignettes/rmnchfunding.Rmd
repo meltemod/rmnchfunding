@@ -118,8 +118,15 @@ universes are complete. See `?sector_weights`.
 
 ## Where the coefficients come from
 
-Both tables are transcribed from the Donors Delivering for SRHR Report 2026,
-pages 110–111. RMNCH follows the Muskoka 2 methodology developed by the London
+The four varying weights follow the Muskoka2 method (Dingle et al., *Lancet
+Global Health* 2020). Its full workbook is not shipped with this package — it
+is 187 MB and CC BY-NC 3.0 — but anyone wanting to inspect the method at source
+can download it from <https://doi.org/10.17037/DATA.00001526> (v1.4, accessed
+2026-07-30). It is a binary `.xlsb`; `readxl` will not open it, Python's
+`pyxlsb` will.
+
+Both fixed-coefficient tables are transcribed from the Donors Delivering for
+SRHR Report 2026, pages 110–111. RMNCH follows the Muskoka 2 methodology developed by the London
 School of Hygiene and Tropical Medicine, family planning follows the revised
 Muskoka methodology agreed at the 2012 London Summit, and SRHR follows the
 Donors Delivering methodology.

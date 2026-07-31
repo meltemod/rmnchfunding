@@ -510,7 +510,13 @@
 #'
 #'   Values decoded from the accompanying data collection,
 #'   `Muskoka2-290120v2.xlsb` (v1.4, 24 March 2020),
-#'   \doi{10.17037/DATA.00001526}, CC BY-NC 3.0.
+#'   \doi{10.17037/DATA.00001526}, CC BY-NC 3.0. Accessed 2026-07-30.
+#'
+#'   That workbook is **not redistributed with this package**: it is 187 MB and
+#'   CC BY-NC 3.0 rather than MIT. Anyone wanting to inspect the method at
+#'   source can download it from the DOI above. It is a binary `.xlsb`, which
+#'   `readxl` and `openxlsx` do not read; Python's `pyxlsb` does. Nothing in the
+#'   build depends on it.
 #'
 #'   General budget support inputs: World Bank API v2, indicators
 #'   `SH.XPD.GHED.GE.ZS` (originating from the WHO Global Health Expenditure

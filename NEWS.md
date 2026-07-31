@@ -180,6 +180,12 @@
   evidenced rather than reasoned: Muskoka2 substitutes a GBD regional
   aggregate, which is a ratio of summed cases and so burden-weighted by
   construction.
+* Recorded that the Muskoka2 workbook was accessed 2026-07-30, and that it is
+  not redistributed with the package: at 187 MB it exceeds GitHub's per-file
+  limit and it is CC BY-NC 3.0 rather than MIT. `?rmnch_recipient_weights`, the
+  vignette and `data-raw/reference/README.md` all point at the DOI for anyone
+  wanting to inspect the method at source, and note that the binary `.xlsb`
+  needs Python's `pyxlsb` rather than `readxl`.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the RMNCH weights for the three

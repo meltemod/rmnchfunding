@@ -9,7 +9,7 @@ can be reproduced and re-examined.
 
 The published country-by-year percentages for the four varying purpose codes,
 plus their RH/MNH/CH components, the fixed percentages for every other code,
-and a method note. Extracted from the workbook below.
+and a method note. Extracted from the workbook below, accessed 2026-07-30.
 
 ## `Muskoka2-290120v2.xlsb` (NOT committed)
 
@@ -24,6 +24,8 @@ Download from the LSHTM Data Compass record:
 > and child health: data and analysis from application of the Muskoka2 method,
 > 2002-2017.* [Data Collection]. London School of Hygiene & Tropical Medicine.
 > <https://doi.org/10.17037/DATA.00001526>
+>
+> Version 1.4, released 24 March 2020. **Accessed 2026-07-30.**
 
 It is a binary `.xlsb`, which neither `readxl` nor `openxlsx` reads. Python's
 `pyxlsb` does.

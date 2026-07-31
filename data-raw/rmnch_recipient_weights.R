@@ -28,7 +28,8 @@
 # Muskoka2 method, 2002-17." Lancet Global Health 2020; 8(3): e374-e386,
 # doi:10.1016/S2214-109X(20)30005-X, with supplementary appendix sections I.2
 # and I.3. Values decoded from the accompanying data collection, Muskoka2-
-# 290120v2.xlsb (v1.4, 24 March 2020), doi:10.17037/DATA.00001526, CC BY-NC 3.0.
+# 290120v2.xlsb (v1.4, 24 March 2020), doi:10.17037/DATA.00001526, CC BY-NC 3.0,
+# accessed 2026-07-30. Not redistributed here; see data-raw/reference/README.md.
 #
 # NOTE ON AN EARLIER MISREADING: this package previously documented these
 # weights as varying per DONOR, recoverable by solving published donor totals.
