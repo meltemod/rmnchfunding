@@ -138,6 +138,18 @@
   recipients borrow a malaria weight, and from which level". This joins two
   things that were otherwise separate: the crosswalk had the identifiers but no
   provenance, the weights had the provenance but one row per recipient-year.
+* Regional substitution is now **burden-weighted** rather than an unweighted
+  mean: weighted by all-age case counts for the disease codes and by
+  population for general budget support. A ratio of summed cases across a
+  group is identically a mean of member ratios weighted by their denominators,
+  so a substituted weight now equals what an aggregate of the source data over
+  that group would report — which is what the published method's regional rows
+  appear to contain. It matters: for tuberculosis in the Caribbean the
+  weighted and unweighted figures differ by 38%.
+* Where a whole group has zero burden the weights are all zero and a weighted
+  mean is undefined, but the answer is not — no cases anywhere means a zero
+  child share. Europe is entirely malaria-free, so Gibraltar and Kosovo take
+  the MNH constant alone.
 * Removed the `rescale01()` placeholder that shipped with the template.
 
 `muskoka()` itself is not written yet, and the RMNCH weights for the three

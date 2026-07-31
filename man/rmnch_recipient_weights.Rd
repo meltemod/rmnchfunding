@@ -87,15 +87,39 @@ beyond which the weight is \code{NA} rather than a guess.
 
 \code{source} is \code{"own"} where the recipient has its own data, or
 \code{"regional (subregion)"}, \code{"regional (region)"} or \code{"regional (continent)"}
-where it does not and the mean of its geographic group was substituted. The
-narrowest available group is used. Substitution affects recipients the World
-Bank has no record for — small territories such as Niue and Tokelau, and
-OECD programmes such as the Mekong Delta — listed with reasons in
+where it does not and its geographic group's figure was substituted. The
+narrowest available group is used. Substitution affects recipients the
+sources have no record for — small territories such as Niue and Tokelau,
+and OECD programmes such as the Mekong Delta — listed with reasons in
 \link{recipient_crosswalk}.
+}
 
-The mean is unweighted deliberately: the recipients needing a fallback are
-small, and a population-weighted mean would let a group's largest member
-stand in for a territory of a few thousand people.
+\section{How a substituted weight is computed}{
+
+The group figure is a \strong{burden-weighted} mean of its members, weighted by
+the denominator each member's ratio was taken over: all-age case counts for
+the three disease codes, total population for general budget support.
+
+That is not an arbitrary choice. A ratio of summed cases across a group is
+identically a mean of member ratios weighted by their denominators:
+
+\deqn{rac{\sum u5_i}{\sum all_i} = rac{\sum (all_i 	imes CH_i)}{\sum all_i}}
+
+so weighting this way makes a substituted value equal what an aggregate of
+the source data over that group would report — which is what the published
+method's regional rows appear to contain. An unweighted mean would let a
+country with almost no malaria pull a regional child share as hard as one
+carrying tens of millions of cases. For tuberculosis in the Caribbean the
+two differ by 38\%.
+
+Weighting is applied to each component separately, so \code{rh + mnh + ch} still
+equals \code{weight} exactly.
+
+Where every member of a group has zero burden the weights are all zero and a
+weighted mean is undefined, but the answer is not: no cases anywhere means a
+zero child share, and a fixed component keeps its constant. Europe is
+entirely malaria-free, which is how Gibraltar and Kosovo get a malaria
+weight of exactly 0.15, the MNH constant alone.
 }
 
 \section{Validation against the published method}{

@@ -95,14 +95,22 @@ wide <- stats::reshape(
 )
 names(wide) <- sub("^value[.]", "", names(wide))
 
-# Percentages to proportions, once, here.
-for (nm in names(WB_INDICATORS)) wide[[nm]] <- wide[[nm]] / 100
+# Percentages to proportions, once, here. Count indicators are excluded:
+# dividing a population by 100 would silently reweight every regional average.
+for (nm in setdiff(names(WB_INDICATORS), WB_COUNT_INDICATORS)) {
+  wide[[nm]] <- wide[[nm]] / 100
+}
 
 wide$wra <- rowSums(wide[WB_WRA_BANDS], na.rm = FALSE)
 
 gbs <- data.frame(
   iso3 = wide$iso3,
   year = wide$year,
+  # The denominator this weight is an average OVER, used only when a recipient
+  # with no data borrows its region's figure. For general budget support the
+  # components are population shares scaled by a spending ratio, so the
+  # quantity being averaged is per-person and population is the right weight.
+  denom = wide$pop_total,
   rh  = wide$gov_health_share * wide$female_share * wide$wra,
   mnh = 0,
   ch  = wide$gov_health_share *
@@ -297,7 +305,16 @@ if (is.null(gbd)) {
                   hiv_den)
   tb_ch  <- ratio(key("Tuberculosis", "Prevalence", "Both", "<5 years"), tb_den)
 
-  as_rows <- function(code, rh, mnh, ch) {
+  # The denominator each ratio was taken over. Carried through because the
+  # regional fallback is a weighted mean, and a ratio of summed cases IS a
+  # mean of country ratios weighted by their denominators:
+  #
+  #   sum(u5) / sum(all) == sum(all * CH) / sum(all)
+  #
+  # So weighting by all-age cases reproduces exactly what a regional aggregate
+  # of the source data would give, while an unweighted mean would let a country
+  # with almost no burden count as much as one carrying most of it.
+  as_rows <- function(code, rh, mnh, ch, den) {
     ids <- names(ch)
     loc <- sub(" [0-9]{4}$", "", ids)
     yr <- as.integer(sub("^.* ", "", ids))
@@ -308,13 +325,14 @@ if (is.null(gbd)) {
       rh = if (length(rh) == 1L) rep(rh, length(ids)) else unname(rh[ids]),
       mnh = mnh,
       ch = unname(ch),
+      denom = unname(den[ids]),
       stringsAsFactors = FALSE
     )
   }
   disease_weights <- rbind(
-    as_rows("12262", 0, MALARIA_MNH, mal_ch),
-    as_rows("13040", hiv_rh, 0, hiv_ch),
-    as_rows("12263", 0, 0, tb_ch)
+    as_rows("12262", 0, MALARIA_MNH, mal_ch, mal_den),
+    as_rows("13040", hiv_rh, 0, hiv_ch, hiv_den),
+    as_rows("12263", 0, 0, tb_ch, tb_den)
   )
   disease_weights$weight <-
     disease_weights$rh + disease_weights$mnh + disease_weights$ch
@@ -426,9 +444,33 @@ fill_from_group <- function(rows, group_col, label) {
   # zero here would leave a substituted malaria row whose components no longer
   # sum to its total. Averaging is linear, so the summed means equal the mean
   # total exactly and the identity rh + mnh + ch == weight survives.
-  grp_rh <- tapply(donors$rh, key, mean, na.rm = TRUE)
-  grp_mnh <- tapply(donors$mnh, key, mean, na.rm = TRUE)
-  grp_ch <- tapply(donors$ch, key, mean, na.rm = TRUE)
+  #
+  # BURDEN-WEIGHTED, by the denominator each ratio was taken over. This makes
+  # the substituted value equal the ratio of summed cases across the group,
+  # which is the quantity a regional aggregate of the source data reports and
+  # what the published method's regional rows appear to contain. An unweighted
+  # mean would let a country with almost no malaria pull the regional child
+  # share as hard as one carrying tens of millions of cases.
+  wmean <- function(x, w) {
+    ok <- is.finite(x) & is.finite(w) & w > 0
+    if (any(ok)) return(sum(x[ok] * w[ok]) / sum(w[ok]))
+    # Every weight in the group is zero, which for a disease code means the
+    # disease is absent from the whole group. Weighting by zero burden is
+    # undefined, but the answer is not: no cases anywhere means a zero child
+    # share, and a fixed component keeps its constant. Europe is entirely
+    # malaria-free, so this is how Gibraltar and Kosovo get a malaria weight
+    # at all. Falls back to the unweighted mean, which for a zero-burden group
+    # is 0 for the derived components and the constant for MNH.
+    flat <- is.finite(x)
+    if (any(flat)) return(mean(x[flat]))
+    NA_real_
+  }
+  grp_rh <- tapply(seq_len(nrow(donors)), key,
+                   function(i) wmean(donors$rh[i], donors$denom[i]))
+  grp_mnh <- tapply(seq_len(nrow(donors)), key,
+                    function(i) wmean(donors$mnh[i], donors$denom[i]))
+  grp_ch <- tapply(seq_len(nrow(donors)), key,
+                   function(i) wmean(donors$ch[i], donors$denom[i]))
   want <- paste(rows[[group_col]], rows$year)
   hit <- need & want %in% names(grp_rh)
   rows$rh[hit] <- as.numeric(grp_rh[want[hit]])
@@ -458,6 +500,11 @@ full <- do.call(rbind, lapply(codes_present, function(pc) {
   skeleton <- grid[gap, ]
   if (nrow(skeleton) == 0L) return(have)
   skeleton$rh <- NA_real_; skeleton$mnh <- NA_real_; skeleton$ch <- NA_real_
+  # `denom` must be present, not merely absent-and-ignored: the skeleton is
+  # rbind-ed to the rows that have data, and a missing column here silently
+  # drops the denominators from the whole frame, leaving the weighted fallback
+  # with nothing to weight by and every substituted weight NA.
+  skeleton$denom <- NA_real_
   skeleton$weight <- NA_real_; skeleton$source_year <- NA_integer_
   skeleton$source <- NA_character_
   out <- rbind(have[names(skeleton)], skeleton)

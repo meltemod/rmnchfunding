@@ -124,8 +124,12 @@ test_that("all four purpose codes are present", {
 test_that("the fixed components of each disease formula are respected", {
   w <- rmnch_recipient_weights
   # Malaria carries a fixed MNH of 0.15 from the Countdown method, and no RH.
+  # Compared with a tolerance rather than exactly: an imputed row takes the
+  # burden-weighted mean of its group, and sum(x * w) / sum(w) over identical
+  # values is only equal to that value to floating-point precision. The
+  # observed deviation is around 3e-17.
   mal <- w[w$purpose_code == "12262", ]
-  expect_true(all(mal$mnh == 0.15, na.rm = TRUE))
+  expect_true(all(abs(mal$mnh - 0.15) < 1e-12, na.rm = TRUE))
   expect_true(all(mal$rh == 0, na.rm = TRUE))
   # Tuberculosis is child health only.
   tb <- w[w$purpose_code == "12263", ]
@@ -148,7 +152,7 @@ test_that("a malaria-free country gets the fixed MNH and nothing more", {
       rmnch_recipient_weights$recipient_code == "ALB", ]
   expect_gt(nrow(alb), 0L)
   expect_true(all(alb$ch == 0))
-  expect_true(all(alb$weight == 0.15))
+  expect_true(all(abs(alb$weight - 0.15) < 1e-12))
   expect_true(all(alb$source == "own"))
 })
 
@@ -163,6 +167,40 @@ test_that("a high-burden country has a substantial child share", {
   expect_true(all(nga$weight > 0.35))
 })
 
+test_that("a substituted weight lies within its peer group's range", {
+  # A burden-weighted mean is still a mean, so it cannot fall outside the
+  # values it averages. This catches a weighting bug that a component-sum
+  # check would not: mis-paired weights can still sum correctly while
+  # producing a value no member supports.
+  w <- rmnch_recipient_weights
+  cw <- recipient_crosswalk
+  bad <- 0L
+  for (i in which(w$source != "own")) {
+    lvl <- gsub("regional |[()]", "", w$source[i])
+    grp <- cw[[lvl]][match(w$recipient_code[i], cw$recipient_code)]
+    peers <- cw$recipient_code[cw[[lvl]] == grp]
+    own <- w[w$recipient_code %in% peers & w$purpose_code == w$purpose_code[i] &
+               w$year == w$year[i] & w$source == "own", ]
+    if (nrow(own) == 0L) next
+    if (w$weight[i] < min(own$weight) - 1e-9 ||
+          w$weight[i] > max(own$weight) + 1e-9) bad <- bad + 1L
+  }
+  expect_equal(bad, 0L)
+})
+
+test_that("a malaria-free group still yields the fixed constant", {
+  # Every European denominator is zero, so a burden-weighted mean is
+  # undefined. It must not become NA: no cases anywhere means a zero child
+  # share, leaving the MNH constant alone.
+  w <- rmnch_recipient_weights
+  eu <- w[w$purpose_code == "12262" &
+            w$recipient_code %in% c("GIB", "XKV"), ]
+  expect_gt(nrow(eu), 0L)
+  expect_true(all(eu$ch == 0))
+  expect_true(all(abs(eu$weight - 0.15) < 1e-12))
+  expect_false(anyNA(eu$weight))
+})
+
 test_that("regional substitutes keep components summing to their total", {
   # The bug this guards: the fallback originally hardcoded MNH to zero, which
   # is right for general budget support and tuberculosis but wrong for
@@ -175,7 +213,7 @@ test_that("regional substitutes keep components summing to their total", {
   expect_true(all(abs((sub$rh + sub$mnh + sub$ch) - sub$weight) < 1e-9))
   # And a substituted malaria row must still carry the constant.
   submal <- sub[sub$purpose_code == "12262", ]
-  if (nrow(submal) > 0L) expect_true(all(abs(submal$mnh - 0.15) < 1e-9))
+  if (nrow(submal) > 0L) expect_true(all(abs(submal$mnh - 0.15) < 1e-12))
 })
 
 # ---- the exported crosswalk CSV -------------------------------------------

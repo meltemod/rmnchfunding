@@ -26,8 +26,18 @@ WB_INDICATORS <- c(
   wra_3034         = "SP.POP.3034.FE.5Y",  # the 15-49 share.
   wra_3539         = "SP.POP.3539.FE.5Y",
   wra_4044         = "SP.POP.4044.FE.5Y",
-  wra_4549         = "SP.POP.4549.FE.5Y"
+  wra_4549         = "SP.POP.4549.FE.5Y",
+  pop_total        = "SP.POP.TOTL"           # total population, a COUNT not a
+                                             # percentage. Used only to weight
+                                             # the regional fallback, never in
+                                             # the weight formula itself.
 )
+
+# Indicators that are counts rather than percentages, and so must NOT be
+# divided by 100 when the rest are converted to proportions. Getting this
+# wrong would scale a population of 50 million to 500,000 and silently
+# reweight every regional average.
+WB_COUNT_INDICATORS <- "pop_total"
 
 WB_WRA_BANDS <- c("wra_1519", "wra_2024", "wra_2529", "wra_3034",
                   "wra_3539", "wra_4044", "wra_4549")

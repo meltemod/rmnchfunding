@@ -267,8 +267,17 @@ Disease case counts and World Bank health-expenditure and population series.
 Not every OECD recipient appears in those sources. Small territories such as
 Wallis and Futuna, and OECD programmes such as the Mekong Delta, have no
 disease burden or expenditure data of their own. Rather than leave them
-without a weight, the mean of their geographic group is substituted, trying
-the narrowest group first: subregion, then region, then continent.
+without a weight, their geographic group's figure is substituted, trying the
+narrowest group first: subregion, then region, then continent.
+
+That figure is a **burden-weighted** mean of the group's members — weighted by
+all-age case counts for the disease codes, and by population for general
+budget support. This is not a stylistic choice: a ratio of summed cases across
+a group is identically a mean of member ratios weighted by their denominators,
+so weighting this way makes a substituted value equal what an aggregate of the
+source data over that group would report. An unweighted mean would let a
+country with almost no tuberculosis count as heavily as one carrying most of
+the region's cases; for the Caribbean the two differ by 38%.
 
 Every weight records how it was obtained, so a substituted value is never
 mistaken for an observed one:
