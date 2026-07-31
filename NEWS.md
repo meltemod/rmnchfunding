@@ -98,14 +98,25 @@
   Disease 2023 extract covering 2011-2023, committed under `data-raw/gbd/`
   because GHDx has no unauthenticated API. 2,912 weights: 4 codes x 182
   recipients x 4 years, none unresolved.
-* Validated against the published Muskoka2 reference over the years it covers.
-  General budget support and tuberculosis reproduce it closely (94.2% and 80.5%
-  of observations within 0.02); malaria is moderate; **HIV agrees least well**,
-  and the divergence sits entirely in its RH component. All three plausible
-  readings of that formula were tested on identical rows and none reconciles
-  the two, so the documented formula is retained and the difference is
-  attributed to GBD revising HIV estimates between rounds. HIV weights are the
-  least certain of the four; see `?rmnch_recipient_weights`.
+* Validated against the published Muskoka2 reference over 2005-2017, the
+  overlap between the GBD extract and the reference, recipient by recipient.
+  `ratio` is the median of ours over the reference:
+
+  | code | n | ratio | <0.01 | <0.05 | <0.10 |
+  |---|---:|---:|---:|---:|---:|
+  | 51010 general budget support | 1789 | 1.002 | 83.1% | 99.7% | 99.9% |
+  | 12263 tuberculosis | 1872 | 0.985 | 68.2% | 96.0% | 100.0% |
+  | 12262 malaria, all | 1872 | 0.964 | 35.4% | 68.2% | 83.2% |
+  | 12262 malaria, burden present | 1159 | 1.000 | 56.3% | 90.7% | 95.5% |
+  | 13040 STD incl. HIV/AIDS | 1872 | 1.031 | 15.3% | 69.2% | 96.4% |
+
+  Exact agreement was never expected: the reference used GBD 2017 and
+  2018-vintage World Bank data. Malaria matches in level **exactly** (ratio
+  1.000) once the 713 country-years where GBD 2023 records no malaria at all
+  are separated out — those are elimination and re-estimated history, not a
+  methodological difference. STD/HIV is the loosest and least certain of the
+  four, though much improved by the cause correction, and its error is now
+  roughly symmetric rather than systematic.
 * Where a disease is absent from a country entirely, the child share is 0 and
   the weight reduces to the fixed component. GBD reports zero malaria incidence
   for 118 of 204 locations, so this is the common case rather than an edge one.
