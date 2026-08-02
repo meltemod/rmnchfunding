@@ -5,7 +5,8 @@
 \alias{rmnch_recipient_weights}
 \title{RMNCH weights that vary by recipient and year}
 \format{
-A data frame with 728 rows and 11 columns:
+A data frame with 16,560 rows (4 purpose codes x 207 recipients x
+20 years, 2005 to 2024) and 11 columns:
 \describe{
 \item{purpose_code}{CRS five-digit purpose code, as character.}
 \item{recipient_code}{OECD recipient code, joining to \link{crs_recipients}.}
@@ -241,6 +242,20 @@ inputs.
 Disease weights are built from GBD 2023, which covers 1990-2023, so 2024 is
 carried forward from 2023. General budget support comes from World Bank
 series that effectively stop in 2023 for government health expenditure.
+}
+
+\section{Why the series starts in 2005}{
+
+The GBD extracts this package is built from have no country-level rows
+before 2005. A 2002-2024 build leaves every disease weight unresolved for
+2002, 2003 and 2004 — 621 of 828 cells a year, being all three disease
+codes across all 207 recipients — while 51010, which comes from the World
+Bank rather than GBD, resolves throughout. From 2005 on, every cell
+resolves.
+
+2005 is therefore a property of the extract, not of the method. Muskoka2
+itself runs from 2002. Anyone wanting the missing three years needs a GBD
+pull covering them; see \code{data-raw/gbd/README.md} for the query.
 }
 
 \seealso{

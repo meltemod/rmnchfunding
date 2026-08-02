@@ -46,6 +46,11 @@
 #'   carries a single `source` column for that code; given `NULL` (default),
 #'   one `source_<code>` column per code. Must be one of the four codes whose
 #'   weight varies by recipient: `"12262"`, `"12263"`, `"13040"`, `"51010"`.
+#' @param year Optional single year. The provenance of a weight can change
+#'   across the series — a country whose own data begins partway through is
+#'   substituted before that point and observed after it — so with `year`
+#'   unset a recipient whose source changes is reported as `"mixed"`. Set it
+#'   to resolve that to the source actually used in that year.
 #' @param imputed_only Set `TRUE` to keep only recipients whose weight is
 #'   borrowed — for `purpose_code`, or for any code when that is `NULL`.
 #'
@@ -83,7 +88,8 @@
 #'   c("recipient_name", "wb_name", "gbd_location_name")]
 #'
 #' @export
-recipient_map <- function(purpose_code = NULL, imputed_only = FALSE) {
+recipient_map <- function(purpose_code = NULL, imputed_only = FALSE,
+                          year = NULL) {
   cw <- rmnchfunding::recipient_crosswalk
   w <- rmnchfunding::rmnch_recipient_weights
   codes <- sort(unique(w$purpose_code))
@@ -103,24 +109,32 @@ recipient_map <- function(purpose_code = NULL, imputed_only = FALSE) {
     stop("`imputed_only` must be TRUE or FALSE.", call. = FALSE)
   }
 
+  yrs <- sort(unique(w$year))
+  if (!is.null(year)) {
+    year <- suppressWarnings(as.integer(year))
+    if (length(year) != 1L || is.na(year) || !year %in% yrs) {
+      stop("`year` must be a single year between ", min(yrs), " and ",
+           max(yrs), ".", call. = FALSE)
+    }
+    w <- w[w$year == year, ]
+  }
+
   out <- cw
   out$has_worldbank_data <- !is.na(cw$iso3)
   out$has_gbd_data <- !is.na(cw$gbd_location_name)
 
-  # The imputation source is constant across years for a given recipient and
-  # code, so it collapses to one value. Asserted rather than assumed: were it
-  # to vary, a single column would be silently reporting one year's provenance
-  # as though it covered all of them.
+  # A recipient's provenance is usually the same in every year, but not
+  # always: a country whose own data begins partway through the series is
+  # substituted before that point and observed after it. South Sudan under
+  # 51010 is regional until 2016 and its own from 2017. Collapsing those to
+  # one value would report one year's provenance as though it covered all of
+  # them, so they are labelled "mixed" and `year` narrows to a single year
+  # when an exact answer is wanted.
   srcs <- lapply(codes, function(pc) {
     d <- w[w$purpose_code == pc, ]
     s <- tapply(d$source, d$recipient_code, function(x) {
       u <- unique(x)
-      if (length(u) != 1L) {
-        stop("The imputation source varies across years for a recipient ",
-             "under code ", pc, "; it cannot be reduced to one column.",
-             call. = FALSE)
-      }
-      u
+      if (length(u) == 1L) u else "mixed"
     })
     as.vector(s[out$recipient_code])
   })

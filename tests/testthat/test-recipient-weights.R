@@ -28,7 +28,11 @@ test_that("one row per purpose code, recipient and year", {
   expect_false(anyDuplicated(
     rmnch_recipient_weights[c("purpose_code", "recipient_code", "year")]
   ) > 0L)
-  expect_setequal(rmnch_recipient_weights$year, 2021:2024)
+  # 2005 is the floor because the GBD extracts have no country-level rows
+  # before it: a 2002-2024 build leaves every disease weight NA for 2002-2004
+  # (621 of 828 cells a year) while 2005 onward resolves completely.
+  expect_setequal(rmnch_recipient_weights$year, 2005:2024)
+  expect_false(anyNA(rmnch_recipient_weights$weight))
 })
 
 test_that("every weight records where it came from", {
@@ -124,9 +128,10 @@ test_that("all four purpose codes are present", {
   expect_setequal(unique(rmnch_recipient_weights$purpose_code),
                   c("12262", "12263", "13040", "51010"))
   # Complete grid: every code, every recipient, every target year.
-  # 4 codes x every recipient in the crosswalk x 4 target years.
+  yrs <- length(unique(rmnch_recipient_weights$year))
+  expect_equal(yrs, 20L)
   expect_equal(nrow(rmnch_recipient_weights),
-               4L * nrow(recipient_crosswalk) * 4L)
+               4L * nrow(recipient_crosswalk) * yrs)
 })
 
 test_that("the fixed components of each disease formula are respected", {
@@ -197,16 +202,31 @@ test_that("a substituted weight lies within its peer group's range", {
 })
 
 test_that("a malaria-free group still yields the fixed constant", {
-  # Every European denominator is zero, so a burden-weighted mean is
+  # Where a group's malaria denominator is zero a burden-weighted mean is
   # undefined. It must not become NA: no cases anywhere means a zero child
   # share, leaving the MNH constant alone.
+  #
+  # Europe is the case in point, but only from 2010. GBD records European
+  # malaria in the mid-2000s, so 2005-2009 has a real, non-zero denominator
+  # and a substituted child share around 0.025. Both regimes are correct; the
+  # property being tested is that a zero denominator yields exactly the
+  # constant, never NA.
   w <- rmnch_recipient_weights
   eu <- w[w$purpose_code == "12262" &
             w$recipient_code %in% c("GIB", "XKV"), ]
   expect_gt(nrow(eu), 0L)
-  expect_true(all(eu$ch == 0))
-  expect_true(all(abs(eu$weight - 0.15) < 1e-12))
   expect_false(anyNA(eu$weight))
+
+  zero <- eu[eu$ch == 0, ]
+  expect_gt(nrow(zero), 0L)
+  expect_true(all(abs(zero$weight - 0.15) < 1e-12))
+  expect_true(all(zero$year >= 2010))
+
+  # Where the denominator is non-zero the constant still sits underneath, so
+  # the weight exceeds it rather than replacing it.
+  nz <- eu[eu$ch > 0, ]
+  expect_true(all(nz$weight > 0.15))
+  expect_true(all(abs(nz$weight - (0.15 + nz$ch)) < 1e-12))
 })
 
 test_that("regional substitutes keep components summing to their total", {
@@ -246,7 +266,7 @@ test_that("the crosswalk CSV ships and matches the dataset", {
   expect_false(anyNA(vals))
   expect_true(all(vals %in% c("own", "regional (subregion)",
                               "regional (region)", "regional (continent)",
-                              "global")))
+                              "global", "mixed")))
 })
 
 test_that("the CSV's imputation flags agree with the weights", {
@@ -258,9 +278,11 @@ test_that("the CSV's imputation flags agree with the weights", {
     # as.vector(), not unname(): tapply returns a 1-d array, and the dim
     # attribute survives unname() and fails the comparison on structure even
     # when every value agrees.
+    # Matches recipient_map(): one label where the source is constant across
+    # the series, "mixed" where a recipient's own data starts partway through.
     from_data <- tapply(w$source[w$purpose_code == pc],
                         w$recipient_code[w$purpose_code == pc],
-                        function(x) unique(x)[1])
+                        function(x) if (length(unique(x)) == 1L) unique(x) else "mixed")
     from_csv <- stats::setNames(csv[[paste0("source_", pc)]],
                                 csv$recipient_code)
     expect_equal(as.vector(from_csv[names(from_data)]), as.vector(from_data),

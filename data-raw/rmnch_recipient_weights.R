@@ -53,7 +53,7 @@
 # that everything below is a proportion. Getting this wrong would inflate a
 # weight by 10,000, which is obvious, or by 100, which is not.
 
-TARGET_YEARS <- 2021:2024
+TARGET_YEARS <- 2005:2024
 
 # How far a value may be carried forward when a year has no observation.
 # Health expenditure shares move slowly, so a year or two is defensible; five

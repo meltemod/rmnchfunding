@@ -26,7 +26,8 @@ test_that("the source columns agree with the weights they describe", {
   w <- rmnch_recipient_weights
   for (pc in unique(w$purpose_code)) {
     d <- w[w$purpose_code == pc, ]
-    expected <- tapply(d$source, d$recipient_code, function(x) unique(x)[1])
+    expected <- tapply(d$source, d$recipient_code,
+                       function(x) if (length(unique(x)) == 1L) unique(x) else "mixed")
     got <- stats::setNames(m[[paste0("source_", pc)]], m$recipient_code)
     expect_equal(as.vector(got[names(expected)]), as.vector(expected),
                  label = paste("source for", pc))
@@ -62,4 +63,31 @@ test_that("bad arguments fail with a message naming the valid codes", {
   expect_error(recipient_map("12262"), NA)
   expect_error(recipient_map(c("12262", "13040")), "must be one of")
   expect_error(recipient_map(imputed_only = "yes"), "TRUE or FALSE")
+})
+
+test_that("recipient_map() reports year-varying provenance honestly", {
+  # A recipient whose own data begins partway through the series is
+  # substituted before that point and observed after it. South Sudan became
+  # independent in 2011 and its World Bank health-expenditure series starts
+  # later still, so 51010 is regional early and its own from 2017.
+  m <- recipient_map()
+  expect_equal(m$source_51010[m$recipient_code == "SSD"], "mixed")
+
+  # `year` resolves the label to what was actually used that year.
+  early <- recipient_map(year = 2010)
+  late  <- recipient_map(year = 2024)
+  expect_equal(early$source_51010[early$recipient_code == "SSD"],
+               "regional (subregion)")
+  expect_equal(late$source_51010[late$recipient_code == "SSD"], "own")
+
+  # A mixed recipient is imputed in at least one year, so imputed_only keeps
+  # it rather than dropping it as though it were observed throughout.
+  imp <- recipient_map(imputed_only = TRUE)
+  expect_true("SSD" %in% imp$recipient_code)
+})
+
+test_that("recipient_map() rejects a year outside the series", {
+  expect_error(recipient_map(year = 2004), "must be a single year")
+  expect_error(recipient_map(year = 2025), "must be a single year")
+  expect_silent(recipient_map(year = 2005))
 })

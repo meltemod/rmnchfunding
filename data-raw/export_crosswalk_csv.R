@@ -29,20 +29,20 @@ weights <- local({ e <- new.env(); load("data/rmnch_recipient_weights.rda", e)
 codes <- sort(unique(weights$purpose_code))
 
 # One column per purpose code, holding how that code's weight was obtained.
-# Collapsed to a single value per recipient because the source is constant
-# across years for a given recipient and code; asserted rather than assumed.
+# Usually one label covers the whole series, but not always: a recipient whose
+# own data starts partway through is substituted before that point and
+# observed after it. South Sudan under 51010 is regional until 2016 and its
+# own from 2017. Those are labelled "mixed" rather than collapsed to whichever
+# year happened to come first, which would report one year's provenance as
+# though it covered all of them. recipient_map(year = ) resolves an exact
+# year; this file is a summary over the series.
 src <- lapply(codes, function(pc) {
   d <- weights[weights$purpose_code == pc, ]
   s <- tapply(d$source, d$recipient_code, function(x) {
     u <- unique(x)
-    if (length(u) != 1L) {
-      stop("Imputation source varies across years for a recipient under code ",
-           pc, "; the CSV assumes one source per recipient and code.",
-           call. = FALSE)
-    }
-    u
+    if (length(u) == 1L) u else "mixed"
   })
-  s[crosswalk$recipient_code]
+  as.vector(s[crosswalk$recipient_code])
 })
 names(src) <- paste0("source_", codes)
 

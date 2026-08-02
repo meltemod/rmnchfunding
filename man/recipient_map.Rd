@@ -5,7 +5,7 @@
 \title{How OECD recipients map to the source data, and where borrowed weights come
 from}
 \usage{
-recipient_map(purpose_code = NULL, imputed_only = FALSE)
+recipient_map(purpose_code = NULL, imputed_only = FALSE, year = NULL)
 }
 \arguments{
 \item{purpose_code}{Optionally one CRS purpose code. Given one, the result
@@ -15,6 +15,12 @@ weight varies by recipient: \code{"12262"}, \code{"12263"}, \code{"13040"}, \cod
 
 \item{imputed_only}{Set \code{TRUE} to keep only recipients whose weight is
 borrowed — for \code{purpose_code}, or for any code when that is \code{NULL}.}
+
+\item{year}{Optional single year. The provenance of a weight can change
+across the series — a country whose own data begins partway through is
+substituted before that point and observed after it — so with \code{year}
+unset a recipient whose source changes is reported as \code{"mixed"}. Set it
+to resolve that to the source actually used in that year.}
 }
 \value{
 A tibble with one row per OECD recipient:

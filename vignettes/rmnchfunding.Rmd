@@ -96,7 +96,7 @@ The 2023 weight is 5.18% as first published and 13.42% a year later. So
 them reproduces neither report. The editions also differ in price base: 2022
 constant prices in 2025, 2023 constant prices in 2026.
 
-Between them the two editions cover four spending years, 2021 to 2024, which
+Between them the four editions cover six spending years, 2019 to 2024, which
 is what makes the four per-donor RMNCH weights recoverable — four unknowns
 need four independent published years, and neither edition alone has them.
 

@@ -5,7 +5,7 @@
 \alias{recipient_crosswalk}
 \title{OECD recipients mapped to World Bank codes and geographic groups}
 \format{
-A data frame with 182 rows and 12 columns:
+A data frame with 207 rows and 12 columns:
 \describe{
 \item{recipient_code}{OECD recipient code.}
 \item{recipient_name}{OECD recipient name.}
@@ -53,9 +53,13 @@ accident.
 \section{What is excluded}{
 
 Only leaves under \code{DPGC} are here. That drops aggregates, the \verb{_X}
-unallocated buckets — which are not places and have no population to compute
-a weight from — and the multilateral organisations that also live in OECD's
-\code{CL_AREA_ORG} codelist, which covers areas \emph{and} organisations.
+the multilateral organisations that also live in OECD's \code{CL_AREA_ORG}
+codelist, which covers areas \emph{and} organisations. The unallocated \verb{_X}
+buckets ARE included: they are not places and have no population of their
+own, but CRS reports real disbursements against them — 48\% of the value in
+the four varying codes for the United States — so they take their
+geographic parent's weight rather than being dropped. \code{DPGC_X} takes a
+global one, its parent being the root.
 }
 
 \section{Three naming systems}{

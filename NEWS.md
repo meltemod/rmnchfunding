@@ -186,6 +186,23 @@
   vignette and `data-raw/reference/README.md` all point at the DOI for anyone
   wanting to inspect the method at source, and note that the binary `.xlsb`
   needs Python's `pyxlsb` rather than `readxl`.
+* **`rmnch_recipient_weights` now covers 2005-2024** rather than 2021-2024 —
+  16,560 rows against 3,312, with no unresolved weights. Every previously
+  published weight is unchanged to the last bit; the extension is purely
+  additive. This makes `muskoka2(universe = "rmnch")` usable for the 2023 and
+  2024 editions, whose spending years start in 2019, and opens the Muskoka2
+  reference period to validation against the published 2002-17 estimates.
+
+  The series starts at 2005 because the GBD extracts have no country-level
+  rows before it: a 2002-2024 build leaves all three disease codes unresolved
+  for 2002-2004 (621 of 828 cells a year) while 51010, sourced from the World
+  Bank, resolves throughout. That floor is a property of the extract rather
+  than of the method.
+
+* Corrected two stale `@format` row counts in the data documentation:
+  `rmnch_recipient_weights` said 728 rows and `recipient_crosswalk` said 182.
+  The crosswalk has been 207 since the unallocated `_X` buckets were added.
+
 * **The weight tables now cover four report editions**, 2023 through 2026.
   `sector_weights` gains `report_edition`, `weight_printed` and `is_misprint`
   (396 rows); `agency_weights` gains the 2023 and 2024 editions, extending

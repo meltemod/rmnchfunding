@@ -180,7 +180,7 @@
 #' source table is reason to treat the other half as unverified rather than
 #' as confirmed.
 #'
-#' The two editions between them cover four spending years, 2021 to 2024,
+#' The four editions between them cover six spending years, 2019 to 2024,
 #' which is the window `muskoka()` targets and the range over which
 #' [rmnch_recipient_weights] is built.
 #'
@@ -571,7 +571,20 @@
 #' carried forward from 2023. General budget support comes from World Bank
 #' series that effectively stop in 2023 for government health expenditure.
 #'
-#' @format A data frame with 728 rows and 11 columns:
+#' @section Why the series starts in 2005:
+#' The GBD extracts this package is built from have no country-level rows
+#' before 2005. A 2002-2024 build leaves every disease weight unresolved for
+#' 2002, 2003 and 2004 — 621 of 828 cells a year, being all three disease
+#' codes across all 207 recipients — while 51010, which comes from the World
+#' Bank rather than GBD, resolves throughout. From 2005 on, every cell
+#' resolves.
+#'
+#' 2005 is therefore a property of the extract, not of the method. Muskoka2
+#' itself runs from 2002. Anyone wanting the missing three years needs a GBD
+#' pull covering them; see `data-raw/gbd/README.md` for the query.
+#'
+#' @format A data frame with 16,560 rows (4 purpose codes x 207 recipients x
+#'   20 years, 2005 to 2024) and 11 columns:
 #' \describe{
 #'   \item{purpose_code}{CRS five-digit purpose code, as character.}
 #'   \item{recipient_code}{OECD recipient code, joining to [crs_recipients].}
@@ -641,11 +654,15 @@
 #'
 #' @section What is excluded:
 #' Only leaves under `DPGC` are here. That drops aggregates, the `_X`
-#' unallocated buckets — which are not places and have no population to compute
-#' a weight from — and the multilateral organisations that also live in OECD's
-#' `CL_AREA_ORG` codelist, which covers areas *and* organisations.
+#' the multilateral organisations that also live in OECD's `CL_AREA_ORG`
+#' codelist, which covers areas *and* organisations. The unallocated `_X`
+#' buckets ARE included: they are not places and have no population of their
+#' own, but CRS reports real disbursements against them — 48% of the value in
+#' the four varying codes for the United States — so they take their
+#' geographic parent's weight rather than being dropped. `DPGC_X` takes a
+#' global one, its parent being the root.
 #'
-#' @format A data frame with 182 rows and 12 columns:
+#' @format A data frame with 207 rows and 12 columns:
 #' \describe{
 #'   \item{recipient_code}{OECD recipient code.}
 #'   \item{recipient_name}{OECD recipient name.}
