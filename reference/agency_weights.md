@@ -111,7 +111,7 @@ has been attempted for them. That a misprint was found in one half of
 the source table is reason to treat the other half as unverified rather
 than as confirmed.
 
-The two editions between them cover four spending years, 2021 to 2024,
+The four editions between them cover six spending years, 2019 to 2024,
 which is the window `muskoka()` targets and the range over which
 [rmnch_recipient_weights](https://meltemod.github.io/rmnchfunding/reference/rmnch_recipient_weights.md)
 is built.

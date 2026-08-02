@@ -9,7 +9,7 @@ geographic group.
 ## Usage
 
 ``` r
-recipient_map(purpose_code = NULL, imputed_only = FALSE)
+recipient_map(purpose_code = NULL, imputed_only = FALSE, year = NULL)
 ```
 
 ## Arguments
@@ -26,6 +26,14 @@ recipient_map(purpose_code = NULL, imputed_only = FALSE)
 
   Set `TRUE` to keep only recipients whose weight is borrowed — for
   `purpose_code`, or for any code when that is `NULL`.
+
+- year:
+
+  Optional single year. The provenance of a weight can change across the
+  series — a country whose own data begins partway through is
+  substituted before that point and observed after it — so with `year`
+  unset a recipient whose source changes is reported as `"mixed"`. Set
+  it to resolve that to the source actually used in that year.
 
 ## Value
 

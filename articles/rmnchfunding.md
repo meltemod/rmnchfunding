@@ -129,7 +129,7 @@ The 2023 weight is 5.18% as first published and 13.42% a year later. So
 mixing them reproduces neither report. The editions also differ in price
 base: 2022 constant prices in 2025, 2023 constant prices in 2026.
 
-Between them the two editions cover four spending years, 2021 to 2024,
+Between them the four editions cover six spending years, 2019 to 2024,
 which is what makes the four per-donor RMNCH weights recoverable — four
 unknowns need four independent published years, and neither edition
 alone has them.
@@ -366,9 +366,9 @@ never mistaken for an observed one:
 table(rmnch_recipient_weights$source)
 #> 
 #>               global                  own regional (continent) 
-#>                   16                 2580                  132 
+#>                   80                12856                  666 
 #>    regional (region) regional (subregion) 
-#>                  328                  256
+#>                 1653                 1305
 ```
 
 The substitution applies to each component separately, not just the
@@ -382,11 +382,11 @@ wlf <- rmnch_recipient_weights[
     rmnch_recipient_weights$year == 2023,
 ]
 wlf[c("purpose_code", "rh", "mnh", "ch", "weight", "source")]
-#>      purpose_code         rh  mnh          ch     weight            source
-#> 803         12262 0.00000000 0.15 0.000000000 0.15000000 regional (region)
-#> 1631        12263 0.00000000 0.00 0.057125922 0.05712592 regional (region)
-#> 2459        13040 0.42589402 0.00 0.002456776 0.42835079 regional (region)
-#> 3287        51010 0.02799938 0.00 0.015598318 0.04359770 regional (region)
+#>       purpose_code         rh  mnh          ch     weight            source
+#> 4019         12262 0.00000000 0.15 0.000000000 0.15000000 regional (region)
+#> 8159         12263 0.00000000 0.00 0.057125922 0.05712592 regional (region)
+#> 12299        13040 0.42589402 0.00 0.002456776 0.42835079 regional (region)
+#> 16439        51010 0.02799938 0.00 0.015598318 0.04359770 regional (region)
 ```
 
 Note the malaria row: `mnh` keeps its fixed 0.15 while `ch` is 0,
@@ -489,9 +489,9 @@ table(
   `variant B weight` = ifelse(w$weight_variant_b == 0, "0", "0.15 + CH")
 )
 #>                     variant B weight
-#> MNH applied            0 0.15 + CH
-#>   burden recorded      0       482
-#>   no burden recorded 346         0
+#> MNH applied             0 0.15 + CH
+#>   burden recorded       0      2557
+#>   no burden recorded 1583         0
 ```
 
 Tested against the published reference over 2005-2017, that variant is

@@ -52,7 +52,7 @@ group.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">recipient_map</span><span class="op">(</span>purpose_code <span class="op">=</span> <span class="cn">NULL</span>, imputed_only <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">recipient_map</span><span class="op">(</span>purpose_code <span class="op">=</span> <span class="cn">NULL</span>, imputed_only <span class="op">=</span> <span class="cn">FALSE</span>, year <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -69,6 +69,14 @@ weight varies by recipient: <code>"12262"</code>, <code>"12263"</code>, <code>"1
 <dt id="arg-imputed-only">imputed_only<a class="anchor" aria-label="anchor" href="#arg-imputed-only"></a></dt>
 <dd><p>Set <code>TRUE</code> to keep only recipients whose weight is
 borrowed — for <code>purpose_code</code>, or for any code when that is <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-year">year<a class="anchor" aria-label="anchor" href="#arg-year"></a></dt>
+<dd><p>Optional single year. The provenance of a weight can change
+across the series — a country whose own data begins partway through is
+substituted before that point and observed after it — so with <code>year</code>
+unset a recipient whose source changes is reported as <code>"mixed"</code>. Set it
+to resolve that to the source actually used in that year.</p></dd>
 
 </dl></div>
     <div class="section level2">
